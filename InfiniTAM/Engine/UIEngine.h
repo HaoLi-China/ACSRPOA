@@ -23,7 +23,7 @@ namespace InfiniTAM
 			}mainLoopAction;
 
 
-			ITMLibSettings internalSettings;
+			ITMLibSettings *internalSettings;
 			ImageSourceEngine *imageSource;
 			ITMMainEngine *mainEngine;
 
@@ -69,8 +69,9 @@ namespace InfiniTAM
 			bool needsRefresh;
 			ITMUChar4Image *saveImage;
 
-			void Initialise(int & argc, char** argv, ImageSourceEngine *imageSource, ITMMainEngine *mainEngine, const char *outFolder);
+			void Initialise(int & argc, char** argv, ITMLibSettings *internalSettings, ImageSourceEngine *imageSource, ITMMainEngine *mainEngine, const char *outFolder);
 			void Shutdown();
+      void resetEngine();
 
 			void Run();
 			void ProcessFrame();
