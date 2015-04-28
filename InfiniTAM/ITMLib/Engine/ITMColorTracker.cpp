@@ -23,7 +23,7 @@ ITMColorTracker::~ITMColorTracker(void)
 }
 
 void ITMColorTracker::TrackCamera(ITMTrackingState *trackingState, const ITMView *view)
-{
+{ //printf("ITMColorTracker\n");
 	this->view = view; this->trackingState = trackingState;
 
 	this->PrepareForEvaluation(view);

@@ -104,7 +104,7 @@ Matrix4f ITMDepthTracker::ApplySingleStep(Matrix4f approxInvPose, float *step)
 }
 
 void ITMDepthTracker::TrackCamera(ITMTrackingState *trackingState, const ITMView *view)
-{
+{ //printf("ITMDepthTracker\n");
 	this->SetEvaluationData(trackingState, view);
 
 	this->PrepareForEvaluation();

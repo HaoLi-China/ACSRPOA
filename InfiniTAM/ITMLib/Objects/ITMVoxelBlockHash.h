@@ -52,6 +52,13 @@ namespace ITMLib
 				IndexData *hashData_host = new IndexData;
 				hashData_host->ResetData();
 
+        //const ITMHashEntry *hashTable = hashData_host->entries_all;
+
+        //for(int i=0; i<SDF_BUCKET_NUM * SDF_ENTRY_NUM_PER_BUCKET + SDF_EXCESS_LIST_SIZE; i++){
+        //  const ITMHashEntry &hashEntry = hashTable[i];
+        //  printf("hashEntry.ptr:%d\n",hashEntry.ptr);
+        //}
+
 				if (allocateGPU)
 				{
 #ifndef COMPILE_WITHOUT_CUDA

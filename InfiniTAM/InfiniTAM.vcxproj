@@ -28,7 +28,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v100</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -39,6 +39,7 @@
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="modified_InfiniTAM_x64_release.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -48,8 +49,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <LibraryPath>E:\HaoLi\InfiniTAM-master\IncludeLib\freeglut\lib;C:\Program Files\OpenNI2\Lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>E:\HaoLi\InfiniTAM-master\IncludeLib\freeglut\include;C:\Program Files\OpenNI2\Include;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\HaoLi\GitHub\Modified-InfiniTAM\IncludeLib\freeglut\lib;C:\Program Files\OpenNI2\Lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>E:\HaoLi\GitHub\Modified-InfiniTAM\IncludeLib\freeglut\include;C:\Program Files\OpenNI2\Include;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -103,6 +104,10 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Common\common_func.cpp" />
+    <ClCompile Include="Common\common_type.cpp" />
+    <ClCompile Include="Common\utility.cpp" />
+    <ClCompile Include="Common\visualizer.cpp" />
     <ClCompile Include="Engine\ImageSourceEngine.cpp" />
     <ClCompile Include="Engine\Kinect2Engine.cpp" />
     <ClCompile Include="Engine\OpenNIEngine.cpp" />
@@ -126,9 +131,18 @@
     <ClCompile Include="ITMLib\Objects\ITMDisparityCalib.cpp" />
     <ClCompile Include="ITMLib\Objects\ITMIntrinsics.cpp" />
     <ClCompile Include="ITMLib\Objects\ITMPose.cpp" />
+    <ClCompile Include="ObjPreSegment\main.cpp" />
+    <ClCompile Include="ObjPreSegment\main_scene_seg.cpp" />
+    <ClCompile Include="ObjPreSegment\scene_graph.cpp" />
+    <ClCompile Include="ObjPreSegment\scene_seg.cpp" />
+    <ClCompile Include="ObjPreSegment\supervoxel_clustering.cpp" />
     <ClCompile Include="Utils\FileUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Common\common_func.h" />
+    <ClInclude Include="Common\common_type.h" />
+    <ClInclude Include="Common\utility.h" />
+    <ClInclude Include="Common\visualizer.h" />
     <ClInclude Include="Engine\ImageSourceEngine.h" />
     <ClInclude Include="Engine\Kinect2Engine.h" />
     <ClInclude Include="Engine\OpenNIEngine.h" />
@@ -195,6 +209,10 @@
     <ClInclude Include="ITMLib\Objects\ITMViewHierarchyLevel.h" />
     <ClInclude Include="ITMLib\Objects\ITMLocalVBA.h" />
     <ClInclude Include="ITMLib\ITMLib.h" />
+    <ClInclude Include="ObjPreSegment\scene_graph.h" />
+    <ClInclude Include="ObjPreSegment\scene_seg.h" />
+    <ClInclude Include="ObjPreSegment\supervoxel_clustering.h" />
+    <ClInclude Include="ObjPreSegment\supervoxel_clustering.hpp" />
     <ClInclude Include="Utils\FileUtils.h" />
     <ClInclude Include="Utils\NVTimer.h" />
   </ItemGroup>

@@ -7,6 +7,10 @@
 #include "../Utils/FileUtils.h"
 #include "../Utils/NVTimer.h"
 
+#include <vector>//hao modified it
+
+using namespace std;
+
 #include "ImageSourceEngine.h"
 
 namespace InfiniTAM
@@ -19,7 +23,7 @@ namespace InfiniTAM
 
 			enum MainLoopAction
 			{
-				PROCESS_PAUSED, PROCESS_FRAME, PROCESS_VIDEO, EXIT, SAVE_TO_DISK
+				PROCESS_PAUSED, PROCESS_FRAME, PROCESS_VIDEO, PROCESS_EXIT, SAVE_TO_DISK
 			}mainLoopAction;
 
 
@@ -69,9 +73,9 @@ namespace InfiniTAM
 			bool needsRefresh;
 			ITMUChar4Image *saveImage;
 
-			void Initialise(int & argc, char** argv, ITMLibSettings *internalSettings, ImageSourceEngine *imageSource, ITMMainEngine *mainEngine, const char *outFolder);
+			void Initialise(int & argc, char** argv, ITMLibSettings *internalSettings, ImageSourceEngine *imageSource, ITMMainEngine *mainEngine, const char *outFolder);//hao modified it
 			void Shutdown();
-      void resetEngine();
+      void resetEngine();//hao modified it
 
 			void Run();
 			void ProcessFrame();

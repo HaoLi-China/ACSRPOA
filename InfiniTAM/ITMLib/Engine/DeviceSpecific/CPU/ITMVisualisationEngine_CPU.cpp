@@ -183,7 +183,7 @@ void ITMVisualisationEngine_CPU<TVoxel,ITMVoxelBlockHash>::CreateExpectedDepths(
 
 template<class TVoxel, class TIndex>
 static void RenderImage_common(const ITMScene<TVoxel,TIndex> *scene, const ITMPose *pose, const ITMIntrinsics *intrinsics, const ITMVisualisationState *state, ITMUChar4Image *outputImage, bool useColour)
-{
+{ printf("00000000000000\n");
 	const TVoxel *voxelData = scene->localVBA.GetVoxelBlocks();
 	const typename TIndex::IndexData *voxelIndex = scene->index.getIndexData();
 
@@ -260,7 +260,7 @@ class RaycastRenderer_PointCloud {
 
 template<class TVoxel, class TIndex>
 static void CreatePointCloud_common(const ITMScene<TVoxel,TIndex> *scene, const ITMView *view, ITMTrackingState *trackingState, bool skipPoints)
-{
+{printf("111111111111\n");
 	const TVoxel *voxelData = scene->localVBA.GetVoxelBlocks();
 	const typename TIndex::IndexData *voxelIndex = scene->index.getIndexData();
 
@@ -292,7 +292,7 @@ static void CreatePointCloud_common(const ITMScene<TVoxel,TIndex> *scene, const 
 
 template<class TVoxel, class TIndex>
 static void CreateICPMaps_common(const ITMScene<TVoxel,TIndex> *scene, const ITMView *view, ITMTrackingState *trackingState)
-{
+{printf("222222222222222\n");
 	const TVoxel *voxelData = scene->localVBA.GetVoxelBlocks();
 	const typename TIndex::IndexData *voxelIndex = scene->index.getIndexData();
 
@@ -355,6 +355,37 @@ template<class TVoxel>
 void ITMVisualisationEngine_CPU<TVoxel,ITMVoxelBlockHash>::CreateICPMaps(const ITMScene<TVoxel,ITMVoxelBlockHash> *scene, const ITMView *view, ITMTrackingState *trackingState)
 {
 	CreateICPMaps_common(scene, view, trackingState);
+}
+
+//hao modified it
+template<class TVoxel, class TIndex>
+void ITMVisualisationEngine_CPU<TVoxel,TIndex>::GetAllPoints(const ITMScene<TVoxel,TIndex> *scene){
+}
+
+//hao modified it
+template<class TVoxel>
+void ITMVisualisationEngine_CPU<TVoxel,ITMVoxelBlockHash>::GetAllPoints(const ITMScene<TVoxel,ITMVoxelBlockHash> *scene){
+}
+
+//hao modified it
+template<class TVoxel, class TIndex>
+void ITMVisualisationEngine_CPU<TVoxel,TIndex>::RealTimeSegment(const ITMScene<TVoxel,TIndex> *scene, const ITMView *view, ITMTrackingState *trackingState, Vector3f *points, Vector3f *normals){
+}
+
+//hao modified it
+template<class TVoxel>
+void ITMVisualisationEngine_CPU<TVoxel,ITMVoxelBlockHash>::RealTimeSegment(const ITMScene<TVoxel,ITMVoxelBlockHash> *scene, const ITMView *view, ITMTrackingState *trackingState, Vector3f *points, Vector3f *normals){
+}
+
+//hao modified it
+template<class TVoxel, class TIndex>
+void ITMVisualisationEngine_CPU<TVoxel,TIndex>::NewCreateICPMaps(const ITMScene<TVoxel,TIndex> *scene, const ITMView *view, ITMTrackingState *trackingState, Vector3f *colors){
+}
+
+
+//hao modified it
+template<class TVoxel>
+void ITMVisualisationEngine_CPU<TVoxel,ITMVoxelBlockHash>::NewCreateICPMaps(const ITMScene<TVoxel,ITMVoxelBlockHash> *scene, const ITMView *view, ITMTrackingState *trackingState, Vector3f *colors){
 }
 
 template class ITMLib::Engine::ITMVisualisationEngine_CPU<ITMVoxel, ITMVoxelIndex>;

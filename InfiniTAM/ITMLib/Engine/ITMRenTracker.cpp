@@ -107,7 +107,7 @@ void ITMRenTracker<TVoxel,TIndex>::PrepareForEvaluation(const ITMView *view)
 
 template<class TVoxel, class TIndex>
 void ITMRenTracker<TVoxel,TIndex>::TrackCamera(ITMTrackingState *trackingState, const ITMView *view)
-{
+{ //printf("ITMRenTracker\n");
 	this->PrepareForEvaluation(view);
 
 	// // Olaf LM

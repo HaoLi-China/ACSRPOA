@@ -85,11 +85,11 @@ void UIEngine::glutDisplayFunction()
 
   glRasterPos2f(-0.95f, -0.95f);
   if (ITMVoxel::hasColorInformation)
-  {
+  {//hao modified it
     sprintf(str, "r - reset \t n - next frame \t b - all frames \t e - exit \t f - %s \t c - %s", uiEngine->freeviewActive?"follow camera":"free viewpoint", uiEngine->colourActive?"stop using colour":"use colour");
   }
   else
-  {
+  {//hao modified it
     sprintf(str, "r - reset \t n - next frame \t b - all frames \t e/esc - exit \t f - %s \t t - turn fusion %s", uiEngine->freeviewActive ? "follow camera" : "free viewpoint", uiEngine->intergrationActive ? "off" : "on");
   }
   safe_glutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*)str);
@@ -129,7 +129,7 @@ void UIEngine::glutIdleFunction()
     //		uiEngine->actionDone = true;
     //	}
     //	break;
-  case EXIT:
+  case PROCESS_EXIT:
 #ifdef FREEGLUT
     glutLeaveMainLoop();
 #else
@@ -146,6 +146,7 @@ void UIEngine::glutIdleFunction()
   }
 }
 
+//hao modified it
 void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
 {
   UIEngine *uiEngine = UIEngine::Instance();
@@ -164,8 +165,8 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
     printf("processing input source ...\n");
     uiEngine->mainLoopAction = UIEngine::PROCESS_VIDEO;
     break;
-  case 's':
-    if (uiEngine->isRecording)
+  case 's'://hao modified it
+   /* if (uiEngine->isRecording)
     {
       printf("stopped recoding disk ...\n");
       uiEngine->isRecording = false;
@@ -175,12 +176,17 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
       printf("started recoding disk ...\n");
       uiEngine->currentFrameNo = 0;
       uiEngine->isRecording = true;
+    }*/
+    {
+    uiEngine->mainLoopAction = UIEngine::PROCESS_PAUSED;
+    vector<Vector3f> points_res;
+    uiEngine->mainEngine->savePoints(points_res);
     }
     break;
   case 'e':
   case 27: // esc key
     printf("exiting ...\n");
-    uiEngine->mainLoopAction = UIEngine::EXIT;
+    uiEngine->mainLoopAction = UIEngine::PROCESS_EXIT;
     break;
   case 'f':
     if (uiEngine->freeviewActive)
@@ -408,6 +414,7 @@ void UIEngine::Initialise(int & argc, char** argv, ITMLibSettings *internalSetti
   printf("initialised.\n");
 }
 
+//hao modified it
 void UIEngine::resetEngine()
 {
   this->freeviewActive = false;

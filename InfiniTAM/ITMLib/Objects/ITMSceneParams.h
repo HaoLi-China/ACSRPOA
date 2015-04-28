@@ -41,6 +41,7 @@ namespace ITMLib
 			*/
 			int maxW;
 
+      //0.02f, 100, 0.005f, 0.2f, 3.0f
 			ITMSceneParams(float mu, int maxW, float voxelSize,
 				float viewFrustum_min, float viewFrustum_max)
 			{

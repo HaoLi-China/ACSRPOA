@@ -58,6 +58,24 @@
     <Filter Include="ITMLib\Engine\Trackers">
       <UniqueIdentifier>{b7c1abfb-1faa-4437-b421-e0847200dd2f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common">
+      <UniqueIdentifier>{c1df210e-06c3-4643-afbe-c972e77c0870}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\Header Files">
+      <UniqueIdentifier>{a6b897e3-4440-4118-bbe0-0255508154cd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\Source Files">
+      <UniqueIdentifier>{af56978c-0018-4a43-809f-153da0e71a26}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ObjPreSegment">
+      <UniqueIdentifier>{aaced5a2-c0a2-4731-bc38-d89f1b8c97bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ObjPreSegment\Header Files">
+      <UniqueIdentifier>{72b31fbf-718a-42fe-8ba1-dd9ced109727}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ObjPreSegment\Source Files">
+      <UniqueIdentifier>{22ec27d8-3508-4eaa-80b2-5ee1baba9b8a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Utils\FileUtils.cpp">
@@ -129,6 +147,33 @@
     </ClCompile>
     <ClCompile Include="ITMLib\Engine\ITMTrackerFactory.cpp">
       <Filter>ITMLib\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Common\common_type.cpp">
+      <Filter>Common\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Common\visualizer.cpp">
+      <Filter>Common\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjPreSegment\main.cpp">
+      <Filter>ObjPreSegment\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjPreSegment\main_scene_seg.cpp">
+      <Filter>ObjPreSegment\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjPreSegment\scene_graph.cpp">
+      <Filter>ObjPreSegment\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjPreSegment\scene_seg.cpp">
+      <Filter>ObjPreSegment\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjPreSegment\supervoxel_clustering.cpp">
+      <Filter>ObjPreSegment\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Common\common_func.cpp">
+      <Filter>Common\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Common\utility.cpp">
+      <Filter>Common\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -335,6 +380,30 @@
     </ClInclude>
     <ClInclude Include="ITMLib\Engine\ITMTrackerFactory.h">
       <Filter>ITMLib\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\common_type.h">
+      <Filter>Common\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\visualizer.h">
+      <Filter>Common\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjPreSegment\scene_graph.h">
+      <Filter>ObjPreSegment\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjPreSegment\scene_seg.h">
+      <Filter>ObjPreSegment\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjPreSegment\supervoxel_clustering.h">
+      <Filter>ObjPreSegment\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjPreSegment\supervoxel_clustering.hpp">
+      <Filter>ObjPreSegment\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\common_func.h">
+      <Filter>Common\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\utility.h">
+      <Filter>Common\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

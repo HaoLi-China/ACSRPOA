@@ -5,6 +5,13 @@
 #include "../ITMLib.h"
 #include "../Utils/ITMLibSettings.h"
 
+#include "../../Common/visualizer.h"//hao modified it
+#include "../../ObjPreSegment/scene_seg.h"//hao modified it
+#include <pcl/io/ply_io.h>//hao modified it
+#include <vector>//hao modified it
+
+using namespace std;
+
 /** \mainpage
     This is the API reference documentation for InfiniTAM. For a general
     overview additional documentation can be found in the included Technical
@@ -85,6 +92,8 @@ namespace ITMLib
 			void GetImage(ITMUChar4Image *out, GetImageType getImageType, bool useColour, ITMPose *pose = NULL, ITMIntrinsics *intrinsics = NULL);
 
 			void SaveAll();
+
+      void savePoints(vector<Vector3f> &points);//hao modified it
 
 
 			/// switch for turning intergration on/off

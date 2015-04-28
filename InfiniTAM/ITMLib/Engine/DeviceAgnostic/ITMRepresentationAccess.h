@@ -91,6 +91,8 @@ _CPU_AND_GPU_CODE_ inline TVoxel readVoxel(const TVoxel *voxelData, const ITMVox
 		const ITMHashEntry &hashEntry = hashTable[hashIdx + inBucketIdx];
 		offsetExcess = hashEntry.offset - 1;
 
+    //printf("hashEntry.offset%d\n", (hashEntry.offset));
+
 		if (hashEntry.pos == blockPos && hashEntry.ptr >= 0)
 		{
 			isFound = true;

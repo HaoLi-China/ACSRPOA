@@ -34,6 +34,7 @@ namespace ITMLib
 			}
 			inline bool HasStoredData(int address) const { return hasStoredData[address]; }
 			inline TVoxel *GetStoredVoxelBlock(int address) { return storedVoxelBlocks + address * SDF_BLOCK_SIZE3; }
+      inline TVoxel *GetStoredVoxelBlocks(void) {return storedVoxelBlocks;}//hao modified it
 
 			bool *GetHasSyncedData(bool useGPU) const { return useGPU ? hasSyncedData_device : hasSyncedData_host; }
 			TVoxel *GetSyncedVoxelBlocks(bool useGPU) const { return useGPU ? syncedVoxelBlocks_device : syncedVoxelBlocks_host; }
