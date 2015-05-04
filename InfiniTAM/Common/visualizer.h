@@ -1,4 +1,5 @@
-#pragma once
+#ifndef VISUALIZER_H
+#define VISUALIZER_H
 
 #include "common_type.h"
 #include <pcl/visualization/cloud_viewer.h>
@@ -22,3 +23,5 @@ public:
 void showPointCloud (PointCloudPtr_RGB cloud,std::string name);
 //show cloud
 void showPointCloud2 (PointCloudPtr cloud,std::string name);
+
+#endif // VISUALIZER_H

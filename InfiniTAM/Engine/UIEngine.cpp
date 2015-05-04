@@ -98,6 +98,7 @@ void UIEngine::glutDisplayFunction()
   uiEngine->needsRefresh = false;
 }
 
+//hao modified it
 void UIEngine::glutIdleFunction()
 {
   UIEngine *uiEngine = UIEngine::Instance();
@@ -105,12 +106,22 @@ void UIEngine::glutIdleFunction()
   switch (uiEngine->mainLoopAction)
   {
   case PROCESS_FRAME:
-    uiEngine->ProcessFrame(); uiEngine->processedFrameNo++;
+    uiEngine->ProcessFrame(0); uiEngine->processedFrameNo++;
+    uiEngine->mainLoopAction = PROCESS_PAUSED;
+    uiEngine->needsRefresh = true;
+    break;
+  case OVER_SEG_FRAME:
+    uiEngine->ProcessFrame(1); uiEngine->processedFrameNo++;
+    uiEngine->mainLoopAction = PROCESS_PAUSED;
+    uiEngine->needsRefresh = true;
+    break;
+  case SEG_FRAME:
+    uiEngine->ProcessFrame(2); uiEngine->processedFrameNo++;
     uiEngine->mainLoopAction = PROCESS_PAUSED;
     uiEngine->needsRefresh = true;
     break;
   case PROCESS_VIDEO:
-    uiEngine->ProcessFrame(); uiEngine->processedFrameNo++;
+    uiEngine->ProcessFrame(0); uiEngine->processedFrameNo++;
     uiEngine->needsRefresh = true;
     break;
     //case SAVE_TO_DISK:
@@ -157,6 +168,18 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
     printf("reset ...\n");
     UIEngine::Instance()->resetEngine();
     break;
+  case 'v':
+    printf("save current view ...\n");
+    uiEngine->mainEngine->saveViewPoints();
+    break;
+  case 'o':
+    printf("over segment objects ...\n");
+    uiEngine->mainLoopAction = UIEngine::OVER_SEG_FRAME;
+    break;
+  case 'p':
+    printf("segment objects ...\n");
+    uiEngine->mainLoopAction = UIEngine::SEG_FRAME;
+    break;
   case 'n':
     printf("processing one frame ...\n");
     uiEngine->mainLoopAction = UIEngine::PROCESS_FRAME;
@@ -178,6 +201,7 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
       uiEngine->isRecording = true;
     }*/
     {
+    printf("save points ...\n");
     uiEngine->mainLoopAction = UIEngine::PROCESS_PAUSED;
     vector<Vector3f> points_res;
     uiEngine->mainEngine->savePoints(points_res);
@@ -471,7 +495,8 @@ void UIEngine::GetScreenshot(ITMUChar4Image *dest) const
   glReadPixels(0, 0, dest->noDims.x, dest->noDims.y, GL_RGBA, GL_UNSIGNED_BYTE, dest->GetData(false));
 }
 
-void UIEngine::ProcessFrame()
+//hao modified it
+void UIEngine::ProcessFrame(short segFlag)
 {
   if (!imageSource->hasMoreImages()) return;
   imageSource->getImages(mainEngine->view);
@@ -490,7 +515,7 @@ void UIEngine::ProcessFrame()
   }
 
   //actual processing on the mailEngine
-  mainEngine->ProcessFrame();
+  mainEngine->ProcessFrame(segFlag);
 
   sdkStopTimer(&timer); processedTime = sdkGetTimerValue(&timer);
 

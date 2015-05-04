@@ -23,7 +23,7 @@ namespace InfiniTAM
 
 			enum MainLoopAction
 			{
-				PROCESS_PAUSED, PROCESS_FRAME, PROCESS_VIDEO, PROCESS_EXIT, SAVE_TO_DISK
+				PROCESS_PAUSED, PROCESS_FRAME, PROCESS_VIDEO, PROCESS_EXIT, SAVE_TO_DISK, OVER_SEG_FRAME, SEG_FRAME
 			}mainLoopAction;
 
 
@@ -78,7 +78,7 @@ namespace InfiniTAM
       void resetEngine();//hao modified it
 
 			void Run();
-			void ProcessFrame();
+			void ProcessFrame(short segFlag);//hao modified it. 0:just fusion 1:over-segmentation 2:segment objects
 
 			void GetScreenshot(ITMUChar4Image *dest) const;
 			void SaveScreenshot(const char *filename) const;

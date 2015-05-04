@@ -104,14 +104,28 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Common\color_op.cpp" />
     <ClCompile Include="Common\common_func.cpp" />
     <ClCompile Include="Common\common_type.cpp" />
+    <ClCompile Include="Common\file_io.cpp" />
+    <ClCompile Include="Common\KDtree.cpp" />
     <ClCompile Include="Common\utility.cpp" />
     <ClCompile Include="Common\visualizer.cpp" />
     <ClCompile Include="Engine\ImageSourceEngine.cpp" />
     <ClCompile Include="Engine\Kinect2Engine.cpp" />
     <ClCompile Include="Engine\OpenNIEngine.cpp" />
     <ClCompile Include="Engine\UIEngine.cpp" />
+    <ClCompile Include="GraphCut\BinarySeg.cpp" />
+    <ClCompile Include="GraphCut\Clustering.cpp" />
+    <ClCompile Include="GraphCut\GCoptimization.cpp" />
+    <ClCompile Include="GraphCut\graph.cpp" />
+    <ClCompile Include="GraphCut\GraphCutBasicStruct.cpp" />
+    <ClCompile Include="GraphCut\kdtree.cpp" />
+    <ClCompile Include="GraphCut\LinkedBlockList.cpp" />
+    <ClCompile Include="GraphCut\maxflow.cpp" />
+    <ClCompile Include="GraphCut\MultiSeg.cpp" />
+    <ClCompile Include="GraphCut\PointCloudAnalysis.cpp" />
+    <ClCompile Include="GraphCut\ScanEstimation.cpp" />
     <ClCompile Include="ITMLib\Engine\DeviceSpecific\CPU\ITMColorTracker_CPU.cpp" />
     <ClCompile Include="ITMLib\Engine\DeviceSpecific\CPU\ITMDepthTracker_CPU.cpp" />
     <ClCompile Include="ITMLib\Engine\DeviceSpecific\CPU\ITMLowLevelEngine_CPU.cpp" />
@@ -133,20 +147,41 @@
     <ClCompile Include="ITMLib\Objects\ITMPose.cpp" />
     <ClCompile Include="ObjPreSegment\main.cpp" />
     <ClCompile Include="ObjPreSegment\main_scene_seg.cpp" />
+    <ClCompile Include="ObjPreSegment\object_segmentation.cpp" />
     <ClCompile Include="ObjPreSegment\scene_graph.cpp" />
     <ClCompile Include="ObjPreSegment\scene_seg.cpp" />
     <ClCompile Include="ObjPreSegment\supervoxel_clustering.cpp" />
     <ClCompile Include="Utils\FileUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Common\CMesh.h" />
+    <ClInclude Include="Common\color_op.h" />
     <ClInclude Include="Common\common_func.h" />
     <ClInclude Include="Common\common_type.h" />
+    <ClInclude Include="Common\CUDA_KDtree.h" />
+    <ClInclude Include="Common\file_io.h" />
+    <ClInclude Include="Common\KDtree.h" />
     <ClInclude Include="Common\utility.h" />
     <ClInclude Include="Common\visualizer.h" />
     <ClInclude Include="Engine\ImageSourceEngine.h" />
     <ClInclude Include="Engine\Kinect2Engine.h" />
     <ClInclude Include="Engine\OpenNIEngine.h" />
     <ClInclude Include="Engine\UIEngine.h" />
+    <ClInclude Include="GraphCut\BinarySeg.h" />
+    <ClInclude Include="GraphCut\block.h" />
+    <ClInclude Include="GraphCut\Clustering.h" />
+    <ClInclude Include="GraphCut\energy.h" />
+    <ClInclude Include="GraphCut\GCoptimization.h" />
+    <ClInclude Include="GraphCut\graph.h" />
+    <ClInclude Include="GraphCut\GraphCutBasicStruct.h" />
+    <ClInclude Include="GraphCut\GraphCutGlobalHeader.h" />
+    <ClInclude Include="GraphCut\kdtree.h" />
+    <ClInclude Include="GraphCut\LinkedBlockList.h" />
+    <ClInclude Include="GraphCut\matrix.h" />
+    <ClInclude Include="GraphCut\MultiSeg.h" />
+    <ClInclude Include="GraphCut\MyClass.h" />
+    <ClInclude Include="GraphCut\PointCloudAnalysis.h" />
+    <ClInclude Include="GraphCut\ScanEstimation.h" />
     <ClInclude Include="ITMLib\Engine\DeviceAgnostic\ITMColorTracker.h" />
     <ClInclude Include="ITMLib\Engine\DeviceAgnostic\ITMDepthTracker.h" />
     <ClInclude Include="ITMLib\Engine\DeviceAgnostic\ITMLowLevelEngine.h" />
@@ -209,6 +244,7 @@
     <ClInclude Include="ITMLib\Objects\ITMViewHierarchyLevel.h" />
     <ClInclude Include="ITMLib\Objects\ITMLocalVBA.h" />
     <ClInclude Include="ITMLib\ITMLib.h" />
+    <ClInclude Include="ObjPreSegment\object_segmentation.h" />
     <ClInclude Include="ObjPreSegment\scene_graph.h" />
     <ClInclude Include="ObjPreSegment\scene_seg.h" />
     <ClInclude Include="ObjPreSegment\supervoxel_clustering.h" />
@@ -217,6 +253,7 @@
     <ClInclude Include="Utils\NVTimer.h" />
   </ItemGroup>
   <ItemGroup>
+    <CudaCompile Include="Common\CUDA_KDtree.cu" />
     <CudaCompile Include="ITMLib\Engine\DeviceSpecific\CUDA\ITMColorTracker_CUDA.cu" />
     <CudaCompile Include="ITMLib\Engine\DeviceSpecific\CUDA\ITMDepthTracker_CUDA.cu" />
     <CudaCompile Include="ITMLib\Engine\DeviceSpecific\CUDA\ITMLowLevelEngine_CUDA.cu" />

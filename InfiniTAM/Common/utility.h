@@ -1,4 +1,5 @@
-#pragma once
+#ifndef UTILITY_H
+#define UTILITY_H
 
 #include "common_type.h"
 #include "visualizer.h"
@@ -311,3 +312,5 @@ const float color_table2[6][3] = {
 
 void draw_box(PointCloudPtr box_cloud, Visualizer& vs, float r, float g, float b, const char* id);
 void draw_rect(PointCloudPtr rect_cloud, Visualizer& vs, float r, float g, float b, const char* id);
+
+#endif // UTILITY_H

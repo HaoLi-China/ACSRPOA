@@ -1,8 +1,10 @@
-#pragma once
+#ifndef COMMON_TYPE_H
+#define COMMON_TYPE_H
 
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
 #include <vector>
+#include "color_op.h"
 
 using namespace std;
 
@@ -123,3 +125,53 @@ void MyPointCloud_RGB_NORMAL2MyPointCloud(MyPointCloud_RGB_NORMAL& mc_rgb, MyPoi
 
 void CopyMyPointCloud_RGB(MyPointCloud_RGB& source, MyPointCloud_RGB& target);
 void CopyMyPointCloud(MyPointCloud& source, MyPointCloud& target);
+
+//shiyifei types
+//shiyifei types
+struct GRAPHSHOW
+{
+	vector<MyPt_RGB_NORMAL> vecNodes;
+	vector<pair<MyPt_RGB_NORMAL,MyPt_RGB_NORMAL> > vecEdges;
+
+	vector<bool> vecNodeFlag;
+	vector<bool> vecEdgeFlag;
+	vector<float> vecEdgeColor; 
+};
+
+struct Normalt 
+{
+	float normal_x, normal_y, normal_z;
+};
+
+struct Face3
+{
+	int p0,p1,p2;
+	double r,g,b;
+	bool validFlag;
+};
+
+struct MeshFace
+{
+	vector<Face3> vecFace;
+};
+
+struct MeshVertex
+{
+	vector<Point_RGB_NORMAL> vecVertex;
+	vector<ColorType> objectColor;
+	vector<ColorType> objectnessColor;
+	vector<ColorType> patchColor;
+};
+
+struct Face3V
+{
+	Point_RGB_NORMAL pv0,pv1,pv2;
+};
+
+struct FaceShow
+{
+	vector<Face3V> vecFaceV;
+};
+
+
+#endif 

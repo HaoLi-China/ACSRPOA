@@ -76,6 +76,15 @@
     <Filter Include="ObjPreSegment\Source Files">
       <UniqueIdentifier>{22ec27d8-3508-4eaa-80b2-5ee1baba9b8a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GraphCut">
+      <UniqueIdentifier>{8c29de2b-0fab-4361-8003-4d914e5932ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GraphCut\Header Files">
+      <UniqueIdentifier>{d8c0c9cd-804b-4932-af9d-d15695bfdf65}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GraphCut\Source Files">
+      <UniqueIdentifier>{cb694aaa-85da-4dc4-8a69-d29f029285ba}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Utils\FileUtils.cpp">
@@ -148,7 +157,52 @@
     <ClCompile Include="ITMLib\Engine\ITMTrackerFactory.cpp">
       <Filter>ITMLib\Engine</Filter>
     </ClCompile>
+    <ClCompile Include="GraphCut\BinarySeg.cpp">
+      <Filter>GraphCut\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphCut\Clustering.cpp">
+      <Filter>GraphCut\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphCut\GCoptimization.cpp">
+      <Filter>GraphCut\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphCut\graph.cpp">
+      <Filter>GraphCut\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphCut\GraphCutBasicStruct.cpp">
+      <Filter>GraphCut\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphCut\kdtree.cpp">
+      <Filter>GraphCut\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphCut\LinkedBlockList.cpp">
+      <Filter>GraphCut\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphCut\maxflow.cpp">
+      <Filter>GraphCut\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphCut\MultiSeg.cpp">
+      <Filter>GraphCut\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphCut\PointCloudAnalysis.cpp">
+      <Filter>GraphCut\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphCut\ScanEstimation.cpp">
+      <Filter>GraphCut\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Common\color_op.cpp">
+      <Filter>Common\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Common\common_func.cpp">
+      <Filter>Common\Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Common\common_type.cpp">
+      <Filter>Common\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Common\file_io.cpp">
+      <Filter>Common\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Common\utility.cpp">
       <Filter>Common\Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Common\visualizer.cpp">
@@ -160,6 +214,9 @@
     <ClCompile Include="ObjPreSegment\main_scene_seg.cpp">
       <Filter>ObjPreSegment\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ObjPreSegment\object_segmentation.cpp">
+      <Filter>ObjPreSegment\Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="ObjPreSegment\scene_graph.cpp">
       <Filter>ObjPreSegment\Source Files</Filter>
     </ClCompile>
@@ -169,10 +226,7 @@
     <ClCompile Include="ObjPreSegment\supervoxel_clustering.cpp">
       <Filter>ObjPreSegment\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Common\common_func.cpp">
-      <Filter>Common\Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Common\utility.cpp">
+    <ClCompile Include="Common\KDtree.cpp">
       <Filter>Common\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -381,11 +435,71 @@
     <ClInclude Include="ITMLib\Engine\ITMTrackerFactory.h">
       <Filter>ITMLib\Engine</Filter>
     </ClInclude>
+    <ClInclude Include="GraphCut\BinarySeg.h">
+      <Filter>GraphCut\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphCut\block.h">
+      <Filter>GraphCut\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphCut\Clustering.h">
+      <Filter>GraphCut\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphCut\energy.h">
+      <Filter>GraphCut\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphCut\GCoptimization.h">
+      <Filter>GraphCut\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphCut\graph.h">
+      <Filter>GraphCut\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphCut\GraphCutBasicStruct.h">
+      <Filter>GraphCut\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphCut\GraphCutGlobalHeader.h">
+      <Filter>GraphCut\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphCut\kdtree.h">
+      <Filter>GraphCut\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphCut\LinkedBlockList.h">
+      <Filter>GraphCut\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphCut\matrix.h">
+      <Filter>GraphCut\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphCut\MultiSeg.h">
+      <Filter>GraphCut\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphCut\MyClass.h">
+      <Filter>GraphCut\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphCut\PointCloudAnalysis.h">
+      <Filter>GraphCut\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphCut\ScanEstimation.h">
+      <Filter>GraphCut\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\color_op.h">
+      <Filter>Common\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\common_func.h">
+      <Filter>Common\Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="Common\common_type.h">
+      <Filter>Common\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\file_io.h">
+      <Filter>Common\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\utility.h">
       <Filter>Common\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Common\visualizer.h">
       <Filter>Common\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjPreSegment\object_segmentation.h">
+      <Filter>ObjPreSegment\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ObjPreSegment\scene_graph.h">
       <Filter>ObjPreSegment\Header Files</Filter>
@@ -399,10 +513,13 @@
     <ClInclude Include="ObjPreSegment\supervoxel_clustering.hpp">
       <Filter>ObjPreSegment\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Common\common_func.h">
+    <ClInclude Include="Common\CMesh.h">
       <Filter>Common\Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Common\utility.h">
+    <ClInclude Include="Common\CUDA_KDtree.h">
+      <Filter>Common\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\KDtree.h">
       <Filter>Common\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -427,6 +544,9 @@
     </CudaCompile>
     <CudaCompile Include="ITMLib\Engine\DeviceSpecific\CUDA\ITMRenTracker_CUDA.cu">
       <Filter>ITMLib\Engine\DeviceSpecific\CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="Common\CUDA_KDtree.cu">
+      <Filter>Common\Source Files</Filter>
     </CudaCompile>
   </ItemGroup>
 </Project>

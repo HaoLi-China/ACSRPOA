@@ -6,9 +6,13 @@
 #include "../Utils/ITMLibSettings.h"
 
 #include "../../Common/visualizer.h"//hao modified it
+#include "../../ObjPreSegment/object_segmentation.h"//hao modified it
 #include "../../ObjPreSegment/scene_seg.h"//hao modified it
 #include <pcl/io/ply_io.h>//hao modified it
 #include <vector>//hao modified it
+#include "../../Common/KDtree.h"//hao modified it
+#include "../../Common/CUDA_KDtree.h"//hao modified it
+//#include <pcl/octree/octree.h>//hao modified it
 
 using namespace std;
 
@@ -86,7 +90,7 @@ namespace ITMLib
 			ITMView* GetView() { return view; }
 
 			/// Process the frame accessed with @ref GetView()
-			void ProcessFrame(void);
+			void ProcessFrame(short segFlag);//hao modified it. 0:just fusion 1:over-segmentation 2:segment objects
 
 			/// Get a result image as output
 			void GetImage(ITMUChar4Image *out, GetImageType getImageType, bool useColour, ITMPose *pose = NULL, ITMIntrinsics *intrinsics = NULL);
@@ -94,6 +98,9 @@ namespace ITMLib
 			void SaveAll();
 
       void savePoints(vector<Vector3f> &points);//hao modified it
+      void saveViewPoints();//hao modified it
+      void overSegmentView();//hao modified it
+      void segmentView();//hao modified it
 
 
 			/// switch for turning intergration on/off

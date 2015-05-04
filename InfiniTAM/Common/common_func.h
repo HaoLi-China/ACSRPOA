@@ -1,4 +1,5 @@
-#pragma once
+#ifndef COMMON_FUNC_H
+#define COMMON_FUNC_H
 
 #include <iostream>
 
@@ -10,7 +11,7 @@
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/visualization/cloud_viewer.h>
-#include <pcl/filters/extract_indices.h>
+#include "pcl/filters/extract_indices.h"
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/project_inliers.h>
@@ -18,6 +19,11 @@
 #include <pcl/kdtree/kdtree.h>
 #include <pcl/common/transforms.h>
 #include <vector>
+
+#include <Wm5IntrTriangle3Triangle3.h>
+#include <Wm5IntrTriangle3Sphere3.h>
+#include <Wm5IntrTriangle3Cylinder3.h>
+#include <Wm5IntrSegment2Segment2.h>
 
 #include <Eigen/Dense>
 #include <Eigen/Eigenvalues>
@@ -32,9 +38,12 @@
 #include "common_type.h"
 #include "utility.h"
 
-#define PII 3.1415926535
+#ifndef PI
+#define PI float(3.1415926535897932384626433832795)
+#endif
 
 using namespace std;
+//using namespace Wm5;
 
 //compute bounding box
 void com_bounding_box(PointCloudPtr_RGB cloud,float *min_x,float *min_y,float *min_z, float *max_x, float *max_y, float *max_z);
@@ -61,7 +70,7 @@ void getRectForPlaneCloud(PointCloudPtr_RGB plane_cloud, pcl::ModelCoefficients:
 //sample rect
 void samplePlane(MyPointCloud& rect_mpc, float grid_length, MyPointCloud& sample_mpt, int *rows, int *cols);
 //sample cylinder
-void sampleCylinder(Point cenPoint0, Point cenPoint1, Eigen::Vector3f& direction, float r, float grid_length, MyPointCloud& mpt);
+void sampleCylinder(Point cenPoint0, Point cenPoint1, Wm5::Vector3<float>& direction, float r, float grid_length, MyPointCloud& mpt);
 //sample sphere
 void sampleSphere(Point cenPoint, float r, float grid_length, MyPointCloud& mpt);
 //if a point is in a cloud
@@ -75,9 +84,13 @@ void computeJaccardIndex(int a_num, int intr_num, float *result);
 //compute Plane Jaccard Index
 void computePlaneJaccardIndex(MyPointCloud& source_mpc, MyPointCloud& rect_mpc, float grid_length, float rate_threshold, float *result);
 //compute Cylinder Jaccard Index
-void computeCylinderJaccardIndex(MyPointCloud& source_mpc, Point cenPoint0, Point cenPoint1, Eigen::Vector3f& direction, float r, float grid_length, float *result);
+void computeCylinderJaccardIndex(MyPointCloud& source_mpc, Point cenPoint0, Point cenPoint1, Wm5::Vector3<float>& direction, float r, float grid_length, float *result);
 //compute Sphere Jaccard Index
 void computeSphereJaccardIndex(MyPointCloud& source_mpc, Point cenPoint, float r, float grid_length, float *result);
+//Wm5IntrTriangle3Triangle3
+bool testIntrTriangle3Triangle3(MyPt p00,MyPt p01,MyPt p02, MyPt p10,MyPt p11,MyPt p12);
+//If a rectangle intersects with the other
+bool testIntrRectangle3Rectangle3(MyPt p0_0, MyPt p0_1,MyPt p0_2,MyPt p0_3, MyPt p1_0,MyPt p1_1,MyPt p1_2,MyPt p1_3);
 //rotate a 2d point by a 2d point
 void rotatePoint2ByPoint2(float p_x,float p_y,float cen_x,float cen_y,float ang,float *new_x,float *new_y);
 //if a point in a rect
@@ -88,5 +101,10 @@ bool isInSameRect(Point p1, Point p2, vector<MyPointCloud>& rect_clouds);
 bool isInPlane(Point p, pcl::KdTreeFLANN<Point> tree);
 //if two points in the same plane
 bool isInSamePlane(Point p1, Point p2, vector<pcl::KdTreeFLANN<Point>> trees);
+//Wm5IntrLine2Line2
+bool testIntrLine2Line2(Point p0, Point p1 , Point p2, Point p3);
+//if two points are separated by separation plane 
+bool isSeparated(Point p0, Point p1, vector<MyLine>& lines);
 //Get Color By Value
 void getColorByValue(float val, float min, float max, float *r, float *g, float *b);
+#endif

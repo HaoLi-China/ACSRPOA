@@ -191,7 +191,7 @@ void find_min_rect(PointCloudPtr_RGB cloud, cv::Point2f &p0,cv::Point2f &p1,cv::
   p3.x=rect.center.x+width/2.0;
   p3.y=rect.center.y-height/2.0;
 
-  float ang=(rect.angle/180.0)*PII;
+  float ang=(rect.angle/180.0)*PI;
 
   float x0=rect.center.x+(p0.x-rect.center.x)*cos(ang)-(p0.y-rect.center.y)*sin(ang);
   float y0=rect.center.y+(p0.x-rect.center.x)*sin(ang)+(p0.y-rect.center.y)*cos(ang);
@@ -306,10 +306,10 @@ void samplePlane(MyPointCloud& rect_mpc, float grid_length, MyPointCloud& sample
 }
 
 //sample cylinder
-void sampleCylinder(Point cenPoint0, Point cenPoint1, Eigen::Vector3f& direction, float r, float grid_length, MyPointCloud& mpt){
+void sampleCylinder(Point cenPoint0, Point cenPoint1, Wm5::Vector3f& direction, float r, float grid_length, MyPointCloud& mpt){
   float height=sqrt(pow(cenPoint0.x-cenPoint1.x, 2)+pow(cenPoint0.y-cenPoint1.y, 2)+pow(cenPoint0.z-cenPoint1.z, 2));
 
-  int num_cir=(int)((2*PII*r)/grid_length);
+  int num_cir=(int)((2*PI*r)/grid_length);
   int num_h=(int)(height/grid_length);
 
   Eigen::Vector3d direction_normal;
@@ -367,7 +367,7 @@ void sampleCylinder(Point cenPoint0, Point cenPoint1, Eigen::Vector3f& direction
 //sample sphere
 void sampleSphere(Point cenPoint, float r, float grid_length, MyPointCloud& mpt){
 
-  int woof_num=(int)((PII*r)/grid_length);
+  int woof_num=(int)((PI*r)/grid_length);
 
   PointCloudPtr sample_clound(new PointCloud);
   PointCloudPtr cloud_woof_points(new PointCloud);
@@ -400,7 +400,7 @@ void sampleSphere(Point cenPoint, float r, float grid_length, MyPointCloud& mpt)
     Point cen_cir(cloud_cen_points->at(i).x,cloud_cen_points->at(i).y,cloud_cen_points->at(i).z);
     Point first_point(cloud_woof_points->at(i).x,cloud_woof_points->at(i).y,cloud_woof_points->at(i).z);
     float cir_r=sqrt(pow(first_point.x-cen_cir.x, 2)+pow(first_point.y-cen_cir.y, 2)+pow(first_point.z-cen_cir.z, 2));
-    int num=(int)((2*PII*cir_r)/grid_length);
+    int num=(int)((2*PI*cir_r)/grid_length);
     float ang_tem=grid_length/cir_r;
 
     for(int j=0;j<num;j++){
@@ -524,7 +524,7 @@ void computePlaneJaccardIndex(MyPointCloud& source_mpc, MyPointCloud& rect_mpc, 
 }
 
 //compute Cylinder Jaccard Index
-void computeCylinderJaccardIndex(MyPointCloud& source_mpc, Point cenPoint0, Point cenPoint1, Eigen::Vector3f& direction, float r, float grid_length, float *result){
+void computeCylinderJaccardIndex(MyPointCloud& source_mpc, Point cenPoint0, Point cenPoint1, Wm5::Vector3f& direction, float r, float grid_length, float *result){
   MyPointCloud sample_mpc;
   sampleCylinder(cenPoint0, cenPoint1, direction,r,grid_length,sample_mpc);
 
@@ -569,6 +569,36 @@ void computeSphereJaccardIndex(MyPointCloud& source_mpc, Point cenPoint, float r
   cout<<"rate_sphere>>>>>>>>>>>>>>>>>>>>>>>>>>>:"<<rate<<endl;
   computeJaccardIndex(source_mpc.mypoints.size(), intr_points_num, result);
 
+}
+
+//Wm5IntrTriangle3Triangle3
+bool testIntrTriangle3Triangle3(MyPt p00,MyPt p01,MyPt p02, MyPt p10,MyPt p11,MyPt p12){
+
+  Wm5::Triangle3<float> triangle1(Wm5::Vector3<float>(p00.x,p00.y,p00.z),Wm5::Vector3<float>(p01.x,p01.y,p01.z),Wm5::Vector3<float>(p02.x,p02.y,p02.z));
+  Wm5::Triangle3<float> triangle2(Wm5::Vector3<float>(p10.x,p10.y,p10.z),Wm5::Vector3<float>(p11.x,p11.y,p11.z),Wm5::Vector3<float>(p12.x,p12.y,p12.z));
+
+  Wm5::IntrTriangle3Triangle3<float> intTri3Tri3(triangle1, triangle2);
+  bool bo=intTri3Tri3.Test();
+
+  return bo;
+}
+
+//If a rectangle intersects with the other
+bool testIntrRectangle3Rectangle3(MyPt p0_0, MyPt p0_1,MyPt p0_2,MyPt p0_3, MyPt p1_0,MyPt p1_1,MyPt p1_2,MyPt p1_3){
+  if(testIntrTriangle3Triangle3(p0_0,p0_1,p0_2, p1_0,p1_1,p1_2)){
+    return true;
+  }
+  if(testIntrTriangle3Triangle3(p0_0,p0_3,p0_2, p1_0,p1_1,p1_2)){
+    return true;
+  }
+  if(testIntrTriangle3Triangle3(p0_0,p0_1,p0_2, p1_0,p1_3,p1_2)){
+    return true;
+  }
+  if(testIntrTriangle3Triangle3(p0_0,p0_3,p0_2, p1_0,p1_3,p1_2)){
+    return true;
+  }
+
+  return false;
 }
 
 //append a cloud to another cloud
@@ -669,6 +699,31 @@ bool isInSamePlane(Point p1, Point p2, vector<pcl::KdTreeFLANN<Point>> trees){
 
   for(int i=0; i<trees.size(); i++){
     if(isInPlane(p1, trees.at(i))&&isInPlane(p2, trees.at(i))){
+      return true;
+    }
+  }
+
+  return false;
+}
+
+//Wm5IntrLine2Line2
+bool testIntrLine2Line2(Point p0, Point p1 , Point p2, Point p3){
+
+  //Triangle3<float> triangle(Vector3<float>(p0_0.x,p0_0.y,p0_0.z),Vector3<float>(p0_1.x,p0_1.y,p0_1.z),Vector3<float>(p0_2.x,p0_2.y,p0_2.z));
+  Wm5::Segment2<float> segment0(Wm5::Vector2<float>(p0.x, p0.y), Wm5::Vector2<float>(p1.x, p1.y));
+  Wm5::Segment2<float> segment1(Wm5::Vector2<float>(p2.x, p2.y), Wm5::Vector2<float>(p3.x, p3.y));
+
+  Wm5::IntrSegment2Segment2<float> intrSegment2Segment2(segment0, segment1);
+
+  bool bo=intrSegment2Segment2.Test();
+
+  return bo;
+}
+
+//if two points are separated by separation plane 
+bool isSeparated(Point p0, Point p1, vector<MyLine>& lines){
+  for(int i=0; i<lines.size(); i++){
+    if(testIntrLine2Line2(p0, p1 , Point(lines.at(i).p0.x, lines.at(i).p0.y, 0), Point(lines.at(i).p1.x, lines.at(i).p1.y, 0))){
       return true;
     }
   }
