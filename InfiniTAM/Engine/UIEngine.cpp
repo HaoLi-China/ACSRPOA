@@ -82,18 +82,24 @@ void UIEngine::glutDisplayFunction()
 
   char str[200]; sprintf(str, "%04.2lf", uiEngine->processedTime);
   safe_glutBitmapString(GLUT_BITMAP_HELVETICA_18, (const char*)str);
+  //hao modified it
+  {
+    glRasterPos2f(-0.95f, -0.93f);
+    sprintf(str, "r - reset \t n - next frame \t o - over-segment next frame \t p - segment next frame \t b - all frames \t v - save points in current frame");
+    safe_glutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*)str);
 
-  glRasterPos2f(-0.95f, -0.95f);
-  if (ITMVoxel::hasColorInformation)
-  {//hao modified it
-    sprintf(str, "r - reset \t n - next frame \t b - all frames \t e - exit \t f - %s \t c - %s", uiEngine->freeviewActive?"follow camera":"free viewpoint", uiEngine->colourActive?"stop using colour":"use colour");
+    glRasterPos2f(-0.95f, -0.98f);
+    if (ITMVoxel::hasColorInformation)
+    {//hao modified it
+      sprintf(str, "e - exit \t f - %s \t c - %s", uiEngine->freeviewActive?"follow camera":"free viewpoint", uiEngine->colourActive?"stop using colour":"use colour");
+    }
+    else
+    {//hao modified it
+      sprintf(str, "e/esc - exit \t f - %s \t t - turn fusion %s", uiEngine->freeviewActive ? "follow camera" : "free viewpoint", uiEngine->intergrationActive ? "off" : "on");
+    }
+    safe_glutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*)str);
   }
-  else
-  {//hao modified it
-    sprintf(str, "r - reset \t n - next frame \t b - all frames \t e/esc - exit \t f - %s \t t - turn fusion %s", uiEngine->freeviewActive ? "follow camera" : "free viewpoint", uiEngine->intergrationActive ? "off" : "on");
-  }
-  safe_glutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*)str);
-
+  
   glutSwapBuffers();
   uiEngine->needsRefresh = false;
 }
