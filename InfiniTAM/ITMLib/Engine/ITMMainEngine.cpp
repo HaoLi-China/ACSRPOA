@@ -436,6 +436,9 @@ void ITMMainEngine::saveViewPoints(){
         pt.x=(*(points_host+i))[0];
         pt.y=(*(points_host+i))[1];
         pt.z=(*(points_host+i))[2];
+        pt.r=255;
+        pt.g=255;
+        pt.b=255;
         pt.normal_x=(*(normals_host+i))[0];
         pt.normal_y=(*(normals_host+i))[1];
         pt.normal_z=(*(normals_host+i))[2];
