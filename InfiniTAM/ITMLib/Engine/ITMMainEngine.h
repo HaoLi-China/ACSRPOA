@@ -9,9 +9,12 @@
 #include "../../ObjPreSegment/object_segmentation.h"//hao modified it
 #include "../../ObjPreSegment/scene_seg.h"//hao modified it
 #include <pcl/io/ply_io.h>//hao modified it
+//#include <pcl/io/vtk_io.h>//hao modified it
+//#include <pcl/io/vtk_lib_io.h>//hao modified it
 #include <vector>//hao modified it
 #include "../../Common/KDtree.h"//hao modified it
 #include "../../Common/CUDA_KDtree.h"//hao modified it
+#include "../../ChangeDetection/detect_change.h"//hao modified it
 //#include <pcl/octree/octree.h>//hao modified it
 
 using namespace std;
@@ -87,6 +90,9 @@ namespace ITMLib
 			ITMTrackingState *trackingState;
       ITMTrackingState *trackingStateTem;//hao modified it
 
+      MyPointCloud_RGB_NORMAL myCloudOne;//hao modified it
+      MyPointCloud_RGB_NORMAL myCloudTwo;//hao modified it
+
 			/// Gives access to the current input frame
 			ITMView* GetView() { return view; }
 
@@ -103,6 +109,7 @@ namespace ITMLib
       void saveViewPoints(ITMTrackingState *trackingState);//hao modified it
       void overSegmentView();//hao modified it
       void segmentView();//hao modified it
+      void detectChange();//hao modified it
 
 
 			/// switch for turning intergration on/off

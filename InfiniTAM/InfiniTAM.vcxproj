@@ -50,7 +50,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <LibraryPath>E:\HaoLi\GitHub\Modified-InfiniTAM\IncludeLib\freeglut\lib;C:\Program Files\OpenNI2\Lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>E:\HaoLi\GitHub\Modified-InfiniTAM\IncludeLib\freeglut\include;C:\Program Files\OpenNI2\Include;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Program Files\OpenNI2\Include;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;E:\HaoLi\GitHub\Modified-InfiniTAM\IncludeLib\freeglut\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -104,6 +104,7 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ChangeDetection\detect_change.cpp" />
     <ClCompile Include="Common\color_op.cpp" />
     <ClCompile Include="Common\common_func.cpp" />
     <ClCompile Include="Common\common_type.cpp" />
@@ -154,6 +155,7 @@
     <ClCompile Include="Utils\FileUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ChangeDetection\detect_change.h" />
     <ClInclude Include="Common\CMesh.h" />
     <ClInclude Include="Common\color_op.h" />
     <ClInclude Include="Common\common_func.h" />

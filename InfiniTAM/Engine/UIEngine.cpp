@@ -182,6 +182,10 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
     printf("save current view w...\n");
     uiEngine->mainEngine->saveViewPoints(uiEngine->mainEngine->trackingStateTem);
     break;
+  case 'd':
+    printf("detect change ...\n");
+    uiEngine->mainEngine->detectChange();
+    break;
   case 'o':
     printf("over segment objects ...\n");
     uiEngine->mainLoopAction = UIEngine::OVER_SEG_FRAME;

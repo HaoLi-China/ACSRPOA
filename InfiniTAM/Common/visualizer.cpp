@@ -31,7 +31,7 @@ void Visualizer::show(){
 }
 
 //show rgb cloud
-void showPointCloud (PointCloudPtr_RGB cloud,std::string name)
+void showPointCloud (PointCloudPtr_RGB cloud, std::string name)
 {
   pcl::visualization::CloudViewer viewer (name);
 
@@ -43,11 +43,35 @@ void showPointCloud (PointCloudPtr_RGB cloud,std::string name)
 }
 
 //show cloud
-void showPointCloud2 (PointCloudPtr cloud,std::string name)
+void showPointCloud2 (PointCloudPtr cloud, std::string name)
 {
   pcl::visualization::CloudViewer viewer (name);
 
   viewer.showCloud (cloud);
+  while (!viewer.wasStopped ())
+  {
+
+  }
+}
+
+//show rgb_normal cloud
+void showPointCloud3 (PointCloudPtr_RGB_NORMAL cloud, std::string name){
+  PointCloudPtr_RGB cloudrgb(new PointCloud_RGB);
+
+  for(int i=0; i<cloud->size(); i++){
+    Point_RGB pt;
+    pt.x=cloud->points[i].x;
+    pt.y=cloud->points[i].y;
+    pt.z=cloud->points[i].z;
+    pt.r=cloud->points[i].r;
+    pt.g=cloud->points[i].g;
+    pt.b=cloud->points[i].b;
+    cloudrgb->push_back(pt);
+  }
+
+  pcl::visualization::CloudViewer viewer (name);
+
+  viewer.showCloud (cloudrgb);
   while (!viewer.wasStopped ())
   {
 

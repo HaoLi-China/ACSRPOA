@@ -85,6 +85,15 @@
     <Filter Include="GraphCut\Source Files">
       <UniqueIdentifier>{cb694aaa-85da-4dc4-8a69-d29f029285ba}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ChangeDetection">
+      <UniqueIdentifier>{5effed26-18f6-4370-8db5-5ec4ef01b196}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ChangeDetection\Header Files">
+      <UniqueIdentifier>{fd97cc07-cd6f-4cdc-b5ab-e1ab8f7152ca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ChangeDetection\Source Files">
+      <UniqueIdentifier>{fb6c4eec-d959-4a7f-8b23-013c356c33b2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Utils\FileUtils.cpp">
@@ -228,6 +237,9 @@
     </ClCompile>
     <ClCompile Include="Common\KDtree.cpp">
       <Filter>Common\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ChangeDetection\detect_change.cpp">
+      <Filter>ChangeDetection\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -521,6 +533,9 @@
     </ClInclude>
     <ClInclude Include="Common\KDtree.h">
       <Filter>Common\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ChangeDetection\detect_change.h">
+      <Filter>ChangeDetection\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

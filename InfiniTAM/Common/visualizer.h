@@ -20,8 +20,10 @@ public:
 };
 
 //show rgb cloud
-void showPointCloud (PointCloudPtr_RGB cloud,std::string name);
+void showPointCloud (PointCloudPtr_RGB cloud, std::string name);
 //show cloud
-void showPointCloud2 (PointCloudPtr cloud,std::string name);
+void showPointCloud2 (PointCloudPtr cloud, std::string name);
+//show rgb_normal cloud
+void showPointCloud3 (PointCloudPtr_RGB_NORMAL cloud, std::string name);
 
 #endif // VISUALIZER_H
