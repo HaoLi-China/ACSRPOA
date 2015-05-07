@@ -415,6 +415,7 @@ void ITMMainEngine::segmentView()
 //hao modified it
 void ITMMainEngine::saveViewPoints(){
   {
+    trackingStateTem=trackingState;
 #ifndef COMPILE_WITHOUT_CUDA
     Vector3f *points_device;
     Vector3f *points_host = (Vector3f*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f));
@@ -457,6 +458,53 @@ void ITMMainEngine::saveViewPoints(){
     ITMSafeCall(cudaFree(normals_device));
 #endif
   }
+}
+
+//hao modified it
+void ITMMainEngine::saveViewPoints(ITMTrackingState *itmtrackingState){
+  {
+#ifndef COMPILE_WITHOUT_CUDA
+  Vector3f *points_device;
+  Vector3f *points_host = (Vector3f*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f));
+  Vector3f *normals_device;
+  Vector3f *normals_host = (Vector3f*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f));
+  ITMSafeCall(cudaMalloc((void**)&points_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
+  ITMSafeCall(cudaMemset(points_device, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
+  ITMSafeCall(cudaMalloc((void**)&normals_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
+  ITMSafeCall(cudaMemset(normals_device, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
+  visualisationEngine->RealTimeSegment(scene, view, itmtrackingState, points_device, normals_device);
+  ITMSafeCall(cudaMemcpy(points_host, points_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyDeviceToHost));
+  ITMSafeCall(cudaMemcpy(normals_host, normals_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyDeviceToHost));
+
+  PointCloudPtr_RGB_NORMAL cloud(new PointCloud_RGB_NORMAL);
+
+  for(int i=0; i<view->depth->noDims.x*view->depth->noDims.y; i++){
+    if(!((*(points_host+i))[0]==0&&(*(points_host+i))[1]==0&&(*(points_host+i))[2]==0)){
+      Point_RGB_NORMAL pt;
+      pt.x=(*(points_host+i))[0];
+      pt.y=(*(points_host+i))[1];
+      pt.z=(*(points_host+i))[2];
+      pt.r=255;
+      pt.g=255;
+      pt.b=255;
+      pt.normal_x=(*(normals_host+i))[0];
+      pt.normal_y=(*(normals_host+i))[1];
+      pt.normal_z=(*(normals_host+i))[2];
+      cloud->points.push_back(pt);
+    }
+  }
+
+  pcl::io::savePLYFileASCII("Data/currentView.ply", *cloud);
+
+  free(points_host);
+  free(normals_host);
+  points_host=NULL;
+  normals_host=NULL;
+
+  ITMSafeCall(cudaFree(points_device));
+  ITMSafeCall(cudaFree(normals_device));
+#endif
+}
 }
 
 //hao modified it

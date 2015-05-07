@@ -85,6 +85,7 @@ namespace ITMLib
 			ITMView *view;
 			/// Pointer to the current camera pose and additional tracking information
 			ITMTrackingState *trackingState;
+      ITMTrackingState *trackingStateTem;//hao modified it
 
 			/// Gives access to the current input frame
 			ITMView* GetView() { return view; }
@@ -99,6 +100,7 @@ namespace ITMLib
 
       void savePoints(vector<Vector3f> &points);//hao modified it
       void saveViewPoints();//hao modified it
+      void saveViewPoints(ITMTrackingState *trackingState);//hao modified it
       void overSegmentView();//hao modified it
       void segmentView();//hao modified it
 
