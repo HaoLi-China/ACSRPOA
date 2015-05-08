@@ -81,7 +81,7 @@ void MyPointCloud_RGB_NORMAL2PointCloud_RGB_NORMAL(MyPointCloud_RGB_NORMAL& mc, 
     point_tem.r=mc.mypoints.at(i).r;
     point_tem.g=mc.mypoints.at(i).g;
     point_tem.b=mc.mypoints.at(i).b;
-    point_tem.b=mc.mypoints.at(i).a;
+    point_tem.a=mc.mypoints.at(i).a;
     point_tem.normal_x=mc.mypoints.at(i).normal_x;
     point_tem.normal_y=mc.mypoints.at(i).normal_y;
     point_tem.normal_z=mc.mypoints.at(i).normal_z;

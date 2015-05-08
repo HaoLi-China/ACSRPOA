@@ -126,6 +126,11 @@ void UIEngine::glutIdleFunction()
     uiEngine->mainLoopAction = PROCESS_PAUSED;
     uiEngine->needsRefresh = true;
     break;
+  case UPDATE_SEG_FRAME:
+    uiEngine->ProcessFrame(3); uiEngine->processedFrameNo++;
+    uiEngine->mainLoopAction = PROCESS_PAUSED;
+    uiEngine->needsRefresh = true;
+    break;
   case PROCESS_VIDEO:
     uiEngine->ProcessFrame(0); uiEngine->processedFrameNo++;
     uiEngine->needsRefresh = true;
@@ -193,6 +198,10 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
   case 'p':
     printf("segment objects ...\n");
     uiEngine->mainLoopAction = UIEngine::SEG_FRAME;
+    break;
+  case 'u':
+    printf("segment objects ...\n");
+    uiEngine->mainLoopAction = UIEngine::UPDATE_SEG_FRAME;
     break;
   case 'n':
     printf("processing one frame ...\n");

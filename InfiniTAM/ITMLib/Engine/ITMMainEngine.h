@@ -97,7 +97,7 @@ namespace ITMLib
 			ITMView* GetView() { return view; }
 
 			/// Process the frame accessed with @ref GetView()
-			void ProcessFrame(short segFlag);//hao modified it. 0:just fusion 1:over-segmentation 2:segment objects
+			void ProcessFrame(short segFlag);//hao modified it. 0:just fusion 1:over-segmentation 2:segment objects 3:update segment objects
 
 			/// Get a result image as output
 			void GetImage(ITMUChar4Image *out, GetImageType getImageType, bool useColour, ITMPose *pose = NULL, ITMIntrinsics *intrinsics = NULL);
@@ -109,6 +109,7 @@ namespace ITMLib
       void saveViewPoints(ITMTrackingState *trackingState);//hao modified it
       void overSegmentView();//hao modified it
       void segmentView();//hao modified it
+      void updateSegmentView();//hao modified it
       void detectChange();//hao modified it
 
 
