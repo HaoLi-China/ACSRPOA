@@ -94,7 +94,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>freeglut.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>freeglut.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Profile>true</Profile>
     </Link>
     <CudaCompile>
@@ -153,6 +153,7 @@
     <ClCompile Include="ObjPreSegment\scene_seg.cpp" />
     <ClCompile Include="ObjPreSegment\supervoxel_clustering.cpp" />
     <ClCompile Include="Utils\FileUtils.cpp" />
+    <ClCompile Include="Utils\SocketClient.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ChangeDetection\detect_change.h" />
@@ -253,6 +254,7 @@
     <ClInclude Include="ObjPreSegment\supervoxel_clustering.hpp" />
     <ClInclude Include="Utils\FileUtils.h" />
     <ClInclude Include="Utils\NVTimer.h" />
+    <ClInclude Include="Utils\SocketClient.h" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="Common\CUDA_KDtree.cu" />

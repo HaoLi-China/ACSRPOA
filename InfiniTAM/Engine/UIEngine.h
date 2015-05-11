@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "../Utils/SocketClient.h"//hao modified it
 #include "../ITMLib/Engine/ITMMainEngine.h"
 #include "../ITMLib/Utils/ITMLibSettings.h"
 #include "../Utils/FileUtils.h"
@@ -21,16 +22,9 @@ namespace InfiniTAM
 		{
 			static UIEngine* instance;
 
-			enum MainLoopAction
-			{
-				PROCESS_PAUSED, PROCESS_FRAME, PROCESS_VIDEO, PROCESS_EXIT, SAVE_TO_DISK, OVER_SEG_FRAME, SEG_FRAME, UPDATE_SEG_FRAME
-			}mainLoopAction;
-
-
 			ITMLibSettings *internalSettings;
 			ImageSourceEngine *imageSource;
-			ITMMainEngine *mainEngine;
-
+			
 			StopWatchInterface *timer;
 
 		private: // For UI layout
@@ -57,6 +51,13 @@ namespace InfiniTAM
 				return instance;
 			}
 
+      enum MainLoopAction
+      {
+        PROCESS_PAUSED, PROCESS_FRAME, PROCESS_VIDEO, PROCESS_EXIT, SAVE_TO_DISK, OVER_SEG_FRAME, SEG_FRAME, UPDATE_SEG_FRAME
+      }mainLoopAction;//hao modified it
+
+      ITMMainEngine *mainEngine;//hao modified it
+
 			static void glutDisplayFunction();
 			static void glutIdleFunction();
 			static void glutKeyUpFunction(unsigned char key, int x, int y);
@@ -82,6 +83,8 @@ namespace InfiniTAM
 
 			void GetScreenshot(ITMUChar4Image *dest) const;
 			void SaveScreenshot(const char *filename) const;
+
+      void autoReconstruct();//hao modified it
 		};
 	}
 }

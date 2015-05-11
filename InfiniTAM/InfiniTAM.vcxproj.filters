@@ -241,6 +241,9 @@
     <ClCompile Include="ChangeDetection\detect_change.cpp">
       <Filter>ChangeDetection\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Utils\SocketClient.cpp">
+      <Filter>Utils\Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Utils\FileUtils.h">
@@ -536,6 +539,9 @@
     </ClInclude>
     <ClInclude Include="ChangeDetection\detect_change.h">
       <Filter>ChangeDetection\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\SocketClient.h">
+      <Filter>Utils\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

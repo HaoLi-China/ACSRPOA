@@ -528,11 +528,11 @@ namespace ITMLib {
 		return sum == 0 ? T(typename T::value_type(0)) : vec / sum;
 	}
 
-	template< class T> _CPU_AND_GPU_CODE_ inline T min(const T &lhs, const T &rhs) {
+	template< class T> _CPU_AND_GPU_CODE_ inline T min_m(const T &lhs, const T &rhs) {
 		return lhs <= rhs ? lhs : rhs;
 	}
 
-	template< class T> _CPU_AND_GPU_CODE_ inline T max(const T &lhs, const T &rhs) {
+	template< class T> _CPU_AND_GPU_CODE_ inline T max_m(const T &lhs, const T &rhs) {
 		return lhs >= rhs ? lhs : rhs;
 	}
 
@@ -540,7 +540,7 @@ namespace ITMLib {
 	template< class T> _CPU_AND_GPU_CODE_ inline T minV(const T &lhs, const T &rhs) {
 		T rv;
 		for (int i = 0; i < lhs.size(); i++)
-			rv[i] = min(lhs[i], rhs[i]);
+			rv[i] = min_m(lhs[i], rhs[i]);
 		return rv;
 	}
 
@@ -549,7 +549,7 @@ namespace ITMLib {
 	_CPU_AND_GPU_CODE_ inline T maxV(const T &lhs, const T &rhs)	{
 		T rv;
 		for (int i = 0; i < lhs.size(); i++)
-			rv[i] = max(lhs[i], rhs[i]);
+			rv[i] = max_m(lhs[i], rhs[i]);
 		return rv;
 	}
 };

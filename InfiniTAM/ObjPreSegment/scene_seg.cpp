@@ -968,6 +968,10 @@ void detect_table(PointCloudPtr_RGB_NORMAL sourceCloud, pcl::ModelCoefficients& 
     normal << plane_coefficients.values[0], plane_coefficients.values[1], plane_coefficients.values[2];
     normal.normalize();
 
+    //cout<<"std::abs(normal.dot(Eigen::Vector3d(0,0,1))):"<<std::abs(normal.dot(Eigen::Vector3d(0,0,1)))<<endl;
+
+    //showPointCloud3(planeCloud, "planeCloud");
+
     if(std::abs(normal.dot(Eigen::Vector3d(0,0,1)))<0.7){
       break;
     }

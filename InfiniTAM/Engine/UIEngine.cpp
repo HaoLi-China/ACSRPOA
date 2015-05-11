@@ -99,7 +99,7 @@ void UIEngine::glutDisplayFunction()
     }
     safe_glutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*)str);
   }
-  
+
   glutSwapBuffers();
   uiEngine->needsRefresh = false;
 }
@@ -175,6 +175,10 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
 
   switch (key)
   {
+  case 'a':
+    printf("auto reconstruct ...\n");
+    UIEngine::Instance()->autoReconstruct();
+    break;
   case 'r':
     printf("reset ...\n");
     UIEngine::Instance()->resetEngine();
@@ -212,22 +216,22 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
     uiEngine->mainLoopAction = UIEngine::PROCESS_VIDEO;
     break;
   case 's'://hao modified it
-   /* if (uiEngine->isRecording)
+    /* if (uiEngine->isRecording)
     {
-      printf("stopped recoding disk ...\n");
-      uiEngine->isRecording = false;
+    printf("stopped recoding disk ...\n");
+    uiEngine->isRecording = false;
     }
     else
     {
-      printf("started recoding disk ...\n");
-      uiEngine->currentFrameNo = 0;
-      uiEngine->isRecording = true;
+    printf("started recoding disk ...\n");
+    uiEngine->currentFrameNo = 0;
+    uiEngine->isRecording = true;
     }*/
     {
-    printf("save points ...\n");
-    uiEngine->mainLoopAction = UIEngine::PROCESS_PAUSED;
-    vector<Vector3f> points_res;
-    uiEngine->mainEngine->savePoints(points_res);
+      printf("save points ...\n");
+      uiEngine->mainLoopAction = UIEngine::PROCESS_PAUSED;
+      vector<Vector3f> points_res;
+      uiEngine->mainEngine->savePoints(points_res);
     }
     break;
   case 'e':
@@ -555,4 +559,98 @@ void UIEngine::Shutdown()
   delete[] outFolder;
   delete saveImage; 
   delete instance; 
+}
+
+//hao modified it
+DWORD _stdcall autoscan(LPVOID lpParameter)
+  //void* autoscan(void* argc) 
+{  
+  SOCKET sockClient;
+
+  //first step
+  open_socket(sockClient);
+
+  //second step
+  float pos_left_arm[] = {1.613, 0.063, 1.532, -1.536, -0.141, -0.094, -7.788};
+  float pos_right_arm[] = {0.510, 0.625, 0.100, -2.117, 3.207, -1.854, -3.276};
+  //float pos_right_arm[] = {0.564, -0.328, 0.213, -1.222, 2.373, -2.014, -3.376};
+  //float pos_right_arm[] = {0.564, 0.168, -0.040, -1.959, -3.629, -1.960, 2.948};
+  Eigen::Vector3f head_focus(0.5, 0.0, 1.2);
+  float torso_up = 0.20;
+  init_robot_pose(sockClient, pos_left_arm, pos_right_arm, head_focus, torso_up);
+
+  //third step
+  printf("processing input source ...\n");
+  UIEngine::Instance()->mainLoopAction = UIEngine::PROCESS_VIDEO;
+
+  //fourth step
+  float down_value = -1.7;
+  float up_value = -1.9;
+  up_down_right_scanner(sockClient, down_value, up_value);
+
+  //fifth step
+  printf("processing one frame ...\n");
+  UIEngine::Instance()->mainLoopAction = UIEngine::PROCESS_FRAME;
+
+  //sixth step
+  printf("save current view ...\n");
+  UIEngine::Instance()->mainEngine->saveViewPoints();
+
+  //seventh step
+  printf("segment objects ...\n");
+  UIEngine::Instance()->mainLoopAction = UIEngine::SEG_FRAME;
+
+  while(UIEngine::Instance()->mainLoopAction == UIEngine::SEG_FRAME){
+    Sleep(5000);   
+  }
+
+  ////eighth step
+  //float pos_left_arm_ins[7];
+  //init_left_arm_pose(pos_left_arm_ins);
+
+  //fourteenth step
+  //init_left_arm_pose(pos_left_arm_ins);
+
+  //eighth step
+  Eigen::Vector3f position(0.80, 0.40, 0.780);
+  Eigen::Vector3f direction(1, 0, 0);
+
+  set_head_pose(sockClient, position);
+  l_push_object(sockClient, position, direction);
+
+  l_take_back(sockClient, position, direction);
+
+  //ninth step
+  init_left_arm_pose(sockClient, pos_left_arm);
+
+  //tenth step
+  printf("processing input source ...\n");
+  UIEngine::Instance()->mainLoopAction = UIEngine::PROCESS_VIDEO;
+
+  //eleventh step
+  up_down_right_scanner(sockClient, down_value, up_value);
+
+  //twelfth step
+  printf("save current view w...\n");
+  UIEngine::Instance()->mainEngine->saveViewPoints(UIEngine::Instance()->mainEngine->trackingStateTem);
+
+  //thirteenth step
+  printf("segment objects ...\n");
+  UIEngine::Instance()->mainLoopAction = UIEngine::UPDATE_SEG_FRAME;
+
+  //sixteenth step
+  close_socket(sockClient);
+
+  return 0;
+}  
+
+//hao modified it
+void UIEngine::autoReconstruct(){
+  /* pthread_t tid;
+  int ret = pthread_create(&tid, NULL, autoscan, NULL);
+  if (ret != 0)  
+  {  
+  cout << "pthread_create error: error_code=" << ret << endl;  
+  }  */
+  CreateThread(NULL,0,autoscan,NULL,0,NULL);
 }
