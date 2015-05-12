@@ -85,7 +85,7 @@ void UIEngine::glutDisplayFunction()
   //hao modified it
   {
     glRasterPos2f(-0.95f, -0.93f);
-    sprintf(str, "r - reset \t n - next frame \t o - over-segment next frame \t p - segment next frame \t b - all frames \t v - save points in current frame");
+    sprintf(str, "r - reset \t n - next frame \t o - over-segment next frame \t p - segment next frame \t b - all frames \t v - save points in current frame \t m - save mesh to file");
     safe_glutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*)str);
 
     glRasterPos2f(-0.95f, -0.98f);
@@ -234,6 +234,15 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
       uiEngine->mainEngine->savePoints(points_res);
     }
     break;
+
+    //ccjn modified it
+  case 'm':
+    printf("save mesh ...\n");
+    uiEngine->mainLoopAction = UIEngine::PROCESS_PAUSED;
+    uiEngine->mainEngine->saveMesh();
+    uiEngine->mainLoopAction = UIEngine::PROCESS_VIDEO;
+    break;
+
   case 'e':
   case 27: // esc key
     printf("exiting ...\n");

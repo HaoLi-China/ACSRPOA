@@ -1036,3 +1036,295 @@ void ITMMainEngine::savePoints(vector<Vector3f> &points)
 
   //printf("points.size:%d\n", points.size());
 }
+
+//ccjn modified it
+int hashIndex(const Vector3s voxelPos, const int hashMask) {
+  return ((uint)(((uint)voxelPos.x * 73856093) ^ ((uint)voxelPos.y * 19349669) ^ ((uint)voxelPos.z * 83492791)) & (uint)hashMask);
+}
+
+//ccjn modified it
+int  FindVBIndex(const Vector3s blockPos, const ITMHashEntry *hashTable)
+{
+  int offsetExcess = 0;
+  int hashIdx = hashIndex(blockPos, SDF_HASH_MASK) * SDF_ENTRY_NUM_PER_BUCKET;
+
+
+  //check ordered list
+  for(int inBucketIdx = 0 ; inBucketIdx < SDF_ENTRY_NUM_PER_BUCKET ; inBucketIdx++)
+  {
+    const ITMHashEntry &hashEntry = hashTable[hashIdx + inBucketIdx];
+    offsetExcess = hashEntry.offset - 1;
+
+    if(hashEntry.ptr < 0 ) return hashIdx;
+
+    if(hashEntry.pos == blockPos && hashEntry.ptr >= 0)
+      return hashIdx + inBucketIdx;
+  }
+
+  //check excess list
+  while( offsetExcess >= 0)
+  {
+    const ITMHashEntry &hashEntry = hashTable[SDF_BUCKET_NUM  * SDF_ENTRY_NUM_PER_BUCKET + offsetExcess];
+
+    if(hashEntry.pos == blockPos && hashEntry.ptr >= 0 )
+      return SDF_BUCKET_NUM  * SDF_ENTRY_NUM_PER_BUCKET + offsetExcess;
+    offsetExcess = hashEntry.offset - 1;
+  }
+}
+
+
+
+//ccjn modified it
+void ITMMainEngine::saveMesh()
+{
+
+  ITMVoxelIndex::IndexData *hashData_host = new ITMVoxelIndex::IndexData;
+  ITMVoxel *voxels = (ITMVoxel*)malloc(SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3 * sizeof(ITMVoxel));
+
+  bool flag = false;
+#ifndef COMPILE_WITHOUT_CUDA
+  flag=true;
+#endif
+  if(flag){
+    ITMSafeCall(cudaMemcpy(hashData_host, scene->index.getIndexData(), sizeof(ITMVoxelIndex::IndexData), cudaMemcpyDeviceToHost));
+    ITMSafeCall(cudaMemcpy(voxels, scene->localVBA.GetVoxelBlocks(), SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3*sizeof(ITMVoxel), cudaMemcpyDeviceToHost));
+  }
+  else{
+    memcpy(hashData_host, scene->index.getIndexData(), sizeof(ITMVoxelIndex::IndexData));
+    memcpy(voxels, scene->localVBA.GetVoxelBlocks(), SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3 * sizeof(ITMVoxel));
+  }
+
+  const ITMHashEntry *hashTable = hashData_host->entries_all;
+  float mu = scene->sceneParams->mu;
+
+  const float isolevel = 0.0f;
+
+  for(int i=0; i<SDF_BUCKET_NUM * SDF_ENTRY_NUM_PER_BUCKET + SDF_EXCESS_LIST_SIZE; i++)
+  {
+    const ITMHashEntry &hashEntry = hashTable[i];
+
+    if(hashEntry.ptr >= 0) // means there is a voxel block
+    {
+      int ExceedX = FindVBIndex(Vector3s(hashEntry.pos.x + 1 , hashEntry.pos.y , hashEntry.pos.z), hashTable);
+      int ExceedY = FindVBIndex(Vector3s(hashEntry.pos.x , hashEntry.pos.y + 1 , hashEntry.pos.z), hashTable);
+      int ExceedZ = FindVBIndex(Vector3s(hashEntry.pos.x , hashEntry.pos.y , hashEntry.pos.z + 1), hashTable);
+      int ExceedXY = FindVBIndex(Vector3s(hashEntry.pos.x + 1 , hashEntry.pos.y + 1 , hashEntry.pos.z), hashTable);
+      int ExceedXZ = FindVBIndex(Vector3s(hashEntry.pos.x + 1 , hashEntry.pos.y , hashEntry.pos.z + 1), hashTable);
+      int ExceedYZ = FindVBIndex(Vector3s(hashEntry.pos.x , hashEntry.pos.y + 1 , hashEntry.pos.z + 1), hashTable);
+      int ExceedXYZ = FindVBIndex(Vector3s(hashEntry.pos.x + 1 , hashEntry.pos.y + 1 , hashEntry.pos.z + 1), hashTable);
+
+      const ITMHashEntry &hashEntryEX = hashTable[ExceedX];
+      const ITMHashEntry &hashEntryEY = hashTable[ExceedY];
+      const ITMHashEntry &hashEntryEZ = hashTable[ExceedZ];
+      const ITMHashEntry &hashEntryEXY = hashTable[ExceedXY];
+      const ITMHashEntry &hashEntryEXZ = hashTable[ExceedXZ];
+      const ITMHashEntry &hashEntryEYZ = hashTable[ExceedYZ];
+      const ITMHashEntry &hashEntryEXYZ = hashTable[ExceedXYZ];
+
+      //float voxelSize = scene->sceneParams->voxelSize; // = 0.005;
+      float voxelSize = 0.125f;
+
+      for(int j=0 ; j<SDF_BLOCK_SIZE3 /*- SDF_BLOCK_SIZE*SDF_BLOCK_SIZE*/ ; j++)
+      {
+
+        int ZZ = (int)(j/(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE));
+        int YY = (int)((j%(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE))/SDF_BLOCK_SIZE);
+        int XX = (int)((j%(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE))%SDF_BLOCK_SIZE);
+
+        ITMVoxel v000,v100,v010,v001,v110,v011,v101,v111;
+
+        if((XX == 7) && (YY == 7) && (ZZ == 7))
+        {
+          if(hashEntryEX.ptr < 0) continue;
+          if(hashEntryEY.ptr < 0) continue;
+          if(hashEntryEZ.ptr < 0) continue;
+          if(hashEntryEXY.ptr < 0) continue;
+          if(hashEntryEYZ.ptr < 0) continue;
+          if(hashEntryEXZ.ptr < 0) continue;
+          if(hashEntryEXYZ.ptr < 0) continue;
+
+          v000 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + XX + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
+          v100 = voxels[(hashEntryEX.ptr * SDF_BLOCK_SIZE3) + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
+          v010 = voxels[(hashEntryEY.ptr * SDF_BLOCK_SIZE3) + XX + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
+          v001 = voxels[(hashEntryEZ.ptr * SDF_BLOCK_SIZE3) + XX + YY*SDF_BLOCK_SIZE];
+          v110 = voxels[(hashEntryEXY.ptr * SDF_BLOCK_SIZE3) + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
+          v011 = voxels[(hashEntryEYZ.ptr * SDF_BLOCK_SIZE3) + XX];
+          v101 = voxels[(hashEntryEXZ.ptr * SDF_BLOCK_SIZE3) + YY*SDF_BLOCK_SIZE];
+          v111 = voxels[(hashEntryEXYZ.ptr * SDF_BLOCK_SIZE3) ];
+        }
+
+        if((XX == 7) && (YY == 7) && (ZZ != 7))
+        {
+          if(hashEntryEX.ptr < 0) continue;
+          if(hashEntryEY.ptr < 0) continue;
+          if(hashEntryEXY.ptr < 0) continue;
+
+          v000 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + XX + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
+          v100 = voxels[(hashEntryEX.ptr * SDF_BLOCK_SIZE3) + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
+          v010 = voxels[(hashEntryEY.ptr * SDF_BLOCK_SIZE3) + XX + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
+          v001 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + XX + YY*SDF_BLOCK_SIZE + (ZZ + 1)*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
+          v110 = voxels[(hashEntryEXY.ptr * SDF_BLOCK_SIZE3) + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
+          v011 = voxels[(hashEntryEY.ptr * SDF_BLOCK_SIZE3) + XX + (ZZ + 1)*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
+          v101 = voxels[(hashEntryEX.ptr * SDF_BLOCK_SIZE3) + YY*SDF_BLOCK_SIZE + (ZZ + 1)*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
+          v111 = voxels[(hashEntryEXY.ptr * SDF_BLOCK_SIZE3) + (ZZ + 1)*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
+        }
+
+        if((XX == 7) && (YY != 7) && (ZZ == 7))
+        {
+          if(hashEntryEX.ptr < 0) continue;
+          if(hashEntryEZ.ptr < 0) continue;
+          if(hashEntryEXZ.ptr < 0) continue;
+
+          v000 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + XX + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
+          v100 = voxels[(hashEntryEX.ptr * SDF_BLOCK_SIZE3) + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
+          v010 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + XX + (YY + 1)*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
+          v001 = voxels[(hashEntryEZ.ptr * SDF_BLOCK_SIZE3) + XX + YY*SDF_BLOCK_SIZE];
+          v110 = voxels[(hashEntryEX.ptr * SDF_BLOCK_SIZE3) + (YY + 1)*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
+          v011 = voxels[(hashEntryEZ.ptr * SDF_BLOCK_SIZE3) + XX + (YY + 1)*SDF_BLOCK_SIZE];
+          v101 = voxels[(hashEntryEXZ.ptr * SDF_BLOCK_SIZE3) + YY*SDF_BLOCK_SIZE];
+          v111 = voxels[(hashEntryEXZ.ptr * SDF_BLOCK_SIZE3) + (YY + 1)*SDF_BLOCK_SIZE];
+
+        }
+
+        if((XX != 7) && (YY == 7) && (ZZ == 7))
+        {
+          if(hashEntryEY.ptr < 0) continue;
+          if(hashEntryEZ.ptr < 0) continue;
+          if(hashEntryEYZ.ptr < 0) continue;
+
+          v000 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + XX + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
+          v100 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + (XX + 1) + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
+          v010 = voxels[(hashEntryEY.ptr * SDF_BLOCK_SIZE3) + XX + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
+          v001 = voxels[(hashEntryEZ.ptr * SDF_BLOCK_SIZE3) + XX + YY*SDF_BLOCK_SIZE];
+          v110 = voxels[(hashEntryEY.ptr * SDF_BLOCK_SIZE3) + (XX + 1) + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
+          v011 = voxels[(hashEntryEYZ.ptr * SDF_BLOCK_SIZE3) + XX];
+          v101 = voxels[(hashEntryEZ.ptr * SDF_BLOCK_SIZE3) + (XX + 1) + YY*SDF_BLOCK_SIZE];
+          v111 = voxels[(hashEntryEYZ.ptr * SDF_BLOCK_SIZE3) + (XX + 1)];
+        }
+
+        if((XX == 7) && (YY != 7) && (ZZ != 7))
+        {
+          if(hashEntryEX.ptr < 0) continue;
+
+          v000 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + XX + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
+          v100 = voxels[(hashEntryEX.ptr * SDF_BLOCK_SIZE3) + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
+          v010 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + XX + (YY + 1)*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
+          v001 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + XX + YY*SDF_BLOCK_SIZE + (ZZ + 1)*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
+          v110 = voxels[(hashEntryEX.ptr * SDF_BLOCK_SIZE3) + (YY + 1)*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
+          v011 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + XX + (YY + 1)*SDF_BLOCK_SIZE + (ZZ + 1)*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
+          v101 = voxels[(hashEntryEX.ptr * SDF_BLOCK_SIZE3) + YY*SDF_BLOCK_SIZE + (ZZ + 1)*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
+          v111 = voxels[(hashEntryEX.ptr * SDF_BLOCK_SIZE3) + (YY + 1)*SDF_BLOCK_SIZE + (ZZ + 1)*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
+        }
+
+        if((XX != 7) && (YY == 7) && (ZZ != 7))
+        {
+          if(hashEntryEY.ptr < 0) continue;
+
+          v000 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + XX + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
+          v100 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + (XX + 1) + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
+          v010 = voxels[(hashEntryEY.ptr * SDF_BLOCK_SIZE3) + XX + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
+          v001 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + XX + YY*SDF_BLOCK_SIZE + (ZZ + 1)*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
+          v110 = voxels[(hashEntryEY.ptr * SDF_BLOCK_SIZE3) + (XX + 1) + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
+          v011 = voxels[(hashEntryEY.ptr * SDF_BLOCK_SIZE3) + XX + (ZZ + 1)*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
+          v101 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + (XX + 1) + YY*SDF_BLOCK_SIZE + (ZZ + 1)*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
+          v111 = voxels[(hashEntryEY.ptr * SDF_BLOCK_SIZE3) + (XX + 1) + (ZZ + 1)*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
+        }
+
+        if((XX != 7) && (YY != 7) && (ZZ == 7))
+        {
+          if(hashEntryEZ.ptr < 0) continue;
+
+          v000 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + XX + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
+          v100 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + (XX + 1) + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
+          v010 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + XX + (YY + 1)*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
+          v001 = voxels[(hashEntryEZ.ptr * SDF_BLOCK_SIZE3) + XX + YY*SDF_BLOCK_SIZE];
+          v110 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + (XX + 1) + (YY + 1)*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
+          v011 = voxels[(hashEntryEZ.ptr * SDF_BLOCK_SIZE3) + XX + (YY + 1)*SDF_BLOCK_SIZE];
+          v101 = voxels[(hashEntryEZ.ptr * SDF_BLOCK_SIZE3) + (XX + 1) + YY*SDF_BLOCK_SIZE];
+          v111 = voxels[(hashEntryEZ.ptr * SDF_BLOCK_SIZE3) + (XX + 1) + (YY + 1)*SDF_BLOCK_SIZE];
+        }
+
+        if((XX != 7) && (YY != 7) && (ZZ != 7))
+        {
+          v000 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + XX + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
+          v100 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + (XX + 1) + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
+          v010 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + XX + (YY + 1)*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
+          v001 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + XX + YY*SDF_BLOCK_SIZE + (ZZ + 1)*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
+          v110 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + (XX + 1) + (YY + 1)*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
+          v011 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + XX + (YY + 1)*SDF_BLOCK_SIZE + (ZZ + 1)*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
+          v101 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + (XX + 1) + YY*SDF_BLOCK_SIZE + (ZZ + 1)*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
+          v111 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + (XX + 1) + (YY + 1)*SDF_BLOCK_SIZE + (ZZ + 1)*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
+        }
+
+        // if voxel not exist, jump this time
+        if(v000.w_depth == 0) continue;
+        if(v100.w_depth == 0) continue;
+        if(v010.w_depth == 0) continue;
+        if(v001.w_depth == 0) continue;
+        if(v110.w_depth == 0) continue;
+        if(v011.w_depth == 0) continue;
+        if(v101.w_depth == 0) continue;
+        if(v111.w_depth == 0) continue;
+
+        uint cubeindex = 0;
+        if(ITMVoxel::SDF_valueToFloat(v010.sdf) < isolevel) cubeindex += 1;
+        if(ITMVoxel::SDF_valueToFloat(v110.sdf) < isolevel) cubeindex += 2;
+        if(ITMVoxel::SDF_valueToFloat(v100.sdf) < isolevel) cubeindex += 4;
+        if(ITMVoxel::SDF_valueToFloat(v000.sdf) < isolevel) cubeindex += 8;
+        if(ITMVoxel::SDF_valueToFloat(v011.sdf) < isolevel) cubeindex += 16;
+        if(ITMVoxel::SDF_valueToFloat(v111.sdf) < isolevel) cubeindex += 32;
+        if(ITMVoxel::SDF_valueToFloat(v101.sdf) < isolevel) cubeindex += 64;
+        if(ITMVoxel::SDF_valueToFloat(v001.sdf) < isolevel) cubeindex += 128;
+
+        if((cubeindex == 0) || (cubeindex == 0xff)) continue;
+        if(edgeTable[cubeindex] == 0 || edgeTable[cubeindex] == 255) continue;
+
+        Vector3f p000 = Vector3f(hashEntry.pos.x + XX*voxelSize, hashEntry.pos.y + YY*voxelSize, hashEntry.pos.z + ZZ*voxelSize);
+        Vector3f p100 = Vector3f(hashEntry.pos.x + XX*voxelSize + 1*voxelSize, hashEntry.pos.y + YY*voxelSize,hashEntry.pos.z + ZZ*voxelSize );
+        Vector3f p010 = Vector3f(hashEntry.pos.x + XX*voxelSize, hashEntry.pos.y + YY*voxelSize + 1*voxelSize, hashEntry.pos.z + ZZ*voxelSize);
+        Vector3f p001 = Vector3f(hashEntry.pos.x + XX*voxelSize, hashEntry.pos.y + YY*voxelSize, hashEntry.pos.z + ZZ*voxelSize + 1*voxelSize);
+        Vector3f p110 = Vector3f(hashEntry.pos.x + XX*voxelSize + 1*voxelSize , hashEntry.pos.y + YY*voxelSize + 1*voxelSize, hashEntry.pos.z + ZZ*voxelSize);
+        Vector3f p011 = Vector3f(hashEntry.pos.x + XX*voxelSize , hashEntry.pos.y + YY*voxelSize + 1*voxelSize, hashEntry.pos.z + ZZ*voxelSize + 1*voxelSize);
+        Vector3f p101 = Vector3f(hashEntry.pos.x + XX*voxelSize + 1*voxelSize , hashEntry.pos.y + YY*voxelSize, hashEntry.pos.z + ZZ*voxelSize + 1*voxelSize);
+        Vector3f p111 = Vector3f(hashEntry.pos.x + XX*voxelSize + 1*voxelSize , hashEntry.pos.y + YY*voxelSize + 1*voxelSize, hashEntry.pos.z + ZZ*voxelSize + 1*voxelSize);
+
+        if(edgeTable[cubeindex] == 0 || edgeTable[cubeindex] == 255) return;  // added by me edgeTable[cubeindex] == 255 !!!
+
+        myVertex vertlist[12];
+        if(edgeTable[cubeindex] & 1)	vertlist[0]  = VertexInterp(isolevel, p010, p110, v010, v110);
+        if(edgeTable[cubeindex] & 2)	vertlist[1]  = VertexInterp(isolevel, p110, p100, v110, v100);
+        if(edgeTable[cubeindex] & 4)	vertlist[2]  = VertexInterp(isolevel, p100, p000, v100, v000);
+        if(edgeTable[cubeindex] & 8)	vertlist[3]  = VertexInterp(isolevel, p000, p010, v000, v010);
+        if(edgeTable[cubeindex] & 16)	vertlist[4]  = VertexInterp(isolevel, p011, p111, v011, v111);
+        if(edgeTable[cubeindex] & 32)	vertlist[5]  = VertexInterp(isolevel, p111, p101, v111, v101);
+        if(edgeTable[cubeindex] & 64)	vertlist[6]  = VertexInterp(isolevel, p101, p001, v101, v001);
+        if(edgeTable[cubeindex] & 128)	vertlist[7]  = VertexInterp(isolevel, p001, p011, v001, v011);
+        if(edgeTable[cubeindex] & 256)	vertlist[8]	 = VertexInterp(isolevel, p010, p011, v010, v011);
+        if(edgeTable[cubeindex] & 512)	vertlist[9]  = VertexInterp(isolevel, p110, p111, v110, v111);
+        if(edgeTable[cubeindex] & 1024) vertlist[10] = VertexInterp(isolevel, p100, p101, v100, v101);
+        if(edgeTable[cubeindex] & 2048) vertlist[11] = VertexInterp(isolevel, p000, p001, v000, v001);
+
+
+
+        for(int i=0; triTable[cubeindex][i] != -1; i+=3)
+        {
+          myTriangle t;
+          t.v0 = vertlist[triTable[cubeindex][i+0]];
+          t.v1 = vertlist[triTable[cubeindex][i+1]];
+          t.v2 = vertlist[triTable[cubeindex][i+2]];
+
+          g_triangles.push_back(t);
+        }
+      }
+    }
+  }
+
+  std::cout<<"start writing mesh to file ..."<<std::endl;
+  string filename = "Data/Mesh.off";
+  writeToFileOFF(filename, g_triangles);
+  std::cout<<"writing finished!"<<endl;
+
+  g_triangles.clear();
+  //writeToFile(g_triangles);
+
+}
