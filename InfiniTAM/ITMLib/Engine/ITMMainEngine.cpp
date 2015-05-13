@@ -1043,7 +1043,7 @@ int hashIndex(const Vector3s voxelPos, const int hashMask) {
 }
 
 //ccjn modified it
-int  FindVBIndex(const Vector3s blockPos, const ITMHashEntry *hashTable)
+int FindVBIndex(const Vector3s blockPos, const ITMHashEntry *hashTable)
 {
   int offsetExcess = 0;
   int hashIdx = hashIndex(blockPos, SDF_HASH_MASK) * SDF_ENTRY_NUM_PER_BUCKET;
@@ -1055,7 +1055,7 @@ int  FindVBIndex(const Vector3s blockPos, const ITMHashEntry *hashTable)
     const ITMHashEntry &hashEntry = hashTable[hashIdx + inBucketIdx];
     offsetExcess = hashEntry.offset - 1;
 
-    if(hashEntry.ptr < 0 ) return hashIdx;
+    if(hashEntry.ptr < 0 ) return -1;
 
     if(hashEntry.pos == blockPos && hashEntry.ptr >= 0)
       return hashIdx + inBucketIdx;
@@ -1070,6 +1070,8 @@ int  FindVBIndex(const Vector3s blockPos, const ITMHashEntry *hashTable)
       return SDF_BUCKET_NUM  * SDF_ENTRY_NUM_PER_BUCKET + offsetExcess;
     offsetExcess = hashEntry.offset - 1;
   }
+
+  return -1;
 }
 
 
@@ -1113,15 +1115,43 @@ void ITMMainEngine::saveMesh()
       int ExceedYZ = FindVBIndex(Vector3s(hashEntry.pos.x , hashEntry.pos.y + 1 , hashEntry.pos.z + 1), hashTable);
       int ExceedXYZ = FindVBIndex(Vector3s(hashEntry.pos.x + 1 , hashEntry.pos.y + 1 , hashEntry.pos.z + 1), hashTable);
 
-      const ITMHashEntry &hashEntryEX = hashTable[ExceedX];
-      const ITMHashEntry &hashEntryEY = hashTable[ExceedY];
-      const ITMHashEntry &hashEntryEZ = hashTable[ExceedZ];
-      const ITMHashEntry &hashEntryEXY = hashTable[ExceedXY];
-      const ITMHashEntry &hashEntryEXZ = hashTable[ExceedXZ];
-      const ITMHashEntry &hashEntryEYZ = hashTable[ExceedYZ];
-      const ITMHashEntry &hashEntryEXYZ = hashTable[ExceedXYZ];
+      //modified
+      ITMHashEntry hashEntryEX;
+      if(ExceedX != -1){
+        hashEntryEX = hashTable[ExceedX];
+      }
+      
+      ITMHashEntry hashEntryEY;
+      if(ExceedY != -1){
+        hashEntryEY = hashTable[ExceedY];
+      }
 
-      //float voxelSize = scene->sceneParams->voxelSize; // = 0.005;
+      ITMHashEntry hashEntryEZ;
+      if(ExceedZ != -1){
+        hashEntryEZ = hashTable[ExceedZ];
+      }
+
+      ITMHashEntry hashEntryEXY;
+      if(ExceedXY != -1){
+        hashEntryEXY = hashTable[ExceedXY];
+      }
+
+      ITMHashEntry hashEntryEXZ;
+      if(ExceedXZ != -1){
+        hashEntryEXZ = hashTable[ExceedXZ];
+      }
+
+      ITMHashEntry hashEntryEYZ;
+      if(ExceedYZ != -1){
+        hashEntryEYZ = hashTable[ExceedYZ];
+      }
+
+      ITMHashEntry hashEntryEXYZ;
+      if(ExceedXYZ != -1){
+        hashEntryEXYZ = hashTable[ExceedXYZ];
+      }
+
+      float blockSizeWorld = scene->sceneParams->voxelSize*SDF_BLOCK_SIZE; // = 0.005*8;
       float voxelSize = 0.125f;
 
       for(int j=0 ; j<SDF_BLOCK_SIZE3 /*- SDF_BLOCK_SIZE*SDF_BLOCK_SIZE*/ ; j++)
@@ -1135,13 +1165,13 @@ void ITMMainEngine::saveMesh()
 
         if((XX == 7) && (YY == 7) && (ZZ == 7))
         {
-          if(hashEntryEX.ptr < 0) continue;
-          if(hashEntryEY.ptr < 0) continue;
-          if(hashEntryEZ.ptr < 0) continue;
-          if(hashEntryEXY.ptr < 0) continue;
-          if(hashEntryEYZ.ptr < 0) continue;
-          if(hashEntryEXZ.ptr < 0) continue;
-          if(hashEntryEXYZ.ptr < 0) continue;
+          if(ExceedX == -1) continue;
+          if(ExceedY == -1) continue;
+          if(ExceedZ == -1) continue;
+          if(ExceedXY == -1) continue;
+          if(ExceedYZ == -1) continue;
+          if(ExceedXZ == -1) continue;
+          if(ExceedXYZ == -1) continue;
 
           v000 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + XX + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
           v100 = voxels[(hashEntryEX.ptr * SDF_BLOCK_SIZE3) + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
@@ -1155,9 +1185,9 @@ void ITMMainEngine::saveMesh()
 
         if((XX == 7) && (YY == 7) && (ZZ != 7))
         {
-          if(hashEntryEX.ptr < 0) continue;
-          if(hashEntryEY.ptr < 0) continue;
-          if(hashEntryEXY.ptr < 0) continue;
+          if(ExceedX == -1) continue;
+          if(ExceedY == -1) continue;
+          if(ExceedXY == -1) continue;
 
           v000 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + XX + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
           v100 = voxels[(hashEntryEX.ptr * SDF_BLOCK_SIZE3) + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
@@ -1171,9 +1201,9 @@ void ITMMainEngine::saveMesh()
 
         if((XX == 7) && (YY != 7) && (ZZ == 7))
         {
-          if(hashEntryEX.ptr < 0) continue;
-          if(hashEntryEZ.ptr < 0) continue;
-          if(hashEntryEXZ.ptr < 0) continue;
+          if(ExceedX == -1) continue;
+          if(ExceedZ == -1) continue;
+          if(ExceedXZ == -1) continue;
 
           v000 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + XX + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
           v100 = voxels[(hashEntryEX.ptr * SDF_BLOCK_SIZE3) + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
@@ -1188,9 +1218,9 @@ void ITMMainEngine::saveMesh()
 
         if((XX != 7) && (YY == 7) && (ZZ == 7))
         {
-          if(hashEntryEY.ptr < 0) continue;
-          if(hashEntryEZ.ptr < 0) continue;
-          if(hashEntryEYZ.ptr < 0) continue;
+          if(ExceedY == -1) continue;
+          if(ExceedZ == -1) continue;
+          if(ExceedYZ == -1) continue;
 
           v000 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + XX + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
           v100 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + (XX + 1) + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
@@ -1204,7 +1234,7 @@ void ITMMainEngine::saveMesh()
 
         if((XX == 7) && (YY != 7) && (ZZ != 7))
         {
-          if(hashEntryEX.ptr < 0) continue;
+          if(ExceedX == -1) continue;
 
           v000 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + XX + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
           v100 = voxels[(hashEntryEX.ptr * SDF_BLOCK_SIZE3) + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
@@ -1218,7 +1248,7 @@ void ITMMainEngine::saveMesh()
 
         if((XX != 7) && (YY == 7) && (ZZ != 7))
         {
-          if(hashEntryEY.ptr < 0) continue;
+          if(ExceedY == -1) continue;
 
           v000 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + XX + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
           v100 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + (XX + 1) + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
@@ -1232,7 +1262,7 @@ void ITMMainEngine::saveMesh()
 
         if((XX != 7) && (YY != 7) && (ZZ == 7))
         {
-          if(hashEntryEZ.ptr < 0) continue;
+          if(ExceedZ == -1) continue;
 
           v000 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + XX + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE ];
           v100 = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + (XX + 1) + YY*SDF_BLOCK_SIZE + ZZ*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE];
@@ -1288,6 +1318,16 @@ void ITMMainEngine::saveMesh()
         Vector3f p101 = Vector3f(hashEntry.pos.x + XX*voxelSize + 1*voxelSize , hashEntry.pos.y + YY*voxelSize, hashEntry.pos.z + ZZ*voxelSize + 1*voxelSize);
         Vector3f p111 = Vector3f(hashEntry.pos.x + XX*voxelSize + 1*voxelSize , hashEntry.pos.y + YY*voxelSize + 1*voxelSize, hashEntry.pos.z + ZZ*voxelSize + 1*voxelSize);
 
+        //hao modified it(the position in real world)
+        p000 *= blockSizeWorld;
+        p100 *= blockSizeWorld;
+        p010 *= blockSizeWorld;
+        p001 *= blockSizeWorld;
+        p110 *= blockSizeWorld;
+        p011 *= blockSizeWorld;
+        p101 *= blockSizeWorld;
+        p111 *= blockSizeWorld;
+
         if(edgeTable[cubeindex] == 0 || edgeTable[cubeindex] == 255) return;  // added by me edgeTable[cubeindex] == 255 !!!
 
         myVertex vertlist[12];
@@ -1320,11 +1360,13 @@ void ITMMainEngine::saveMesh()
   }
 
   std::cout<<"start writing mesh to file ..."<<std::endl;
-  string filename = "Data/Mesh.off";
-  writeToFileOFF(filename, g_triangles);
+  //string filename = "Data/Mesh.off";
+  //writeToFileOFF(filename, g_triangles);
+
+  string filename = "Data/scan.ply";
+  writeToFilePly(filename, g_triangles);
   std::cout<<"writing finished!"<<endl;
 
   g_triangles.clear();
   //writeToFile(g_triangles);
-
 }

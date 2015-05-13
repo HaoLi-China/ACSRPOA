@@ -44,7 +44,34 @@ void writeToFileOFF(std::string filename, vector<myTriangle> &triangles)
 	}
 
 	makefile.close();
-	
+}
+
+//hao modified it
+void writeToFilePly(std::string filename, vector<myTriangle> &triangles)
+{
+  PointCloudPtr cloud(new PointCloud);
+  pcl::PolygonMesh::Ptr mesh (new pcl::PolygonMesh); 
+
+  for(int i=0 ; i<triangles.size() ; i++)
+  {
+    Point p0(triangles[i].v0.pos.x, triangles[i].v0.pos.y, triangles[i].v0.pos.z);
+    Point p1(triangles[i].v1.pos.x, triangles[i].v1.pos.y, triangles[i].v1.pos.z);
+    Point p2(triangles[i].v2.pos.x, triangles[i].v2.pos.y, triangles[i].v2.pos.z);
+
+    cloud->push_back(p0);
+    cloud->push_back(p1);
+    cloud->push_back(p2);
+
+    pcl::Vertices vert;
+    vert.vertices.push_back(i*3);
+    vert.vertices.push_back(i*3+1);
+    vert.vertices.push_back(i*3+2);
+    mesh->polygons.push_back(vert);
+  }
+
+  pcl::toROSMsg(*cloud, mesh->cloud); 
+
+  pcl::io::savePolygonFilePLY(filename, *mesh);
 }
 
 /*

@@ -9,6 +9,12 @@
 #include <fstream>
 #include "ITMLibDefines.h"
 
+#include <pcl/io/ply_io.h>//hao modified it
+#include <pcl/ros/conversions.h> //hao modified it
+#include <pcl/io/vtk_io.h> //hao modified it
+#include <pcl/io/vtk_lib_io.h> //hao modified it
+#include "../../Common/common_type.h" //hao modified it
+
 using namespace std;
 
 struct myVertex
@@ -320,11 +326,8 @@ const static int triTable[256][16] =
 
 myVertex VertexInterp(float isolevel, Vector3f &p1, Vector3f &p2, ITMVoxel &v1, ITMVoxel &v2);
 
-
 void writeToFileOFF(std::string filename, vector<myTriangle> &triangles);
 
-//void writeToFile(vector<Triangle> &triangles);
-
-
+void writeToFilePly(std::string filename, vector<myTriangle> &triangles);//hao modified it
 
 #endif
