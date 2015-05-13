@@ -189,6 +189,7 @@ OpenNIEngine::~OpenNIEngine()
 	openni::OpenNI::shutdown();
 }
 
+//hao modified it
 void OpenNIEngine::getImages(ITMView *out)
 {
 	int changedIndex, waitStreamCount;
@@ -208,12 +209,24 @@ void OpenNIEngine::getImages(ITMView *out)
 	if (colorAvailable)
 	{
 		const openni::RGB888Pixel* colorImagePix = (const openni::RGB888Pixel*)data->colorFrame.getData();
-		for (int i = 0; i < out->rgb->noDims.x * out->rgb->noDims.y; i++)
-		{
-			Vector4u newPix; openni::RGB888Pixel oldPix = colorImagePix[i];
-			newPix.r = oldPix.r; newPix.g = oldPix.g; newPix.b = oldPix.b; newPix.a = 255;
-			rgb[i] = newPix;
-		}
+
+    for (unsigned int j = 0; j < out->rgb->noDims.y; j++) {
+      for (unsigned int i = 0; i < out->rgb->noDims.x; i++) {
+        unsigned int srcIdx = j*out->rgb->noDims.x + (out->rgb->noDims.x - 1 - i);
+        unsigned int desIdx = j*out->rgb->noDims.x + i;
+
+        Vector4u newPix; openni::RGB888Pixel oldPix = colorImagePix[desIdx];
+        newPix.r = oldPix.r; newPix.g = oldPix.g; newPix.b = oldPix.b; newPix.a = 255;
+        rgb[srcIdx] = newPix;
+      }
+    }
+
+    /*	for (int i = 0; i < out->rgb->noDims.x * out->rgb->noDims.y; i++)
+    {
+    Vector4u newPix; openni::RGB888Pixel oldPix = colorImagePix[i];
+    newPix.r = oldPix.r; newPix.g = oldPix.g; newPix.b = oldPix.b; newPix.a = 255;
+    rgb[i] = newPix;
+    }*/
 	}
 	else memset(rgb, 0, out->rgb->dataSize * sizeof(Vector4u));
 
@@ -221,7 +234,16 @@ void OpenNIEngine::getImages(ITMView *out)
 	if (depthAvailable)
 	{
 		const openni::DepthPixel* depthImagePix = (const openni::DepthPixel*)data->depthFrame.getData();
-		memcpy(depth, depthImagePix, out->rawDepth->dataSize * sizeof(short));
+		//memcpy(depth, depthImagePix, out->rawDepth->dataSize * sizeof(short));
+
+    for (unsigned int j = 0; j < out->rawDepth->noDims.y; j++) {
+      for (unsigned int i = 0; i < out->rawDepth->noDims.x; i++) {
+        unsigned int srcIdx = j*out->rawDepth->noDims.x + (out->rawDepth->noDims.x - 1 - i);
+        unsigned int desIdx = j*out->rawDepth->noDims.x + i;
+
+        depth[srcIdx] = depthImagePix[desIdx];
+      }
+    }
 	}
 	else memset(depth, 0, out->rawDepth->dataSize * sizeof(short));
 	//WriteToTXT((short*)depthImagePix, 307200, "d:/temp/dd.txt");
