@@ -85,17 +85,17 @@ void UIEngine::glutDisplayFunction()
   //hao modified it
   {
     glRasterPos2f(-0.95f, -0.93f);
-    sprintf(str, "r - reset \t n - next frame \t o - over-segment next frame \t p - segment next frame \t b - all frames \t v - save points in current frame \t m - save mesh to file");
+    sprintf(str, "r - reset \t n - next frame \t o - over-segmentation \t p - segmentation \t b - all frames \t u - update segmentation \t v - save points in current frame");
     safe_glutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*)str);
 
     glRasterPos2f(-0.95f, -0.98f);
     if (ITMVoxel::hasColorInformation)
     {//hao modified it
-      sprintf(str, "e - exit \t f - %s \t c - %s", uiEngine->freeviewActive?"follow camera":"free viewpoint", uiEngine->colourActive?"stop using colour":"use colour");
+      sprintf(str, "d - detect change \t a - auto reconstruct \t m - save mesh \t e - exit \t f - %s \t c - %s", uiEngine->freeviewActive?"follow camera":"free viewpoint", uiEngine->colourActive?"stop using colour":"use colour");
     }
     else
     {//hao modified it
-      sprintf(str, "e/esc - exit \t f - %s \t t - turn fusion %s", uiEngine->freeviewActive ? "follow camera" : "free viewpoint", uiEngine->intergrationActive ? "off" : "on");
+      sprintf(str, "d - detect change \t a - auto reconstruct \t m - save mesh \t e/esc - exit \t f - %s \t t - turn fusion %s", uiEngine->freeviewActive ? "follow camera" : "free viewpoint", uiEngine->intergrationActive ? "off" : "on");
     }
     safe_glutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*)str);
   }
@@ -204,7 +204,7 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
     uiEngine->mainLoopAction = UIEngine::SEG_FRAME;
     break;
   case 'u':
-    printf("segment objects ...\n");
+    printf("update segment objects ...\n");
     uiEngine->mainLoopAction = UIEngine::UPDATE_SEG_FRAME;
     break;
   case 'n':

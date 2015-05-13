@@ -54,9 +54,9 @@ void writeToFilePly(std::string filename, vector<myTriangle> &triangles)
 
   for(int i=0 ; i<triangles.size() ; i++)
   {
-    Point p0(triangles[i].v0.pos.x, triangles[i].v0.pos.y, triangles[i].v0.pos.z);
-    Point p1(triangles[i].v1.pos.x, triangles[i].v1.pos.y, triangles[i].v1.pos.z);
-    Point p2(triangles[i].v2.pos.x, triangles[i].v2.pos.y, triangles[i].v2.pos.z);
+    Point p0(-triangles[i].v0.pos.x, -triangles[i].v0.pos.y, triangles[i].v0.pos.z);
+    Point p1(-triangles[i].v1.pos.x, -triangles[i].v1.pos.y, triangles[i].v1.pos.z);
+    Point p2(-triangles[i].v2.pos.x, -triangles[i].v2.pos.y, triangles[i].v2.pos.z);
 
     cloud->push_back(p0);
     cloud->push_back(p1);
