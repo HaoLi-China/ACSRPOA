@@ -112,26 +112,71 @@ void UIEngine::glutIdleFunction()
   switch (uiEngine->mainLoopAction)
   {
   case PROCESS_FRAME:
+    if(uiEngine->mainEngine->objectColors!=NULL){
+      free(uiEngine->mainEngine->objectColors);
+      uiEngine->mainEngine->objectColors = NULL;
+    }
+    if(uiEngine->mainEngine->confidenceColors!=NULL){
+      free(uiEngine->mainEngine->confidenceColors);
+      uiEngine->mainEngine->confidenceColors = NULL;
+    }
+
     uiEngine->ProcessFrame(0); uiEngine->processedFrameNo++;
     uiEngine->mainLoopAction = PROCESS_PAUSED;
     uiEngine->needsRefresh = true;
     break;
   case OVER_SEG_FRAME:
+    if(uiEngine->mainEngine->objectColors!=NULL){
+      free(uiEngine->mainEngine->objectColors);
+      uiEngine->mainEngine->objectColors = NULL;
+    }
+    if(uiEngine->mainEngine->confidenceColors!=NULL){
+      free(uiEngine->mainEngine->confidenceColors);
+      uiEngine->mainEngine->confidenceColors = NULL;
+    }
+
     uiEngine->ProcessFrame(1); uiEngine->processedFrameNo++;
     uiEngine->mainLoopAction = PROCESS_PAUSED;
     uiEngine->needsRefresh = true;
     break;
   case SEG_FRAME:
+    if(uiEngine->mainEngine->objectColors!=NULL){
+      free(uiEngine->mainEngine->objectColors);
+      uiEngine->mainEngine->objectColors = NULL;
+    }
+    if(uiEngine->mainEngine->confidenceColors!=NULL){
+      free(uiEngine->mainEngine->confidenceColors);
+      uiEngine->mainEngine->confidenceColors = NULL;
+    }
+
     uiEngine->ProcessFrame(2); uiEngine->processedFrameNo++;
     uiEngine->mainLoopAction = PROCESS_PAUSED;
     uiEngine->needsRefresh = true;
     break;
   case UPDATE_SEG_FRAME:
+    if(uiEngine->mainEngine->objectColors!=NULL){
+      free(uiEngine->mainEngine->objectColors);
+      uiEngine->mainEngine->objectColors = NULL;
+    }
+    if(uiEngine->mainEngine->confidenceColors!=NULL){
+      free(uiEngine->mainEngine->confidenceColors);
+      uiEngine->mainEngine->confidenceColors = NULL;
+    }
+
     uiEngine->ProcessFrame(3); uiEngine->processedFrameNo++;
     uiEngine->mainLoopAction = PROCESS_PAUSED;
     uiEngine->needsRefresh = true;
     break;
   case PROCESS_VIDEO:
+    if(uiEngine->mainEngine->objectColors!=NULL){
+      free(uiEngine->mainEngine->objectColors);
+      uiEngine->mainEngine->objectColors = NULL;
+    }
+    if(uiEngine->mainEngine->confidenceColors!=NULL){
+      free(uiEngine->mainEngine->confidenceColors);
+      uiEngine->mainEngine->confidenceColors = NULL;
+    }
+
     uiEngine->ProcessFrame(0); uiEngine->processedFrameNo++;
     uiEngine->needsRefresh = true;
     break;
@@ -175,6 +220,14 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
 
   switch (key)
   {
+  case '0':
+    printf("show object seg result ...\n");
+    UIEngine::Instance()->mainEngine->showSegmentResult(0);
+    break;
+  case '1':
+    printf("show confidence graph ...\n");
+    UIEngine::Instance()->mainEngine->showSegmentResult(1);
+    break;
   case 'a':
     printf("auto reconstruct ...\n");
     UIEngine::Instance()->autoReconstruct();

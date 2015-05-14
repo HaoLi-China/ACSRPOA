@@ -95,6 +95,11 @@ namespace ITMLib
 
       MyPointCloud_RGB_NORMAL myCloudOne;//hao modified it
       MyPointCloud_RGB_NORMAL myCloudTwo;//hao modified it
+      //MyPointCloud_RGB_NORMAL currentViewCloud;//hao modified it
+      //MyPointCloud_RGB objectCloud;//hao modified it
+      //MyPointCloud_RGB confidenceCloud;//hao modified it
+      Vector3f *objectColors;//hao modified it
+      Vector3f *confidenceColors;//hao modified it
 
       /// Gives access to the current input frame
       ITMView* GetView() { return view; }
@@ -115,6 +120,7 @@ namespace ITMLib
       void saveViewPoints(ITMTrackingState *trackingState);//hao modified it
       void overSegmentView();//hao modified it
       void segmentView();//hao modified it
+      void showSegmentResult(int flag);//hao modified it
       void updateSegmentView();//hao modified it
       void detectChange();//hao modified it
 

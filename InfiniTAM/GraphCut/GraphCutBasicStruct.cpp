@@ -1122,11 +1122,11 @@ void CAreaInterest::UpdateObjectness(int m)
 	double objectness = 0;
 	double fSum = 0;
 	double concaveSum = 0;
-	for(int i = 0;i < vecvecMultiResult[m].size();i++)
+	/*for(int i = 0;i < vecvecMultiResult[m].size();i++)
 	{
 		int patchIndex = vecvecMultiResult[m][i];
 		fSum += vecPatchConfidenceScore[patchIndex];
-	}
+	}*/
 
 	double edgeNum = 0;
 	for(int i = 0;i < vecpairPatchConnection.size();i++)

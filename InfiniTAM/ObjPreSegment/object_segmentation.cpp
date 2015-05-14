@@ -1,7 +1,33 @@
 #include "object_segmentation.h"
 
+void GetColour(double v,double vmin,double vmax,double &r,double &g,double &b)
+{
+  r = g = b =1.0;
+  double dv;
+
+  if (v < vmin)
+    v = vmin;
+  if (v > vmax)
+    v = vmax;
+  dv = vmax - vmin;
+
+  if (v < (vmin + 0.25 * dv)) {
+    r = 0;
+    g = 4 * (v - vmin) / dv;
+  } else if (v < (vmin + 0.5 * dv)) {
+    r = 0;
+    b = 1 + 4 * (vmin + 0.25 * dv - v) / dv;
+  } else if (v < (vmin + 0.75 * dv)) {
+    r = 4 * (v - vmin - 0.5 * dv) / dv;
+    b = 0;
+  } else {
+    g = 1 + 4 * (vmin + 0.75 * dv - v) / dv;
+    b = 0;
+  }
+}
+
 //segment object
-void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RGB result_cloud){
+void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud){
   CPointCloudAnalysis cPointCloudAnalysis;
 
   /******************detect table************************/
@@ -31,7 +57,8 @@ void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RGB resu
     pt_rgb.r = 255;
     pt_rgb.g = 255;
     pt_rgb.b = 255;
-    result_cloud->points.push_back(pt_rgb);
+    object_cloud->points.push_back(pt_rgb);
+    confidence_cloud->points.push_back(pt_rgb);
   }
 
   cPointCloudAnalysis.tablePoint = tablePoint;
@@ -121,16 +148,50 @@ void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RGB resu
           po.g = g;
           po.b = b;
 
-          result_cloud->push_back(po);
+          object_cloud->push_back(po);
         }
       }
     }
   }
+
+  for(int i = 0; i < cPointCloudAnalysis.vecAreaInterest.size();i++)
+  {
+    cPointCloudAnalysis.vecAreaInterest[i].ComputeScore();
+    if(!cPointCloudAnalysis.vecAreaInterest[i].validFlag)	continue;
+    for(int j = 0; j < cPointCloudAnalysis.vecAreaInterest[i].vecObjectHypo.size();j++)
+    {
+      double rObj,gObj,bObj;
+      GetColour(double(650) - cPointCloudAnalysis.vecAreaInterest[i].vecObjectHypo[j].objectness,300,350,rObj,gObj,bObj);
+      rObj *= 255;
+      gObj *= 255;
+      bObj *= 255;
+
+      for(int k = 0; k < cPointCloudAnalysis.vecAreaInterest[i].vecObjectHypo[j].patchIndex.size();k++)
+      {
+        int patchIndex = cPointCloudAnalysis.vecAreaInterest[i].vecObjectHypo[j].patchIndex[k];
+        for(int m = 0; m < cPointCloudAnalysis.vecAreaInterest[i].vecPatchPoint[patchIndex].mypoints.size();m++)
+        {
+          MyPoint_RGB_NORMAL point = cPointCloudAnalysis.vecAreaInterest[i].vecPatchPoint[patchIndex].mypoints[m];
+
+          Point_RGB po;
+          po.x = point.x;
+          po.y = point.y;
+          po.z = point.z;
+          po.r = rObj;
+          po.g = gObj;
+          po.b = bObj;
+
+          confidence_cloud->push_back(po);
+        }
+      }
+    }
+  }
+
+  showPointCloud(confidence_cloud, "confidence_cloud");
 }
 
 //over segment object
-void overSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RGB_NORMAL result_cloud){
-  CPointCloudAnalysis cPointCloudAnalysis;
+void overSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RGB result_cloud){
 
   /******************detect table************************/
   PointCloudPtr_RGB_NORMAL tabletopCloud(new PointCloud_RGB_NORMAL());
@@ -141,7 +202,16 @@ void overSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RGB_
 
   detect_table(source_cloud, coefficients, planeCloud, rect_cloud, remainingCloud);
 
-  appendCloud_RGB_NORMAL(planeCloud, result_cloud);
+  for(int i=0;i<planeCloud->size();i++){
+    Point_RGB pt_rgb;
+    pt_rgb.x = planeCloud->at(i).x;
+    pt_rgb.y = planeCloud->at(i).y;
+    pt_rgb.z = planeCloud->at(i).z;
+    pt_rgb.r = 255;
+    pt_rgb.g = 255;
+    pt_rgb.b = 255;
+    result_cloud->points.push_back(pt_rgb);
+  }
 
   Eigen::Matrix4f matrix_transform;
   Eigen::Matrix4f matrix_transform_r;
@@ -176,23 +246,23 @@ void overSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RGB_
     VCCS_over_segmentation(ct,voxel_resolution,seed_resolution,color_importance,spatial_importance,normal_importance,patch_clouds,colored_cloud,normal_cloud);
 
     for(int j=0; j<colored_cloud->size(); j++){
-      Point_RGB_NORMAL pt;
+      Point_RGB pt;
       pt.x = colored_cloud->points[j].x;
       pt.y = colored_cloud->points[j].y;
       pt.z = colored_cloud->points[j].z;
       pt.r = colored_cloud->points[j].r;
       pt.g = colored_cloud->points[j].g;
       pt.b = colored_cloud->points[j].b;
-      pt.normal_x = ct->points[j].normal_x;
+      /*pt.normal_x = ct->points[j].normal_x;
       pt.normal_y = ct->points[j].normal_x;
-      pt.normal_z = ct->points[j].normal_z;
+      pt.normal_z = ct->points[j].normal_z;*/
       result_cloud->points.push_back(pt);
     }
   }
 }
 
 //update segment object
-void updateSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RGB_NORMAL change_cloudA, PointCloudPtr_RGB_NORMAL change_cloudB, PointCloudPtr_RGB result_cloud){
+void updateSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RGB_NORMAL change_cloudA, PointCloudPtr_RGB_NORMAL change_cloudB, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud){
 
   std::vector<MyPointCloud_RGB_NORMAL> change_cluster;
   object_seg_ECE(change_cloudB, change_cluster);
@@ -267,7 +337,7 @@ void updateSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RG
     pt_rgb.r = 255;
     pt_rgb.g = 255;
     pt_rgb.b = 255;
-    result_cloud->points.push_back(pt_rgb);
+    object_cloud->points.push_back(pt_rgb);
   }
 
   cPointCloudAnalysis.tablePoint = tablePoint;
@@ -436,7 +506,7 @@ void updateSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RG
           po.g = g;
           po.b = b;
 
-          result_cloud->push_back(po);
+          object_cloud->push_back(po);
         }
       }
     }
