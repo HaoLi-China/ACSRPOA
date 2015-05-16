@@ -1,5 +1,6 @@
 #include "object_segmentation.h"
 
+//get color
 void GetColour(double v,double vmin,double vmax,double &r,double &g,double &b)
 {
   r = g = b =1.0;
@@ -26,9 +27,21 @@ void GetColour(double v,double vmin,double vmax,double &r,double &g,double &b)
   }
 }
 
+//shrink cloud range
+void shrinkCloudRange(PointCloudPtr_RGB_NORMAL source_cloud, const float range_x, const float range_y, const float range_z, PointCloudPtr_RGB_NORMAL result_cloud){
+  for(int i=0; i<source_cloud->size(); i++){
+    if(!(source_cloud->points[i].z>range_z||source_cloud->points[i].x<-range_x||source_cloud->points[i].x>range_x||source_cloud->points[i].y<-range_y||source_cloud->points[i].y>range_y)){
+      result_cloud->push_back(source_cloud->points[i]);
+    }
+  }
+}
+
 //segment object
 void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, CPointCloudAnalysis &cpca, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud){
   CPointCloudAnalysis cPointCloudAnalysis;
+
+  PointCloudPtr_RGB_NORMAL shrinked_cloud(new PointCloud_RGB_NORMAL);
+  shrinkCloudRange(source_cloud, 0.6, 0.6, 1.5, shrinked_cloud);
 
   /******************detect table************************/
   PointCloudPtr_RGB_NORMAL tabletopCloud(new PointCloud_RGB_NORMAL());
@@ -37,7 +50,7 @@ void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, CPointCloudAnalysis &c
   PointCloudPtr_RGB_NORMAL remainingCloud(new PointCloud_RGB_NORMAL());
   pcl::ModelCoefficients coefficients;
 
-  detect_table(source_cloud, coefficients, planeCloud, rect_cloud, remainingCloud);
+  detect_table(shrinked_cloud, coefficients, planeCloud, rect_cloud, remainingCloud);
 
   MyPointCloud_RGB_NORMAL tablePoint;
   for(int i=0;i<planeCloud->size();i++){
@@ -194,6 +207,8 @@ void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, CPointCloudAnalysis &c
 
 //over segment object
 void overSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RGB result_cloud){
+  PointCloudPtr_RGB_NORMAL shrinked_cloud(new PointCloud_RGB_NORMAL);
+  shrinkCloudRange(source_cloud, 0.6, 0.6, 1.5, shrinked_cloud);
 
   /******************detect table************************/
   PointCloudPtr_RGB_NORMAL tabletopCloud(new PointCloud_RGB_NORMAL());
@@ -202,7 +217,7 @@ void overSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RGB 
   PointCloudPtr_RGB_NORMAL remainingCloud(new PointCloud_RGB_NORMAL());
   pcl::ModelCoefficients coefficients;
 
-  detect_table(source_cloud, coefficients, planeCloud, rect_cloud, remainingCloud);
+  detect_table(shrinked_cloud, coefficients, planeCloud, rect_cloud, remainingCloud);
 
   for(int i=0;i<planeCloud->size();i++){
     Point_RGB pt_rgb;
@@ -265,6 +280,9 @@ void overSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RGB 
 
 //update segment object
 void updateSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RGB_NORMAL change_cloudA, PointCloudPtr_RGB_NORMAL change_cloudB, CPointCloudAnalysis &cpca, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud){
+  
+  PointCloudPtr_RGB_NORMAL shrinked_cloud(new PointCloud_RGB_NORMAL);
+  shrinkCloudRange(source_cloud, 0.6, 0.6, 1.5, shrinked_cloud);
 
   std::vector<MyPointCloud_RGB_NORMAL> change_cluster;
   object_seg_ECE(change_cloudB, change_cluster);
@@ -278,12 +296,12 @@ void updateSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RG
   CUDA_KDTree GPU_tree;
   int max_tree_levels = 13; // play around with this value to get the best result
 
-  vector<KDPoint> data(source_cloud->size());
+  vector<KDPoint> data(shrinked_cloud->size());
 
-  for(int i=0; i<source_cloud->size(); i++){
-    data[i].coords[0] = source_cloud->points[i].x;
-    data[i].coords[1] = source_cloud->points[i].y;
-    data[i].coords[2] = source_cloud->points[i].z;
+  for(int i=0; i<shrinked_cloud->size(); i++){
+    data[i].coords[0] = shrinked_cloud->points[i].x;
+    data[i].coords[1] = shrinked_cloud->points[i].y;
+    data[i].coords[2] = shrinked_cloud->points[i].z;
   }
 
   tree.Create(data, max_tree_levels);
@@ -304,9 +322,9 @@ void updateSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RG
     GPU_tree.Search(queries, gpu_indexes, gpu_dists);
 
     for(int i=0; i<change_cluster[k].mypoints.size(); i++){
-      source_cloud->points[gpu_indexes[i]].r = 10*(k+1);
-      source_cloud->points[gpu_indexes[i]].g = 0;
-      source_cloud->points[gpu_indexes[i]].b = 0;
+      shrinked_cloud->points[gpu_indexes[i]].r = 10*(k+1);
+      shrinked_cloud->points[gpu_indexes[i]].g = 0;
+      shrinked_cloud->points[gpu_indexes[i]].b = 0;
     }
   }
 
@@ -319,7 +337,7 @@ void updateSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RG
   PointCloudPtr_RGB_NORMAL remainingCloud(new PointCloud_RGB_NORMAL());
   pcl::ModelCoefficients coefficients;
 
-  detect_table(source_cloud, coefficients, planeCloud, rect_cloud, remainingCloud);
+  detect_table(shrinked_cloud, coefficients, planeCloud, rect_cloud, remainingCloud);
 
   MyPointCloud_RGB_NORMAL tablePoint;
   for(int i=0;i<planeCloud->size();i++){
