@@ -100,6 +100,7 @@ namespace ITMLib
       //MyPointCloud_RGB confidenceCloud;//hao modified it
       Vector3f *objectColors;//hao modified it
       Vector3f *confidenceColors;//hao modified it
+      CPointCloudAnalysis cPointCloudAnalysis;//hao modified it
 
       /// Gives access to the current input frame
       ITMView* GetView() { return view; }

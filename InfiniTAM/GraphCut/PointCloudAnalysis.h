@@ -20,6 +20,7 @@ public:
 	vector<MyPointCloud_RGB_NORMAL> vecPatchPoint;
 	vector<Normalt> vecPatcNormal;
 	MyPointCloud_RGB_NORMAL tablePoint;
+  Eigen::Vector3d sup_plane_normal;
 	vector<int> clusterPatchNum;
 	vector<int> clusterPatchInitIndex;
 	vector<CAreaInterest> vecAreaInterest;

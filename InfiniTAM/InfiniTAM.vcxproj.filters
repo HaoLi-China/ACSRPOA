@@ -247,6 +247,9 @@
     <ClCompile Include="ITMLib\Utils\MarchingCubeUtils.cpp">
       <Filter>ITMLib\Utils\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Utils\InteractionCompute.cpp">
+      <Filter>Utils\Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Utils\FileUtils.h">
@@ -548,6 +551,9 @@
     </ClInclude>
     <ClInclude Include="ITMLib\Utils\MarchingCubeUtils.h">
       <Filter>ITMLib\Utils\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\InteractionCompute.h">
+      <Filter>Utils\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -7,6 +7,7 @@
 #include "../ITMLib/Utils/ITMLibSettings.h"
 #include "../Utils/FileUtils.h"
 #include "../Utils/NVTimer.h"
+#include "../Utils/InteractionCompute.h"//hao modified it
 
 #include <vector>//hao modified it
 

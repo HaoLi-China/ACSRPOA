@@ -674,31 +674,52 @@ DWORD _stdcall autoscan(LPVOID lpParameter)
   //init_left_arm_pose(pos_left_arm_ins);
 
   //eighth step
-  Eigen::Vector3f position(0.80, 0.40, 0.780);
-  Eigen::Vector3f direction(1, 0, 0);
+  //Eigen::Vector3f position_under_kinect(0.80, 0.40, 0.780);
+  //Eigen::Vector3f direction(1, 0, 0);
+  Eigen::Vector3f position;
 
-  set_head_pose(sockClient, position);
-  l_push_object(sockClient, position, direction);
+  Eigen::Vector3f position_under_kinect;
+  Eigen::Vector3f direction;
 
-  l_take_back(sockClient, position, direction);
+  CInteractionCompute cic(UIEngine::Instance()->mainEngine->cPointCloudAnalysis);
 
-  //ninth step
-  init_left_arm_pose(sockClient, pos_left_arm);
+  //for(int i=0; i<cic.vecObjectHypo.size(); i++){
+  for(int i=0; i<1; i++){
+    if(cic.vecObjectHypo[i].objectness < 200){
+      break;
+    }
 
-  //tenth step
-  printf("processing input source ...\n");
-  UIEngine::Instance()->mainLoopAction = UIEngine::PROCESS_VIDEO;
+    cic.getTouchPointAndDir(i, position_under_kinect, direction);
 
-  //eleventh step
-  up_down_right_scanner(sockClient, down_value, up_value);
+    get_l_touch_point(sockClient, position_under_kinect, position);
 
-  //twelfth step
-  printf("save current view w...\n");
-  UIEngine::Instance()->mainEngine->saveViewPoints(UIEngine::Instance()->mainEngine->trackingStateTem);
+    set_head_pose(sockClient, position);
+    l_push_object(sockClient, position, direction);
 
-  //thirteenth step
-  printf("segment objects ...\n");
-  UIEngine::Instance()->mainLoopAction = UIEngine::UPDATE_SEG_FRAME;
+    l_take_back(sockClient, position, direction);
+
+    //ninth step
+    init_left_arm_pose(sockClient, pos_left_arm);
+
+    //tenth step
+    printf("processing input source ...\n");
+    UIEngine::Instance()->mainLoopAction = UIEngine::PROCESS_VIDEO;
+
+    //eleventh step
+    up_down_right_scanner(sockClient, down_value, up_value);
+
+    //twelfth step
+    printf("save current view w...\n");
+    UIEngine::Instance()->mainEngine->saveViewPoints(UIEngine::Instance()->mainEngine->trackingStateTem);
+
+    //thirteenth step
+    printf("segment objects ...\n");
+    UIEngine::Instance()->mainLoopAction = UIEngine::UPDATE_SEG_FRAME;
+
+    while(UIEngine::Instance()->mainLoopAction == UIEngine::UPDATE_SEG_FRAME){
+      Sleep(5000);   
+    }
+  }
 
   //sixteenth step
   close_socket(sockClient);

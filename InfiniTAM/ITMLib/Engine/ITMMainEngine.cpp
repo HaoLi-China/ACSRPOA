@@ -378,7 +378,7 @@ void ITMMainEngine::segmentView()
 
     PointCloudPtr_RGB object_cloud(new PointCloud_RGB);
     PointCloudPtr_RGB confidence_cloud(new PointCloud_RGB);
-    segmentObject(cloud, object_cloud, confidence_cloud);
+    segmentObject(cloud, cPointCloudAnalysis, object_cloud, confidence_cloud);
     //showPointCloud(segmented_cloud, "segmented_cloud");
 
     KDtree tree;
@@ -738,7 +738,7 @@ void ITMMainEngine::updateSegmentView(){
 
     PointCloudPtr_RGB object_cloud(new PointCloud_RGB);
     PointCloudPtr_RGB confidence_cloud(new PointCloud_RGB);
-    updateSegmentObject(cloud, resultA, resultB, object_cloud, confidence_cloud);
+    updateSegmentObject(cloud, resultA, resultB, cPointCloudAnalysis, object_cloud, confidence_cloud);
 
     KDtree tree;
     CUDA_KDTree GPU_tree;
@@ -766,65 +766,85 @@ void ITMMainEngine::updateSegmentView(){
     GPU_tree.CreateKDTree(tree.GetRoot(), tree.GetNumNodes(), data);
     GPU_tree.Search(queries, gpu_indexes, gpu_dists);
 
-    PointCloudPtr_RGB colored_cloud(new PointCloud_RGB);
+    PointCloudPtr_RGB colored_cloud0(new PointCloud_RGB);
+    PointCloudPtr_RGB colored_cloud1(new PointCloud_RGB);
     for(int i=0; i<cloud->size(); i++){
       Point_RGB p_tem;
       p_tem.x=0;
       p_tem.y=0;
       p_tem.z=0;
-      colored_cloud->push_back(p_tem);
+      colored_cloud0->push_back(p_tem);
+      colored_cloud1->push_back(p_tem);
     }
 
     for(int i=0; i<object_cloud->size(); i++){
-      colored_cloud->points[gpu_indexes[i]].x = object_cloud->points[i].x;
-      colored_cloud->points[gpu_indexes[i]].y = object_cloud->points[i].y;
-      colored_cloud->points[gpu_indexes[i]].z = object_cloud->points[i].z;
-      colored_cloud->points[gpu_indexes[i]].r = object_cloud->points[i].r;
-      colored_cloud->points[gpu_indexes[i]].g = object_cloud->points[i].g;
-      colored_cloud->points[gpu_indexes[i]].b = object_cloud->points[i].b;
+      colored_cloud0->points[gpu_indexes[i]].x = object_cloud->points[i].x;
+      colored_cloud0->points[gpu_indexes[i]].y = object_cloud->points[i].y;
+      colored_cloud0->points[gpu_indexes[i]].z = object_cloud->points[i].z;
+      colored_cloud0->points[gpu_indexes[i]].r = object_cloud->points[i].r;
+      colored_cloud0->points[gpu_indexes[i]].g = object_cloud->points[i].g;
+      colored_cloud0->points[gpu_indexes[i]].b = object_cloud->points[i].b;
+
+      colored_cloud1->points[gpu_indexes[i]].x = confidence_cloud->points[i].x;
+      colored_cloud1->points[gpu_indexes[i]].y = confidence_cloud->points[i].y;
+      colored_cloud1->points[gpu_indexes[i]].z = confidence_cloud->points[i].z;
+      colored_cloud1->points[gpu_indexes[i]].r = confidence_cloud->points[i].r;
+      colored_cloud1->points[gpu_indexes[i]].g = confidence_cloud->points[i].g;
+      colored_cloud1->points[gpu_indexes[i]].b = confidence_cloud->points[i].b;
     }
 
     //showPointCloud(colored_cloud, "colored_cloud");
 
-    Vector3f *colors_host = (Vector3f*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f));
+    objectColors = (Vector3f*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f));
+    confidenceColors = (Vector3f*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f));
 
     int count=0;
     for(int i=0; i<view->depth->noDims.x*view->depth->noDims.y; i++){
       if(*(id_array_host+i)!=-1){
-        if(!(colored_cloud->points[count].x==0&&colored_cloud->points[count].y==0&&colored_cloud->points[count].z==0)){
-          (*(colors_host+i))[0] = colored_cloud->points[count].r;
-          (*(colors_host+i))[1] = colored_cloud->points[count].g;
-          (*(colors_host+i))[2] = colored_cloud->points[count].b;
+        if(!(colored_cloud0->points[count].x==0&&colored_cloud0->points[count].y==0&&colored_cloud0->points[count].z==0)){
+          (*(objectColors+i))[0] = colored_cloud0->points[count].r;
+          (*(objectColors+i))[1] = colored_cloud0->points[count].g;
+          (*(objectColors+i))[2] = colored_cloud0->points[count].b;
+
+          (*(confidenceColors+i))[0] = colored_cloud1->points[count].r;
+          (*(confidenceColors+i))[1] = colored_cloud1->points[count].g;
+          (*(confidenceColors+i))[2] = colored_cloud1->points[count].b;
         }
         else{
-          (*(colors_host+i))[0] = -1;
-          (*(colors_host+i))[1] = -1;
-          (*(colors_host+i))[2] = -1;
+          (*(objectColors+i))[0] = -1;
+          (*(objectColors+i))[1] = -1;
+          (*(objectColors+i))[2] = -1;
+
+          (*(confidenceColors+i))[0] = -1;
+          (*(confidenceColors+i))[1] = -1;
+          (*(confidenceColors+i))[2] = -1;
         }
 
         count++;
       }
       else{
-        (*(colors_host+i))[0] = -1;
-        (*(colors_host+i))[1] = -1;
-        (*(colors_host+i))[2] = -1;
+        (*(objectColors+i))[0] = -1;
+        (*(objectColors+i))[1] = -1;
+        (*(objectColors+i))[2] = -1;
+
+        (*(confidenceColors+i))[0] = -1;
+        (*(confidenceColors+i))[1] = -1;
+        (*(confidenceColors+i))[2] = -1;
       }
     }
 
     Vector3f *colors_device;
     ITMSafeCall(cudaMalloc((void**)&colors_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
-    ITMSafeCall(cudaMemcpy(colors_device, colors_host, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyHostToDevice));
+    ITMSafeCall(cudaMemcpy(colors_device, objectColors, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyHostToDevice));
     //pcl::io::savePLYFileBinary("Data/scan1.ply", *colored_cloud);
 
     visualisationEngine->NewCreateICPMaps(scene, view, trackingState, colors_device);
 
     free(points_host);
     free(normals_host);
-    free(colors_host);
     free(id_array_host);
     points_host=NULL;
     normals_host=NULL;
-    colors_host=NULL;
     id_array_host=NULL;
 
     ITMSafeCall(cudaFree(points_device));

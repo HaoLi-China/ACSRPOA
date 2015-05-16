@@ -295,6 +295,32 @@ bool r_push_object(SOCKET &sockClient, Eigen::Vector3f& position, Eigen::Vector3
   return false;
 }
 
+//set head pose
+bool set_head_pose(SOCKET &sockClient, Eigen::Vector3f&head_focus){
+  char tem[1024];
+  memset(tem, 0, sizeof(tem));
+
+  stringstream ss;
+  string s;
+  ss << "l:"; 
+
+  ss << head_focus[0] << "," << head_focus[1] << "," << head_focus[2] << ";";
+
+  ss >> s;
+  strcpy(tem, const_cast<char*>(s.c_str()));
+
+  send(sockClient,tem,strlen(tem)+1,0);
+
+  char recvBuf[256];
+  recv(sockClient,recvBuf,256,0);
+
+  if(strcmp(recvBuf,"finished")==0){
+    return true;
+  }
+  return false;
+}
+
+
 //left arm take back
 bool l_take_back(SOCKET &sockClient, Eigen::Vector3f& position, Eigen::Vector3f& direction){
   char tem[1024];
@@ -347,16 +373,16 @@ bool r_take_back(SOCKET &sockClient, Eigen::Vector3f& position, Eigen::Vector3f&
   return false;
 }
 
-//set head pose
-bool set_head_pose(SOCKET &sockClient, Eigen::Vector3f&head_focus){
+//get left gripper touch point
+void get_l_touch_point(SOCKET &sockClient, const Eigen::Vector3f& input_position, Eigen::Vector3f& output_direction){
   char tem[1024];
   memset(tem, 0, sizeof(tem));
 
   stringstream ss;
   string s;
-  ss << "l:"; 
+  ss << "o:"; 
 
-  ss << head_focus[0] << "," << head_focus[1] << "," << head_focus[2] << ";";
+  ss << input_position[0] << "," << input_position[1] << "," << input_position[2] << ";";
 
   ss >> s;
   strcpy(tem, const_cast<char*>(s.c_str()));
@@ -366,10 +392,63 @@ bool set_head_pose(SOCKET &sockClient, Eigen::Vector3f&head_focus){
   char recvBuf[256];
   recv(sockClient,recvBuf,256,0);
 
-  if(strcmp(recvBuf,"finished")==0){
-    return true;
+  char *ch = recvBuf;
+  int index=0;
+  int count=0;
+  char temp[20];
+
+  while(*ch!='\0'){
+    if(*ch==','||*ch==';'){
+      strncpy(temp,ch-index,index);
+      temp[index]='\0';
+      output_direction[count]=str2float(temp);
+      index=0;
+      count++;
+      ch++;
+      continue;
+    }
+    index++;
+    ch++;
   }
-  return false;
+}
+
+//get right gripper touch point
+void get_r_touch_point(SOCKET &sockClient, const Eigen::Vector3f& input_position, Eigen::Vector3f& output_direction){
+  char tem[1024];
+  memset(tem, 0, sizeof(tem));
+
+  stringstream ss;
+  string s;
+  ss << "p:"; 
+
+  ss << input_position[0] << "," << input_position[1] << "," << input_position[2] << ";";
+
+  ss >> s;
+  strcpy(tem, const_cast<char*>(s.c_str()));
+
+  send(sockClient,tem,strlen(tem)+1,0);
+
+  char recvBuf[256];
+  recv(sockClient,recvBuf,256,0);
+
+  char *ch = recvBuf;
+  int index=0;
+  int count=0;
+  char temp[20];
+
+  while(*ch!='\0'){
+    if(*ch==','||*ch==';'){
+      strncpy(temp,ch-index,index);
+      temp[index]='\0';
+      output_direction[count]=str2float(temp);
+      index=0;
+      count++;
+      ch++;
+      continue;
+    }
+    index++;
+    ch++;
+  }
 }
 
 //close the socket
