@@ -228,6 +228,19 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
     printf("show confidence graph ...\n");
     UIEngine::Instance()->mainEngine->showSegmentResult(1);
     break;
+  case '2'://just for test
+    {
+      CInteractionCompute cic(UIEngine::Instance()->mainEngine->cPointCloudAnalysis);
+     
+      if(cic.vecObjectHypo[0].objectness < 200){
+        break;
+      }
+
+      Eigen::Vector3f position_under_kinect;
+      Eigen::Vector3f direction;
+      cic.getTouchPointAndDir(0, position_under_kinect, direction, true);
+      break;
+    }
   case 'a':
     printf("auto reconstruct ...\n");
     UIEngine::Instance()->autoReconstruct();
@@ -689,7 +702,7 @@ DWORD _stdcall autoscan(LPVOID lpParameter)
       break;
     }
 
-    cic.getTouchPointAndDir(i, position_under_kinect, direction);
+    cic.getTouchPointAndDir(i, position_under_kinect, direction, false);
 
     get_l_touch_point(sockClient, position_under_kinect, position);
 

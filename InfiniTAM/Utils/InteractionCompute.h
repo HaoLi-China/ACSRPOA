@@ -48,7 +48,7 @@ public:
 public:
 	CInteractionCompute(CPointCloudAnalysis &cPointCloudAnalysis);
 	~CInteractionCompute(void);
-  void getTouchPointAndDir(const int objectId, Eigen::Vector3f &position, Eigen::Vector3f &direction);
+  void getTouchPointAndDir(const int objectId, Eigen::Vector3f &position, Eigen::Vector3f &direction, bool debug);
   void Preprocessing(const int objectId);
   void Filter(const int objectId);
   bool IsAccessible(const MyPt_RGB_NORMAL point, const int objectId);

@@ -2,7 +2,8 @@
 #include "InteractionCompute.h"
 
 //get transform matrix between plane and x_y plane 
-void GetTempTransformMatrix(Eigen::Vector3d normal, Eigen::Matrix4f& matrix_transform, Eigen::Matrix4f& matrix_transform_r){
+void GetTempTransformMatrix(Eigen::Vector3d sup_normal, Eigen::Matrix4f& matrix_transform, Eigen::Matrix4f& matrix_transform_r){
+  Eigen::Vector3d normal = sup_normal;
   normal.normalize();
 
   if(normal.dot(Eigen::Vector3d(0,0,1))>0){
@@ -28,7 +29,7 @@ CInteractionCompute::CInteractionCompute(CPointCloudAnalysis &cPointCloudAnalysi
   fMin = LARGE_NUM;
 
   sup_plane_normal = cPointCloudAnalysis.sup_plane_normal;
-  
+
   for(int i = 0; i < cPointCloudAnalysis.vecAreaInterest.size();i++)
   {
     for(int j = 0; j < cPointCloudAnalysis.vecAreaInterest[i].vecObjectHypo.size();j++)
@@ -40,8 +41,8 @@ CInteractionCompute::CInteractionCompute(CPointCloudAnalysis &cPointCloudAnalysi
       tem.objectness = oh.objectness;
       tem.mergeFlag = oh.mergeFlag;
       tem.centerPoint = oh.cenPoint;
-      tem.minHeight =0;
-      tem.maxHeight =0;
+      tem.minHeight =fMin;
+      tem.maxHeight =fMax;
       vecObjectHypo.push_back(tem);
 
       MyPointCloud_RGB_NORMAL cloud_tem;
@@ -82,24 +83,24 @@ CInteractionCompute::CInteractionCompute(CPointCloudAnalysis &cPointCloudAnalysi
   GetTempTransformMatrix(sup_plane_normal, matrix_transform, matrix_transform_r);
 
   for(int i=0; i<vecObjectPoints.size(); i++){
-  PointCloudPtr_RGB_NORMAL pc(new PointCloud_RGB_NORMAL);
-  PointCloudPtr_RGB_NORMAL tem(new PointCloud_RGB_NORMAL);
-  MyPointCloud_RGB_NORMAL2PointCloud_RGB_NORMAL(vecObjectPoints[i], pc);
-  pcl::transformPointCloud (*pc, *tem, matrix_transform);
+    PointCloudPtr_RGB_NORMAL pc(new PointCloud_RGB_NORMAL);
+    PointCloudPtr_RGB_NORMAL tem(new PointCloud_RGB_NORMAL);
+    MyPointCloud_RGB_NORMAL2PointCloud_RGB_NORMAL(vecObjectPoints[i], pc);
+    pcl::transformPointCloud (*pc, *tem, matrix_transform);
 
-  for (int j=0; j<tem->size(); ++j) {
-    float x, y, z;
-    x=tem->points[i].x;
-    y=tem->points[i].y;
-    z=tem->points[i].z;
+    for (int j=0; j<tem->size(); ++j) {
+      float x, y, z;
+      x=tem->points[j].x;
+      y=tem->points[j].y;
+      z=tem->points[j].z;
 
-    if(z<(vecObjectHypo[i].minHeight)){
-      vecObjectHypo[i].minHeight=z;
+      if(z<(vecObjectHypo[i].minHeight)){
+        vecObjectHypo[i].minHeight=z;
+      }
+      else if(z>(vecObjectHypo[i].maxHeight)){
+        vecObjectHypo[i].maxHeight=z;
+      }
     }
-    else if(z>(vecObjectHypo[i].maxHeight)){
-      vecObjectHypo[i].maxHeight=z;
-    }
-  }
   }
 }
 
@@ -107,7 +108,7 @@ CInteractionCompute::~CInteractionCompute(void)
 {
 }
 
-void CInteractionCompute::getTouchPointAndDir(const int objectId, Eigen::Vector3f &position, Eigen::Vector3f &direction){
+void CInteractionCompute::getTouchPointAndDir(const int objectId, Eigen::Vector3f &position, Eigen::Vector3f &direction, bool debug){
   Preprocessing(objectId);
   Filter(objectId);
   int max_score_index;
@@ -120,6 +121,28 @@ void CInteractionCompute::getTouchPointAndDir(const int objectId, Eigen::Vector3
   direction[0] = -vecObjectPoints[objectId].mypoints[max_score_index].normal_x;
   direction[1] = -vecObjectPoints[objectId].mypoints[max_score_index].normal_y; 
   direction[2] = 0; 
+  direction.normalize();
+  
+  //for debug
+  if(debug){
+    PointCloudPtr_RGB_NORMAL test_cloud(new PointCloud_RGB_NORMAL);
+    MyPointCloud_RGB_NORMAL2PointCloud_RGB_NORMAL(vecObjectPoints[objectId], test_cloud);
+    test_cloud->points[max_score_index].r = 255;
+    test_cloud->points[max_score_index].g = 0;
+    test_cloud->points[max_score_index].b = 0;
+
+    Point_RGB_NORMAL pt;
+    pt.x = vecObjectHypo[objectId].centerPoint.x;
+    pt.y = vecObjectHypo[objectId].centerPoint.y;
+    pt.z = vecObjectHypo[objectId].centerPoint.z;
+    pt.r = 0;
+    pt.g = 0;
+    pt.b = 255;
+
+    test_cloud->push_back(pt);
+
+    showPointCloud3(test_cloud, "test");
+  }
 }
 
 void CInteractionCompute::Preprocessing(const int objectId){
@@ -139,12 +162,13 @@ void CInteractionCompute::Filter(const int objectId){
   MyPointCloud_RGB_NORMAL2PointCloud_RGB_NORMAL(vecObjectPoints[objectId], pc);
   pcl::transformPointCloud (*pc, *tem, matrix_transform);
 
-  for(int k = 0;k < vecObjectPoints[objectId].mypoints.size();k++)
+  for(int k = 0; k < vecObjectPoints[objectId].mypoints.size(); k++)
   {
     MyPt_RGB_NORMAL point = vecObjectPoints[objectId].mypoints[k];
 
+    double height = (vecObjectHypo[objectId].maxHeight - vecObjectHypo[objectId].minHeight);
     //Lower push
-    if(pc->points[k].z - vecObjectHypo[objectId].minHeight > (vecObjectHypo[objectId].maxHeight - vecObjectHypo[objectId].minHeight) * 2.0 / 3 || pc->points[k].z  - vecObjectHypo[objectId].minHeight < (vecObjectHypo[objectId].maxHeight - vecObjectHypo[objectId].minHeight) * 1.0 / 5)
+    if((tem->points[k].z - vecObjectHypo[objectId].minHeight) > ( height * 2.0 / 3) || (tem->points[k].z  - vecObjectHypo[objectId].minHeight) < (height * 1.0 / 5))
     {
       ptScore.vecInvalidFlag[k] = false;
       continue;
@@ -198,7 +222,7 @@ bool CInteractionCompute::IsExistBlock(const MyPt_RGB_NORMAL point, const int ob
       MyPt_RGB_NORMAL pointi = vecObjectPoints[currentId].mypoints[k];
       double dis_real = sqrt((pointi.x - point.x) * (pointi.x - point.x) + (pointi.y - point.y) * (pointi.y - point.y) + (pointi.z - point.z) * (pointi.z - point.z));
       double dis_hor = (pointi.x - point.x) * point.normal_x + (pointi.y - point.y) * point.normal_y + (pointi.z - point.z) * point.normal_z;
-      
+
       if(dis_hor < 0 && dis_hor > -0.1){
         double dis_rad = sqrt(dis_real*dis_real - dis_hor*dis_hor);
         if(dis_rad < 0.05)  //para
@@ -287,27 +311,52 @@ double CInteractionCompute::GetFs(const int objectId, vector<int> &neighborObjec
 void CInteractionCompute::ComputeScore(const int objectId, int &max_score_index)
 {
   MyPoint centerPoint = vecObjectHypo[objectId].centerPoint;
+  max_score_index = 0;
+  vector<int> neighborObject;
+  GetNeighborObject(objectId, paraNearObject, neighborObject);
 
-  for(int k = 0;k < vecObjectPoints[objectId].mypoints.size();k++)
+  Eigen::Matrix4f matrix_transform;
+  Eigen::Matrix4f matrix_transform_r;
+  GetTempTransformMatrix(sup_plane_normal, matrix_transform, matrix_transform_r);
+
+  PointCloudPtr_RGB_NORMAL pc(new PointCloud_RGB_NORMAL);
+  PointCloudPtr_RGB_NORMAL tem(new PointCloud_RGB_NORMAL);
+  MyPointCloud_RGB_NORMAL2PointCloud_RGB_NORMAL(vecObjectPoints[objectId], pc);
+  Point_RGB_NORMAL pt;
+  pt.x = centerPoint.x;
+  pt.y = centerPoint.y;
+  pt.z = centerPoint.z;
+  pc->push_back(pt);
+  pcl::transformPointCloud (*pc, *tem, matrix_transform);
+
+  int last_index = pc->size()-1;
+
+  for(int k = 0; k < vecObjectPoints[objectId].mypoints.size(); k++)
   {
     if(!ptScore.vecInvalidFlag[k])	continue;
 
-    MyPt_RGB_NORMAL point = vecObjectPoints[objectId].mypoints[k];
-    MyPt_RGB_NORMAL pointq;
-    pointq.x = centerPoint.x - point.x;
-    pointq.y = centerPoint.y - point.y;
+    Point_RGB_NORMAL point = tem->points[k];
+    Point_RGB_NORMAL pointq;
+    pointq.x = tem->points[last_index].x - point.x;
+    pointq.y = tem->points[last_index].y - point.y;
     pointq.z = 0;
     double nomalize = sqrt(pointq.x*pointq.x + pointq.y*pointq.y);
     pointq.x /= nomalize;
     pointq.y /= nomalize;
     pointq.z /= nomalize;
-    double ft = (-point.normal_x) * pointq.x + (-point.normal_y) * pointq.y + (-point.normal_z) * pointq.z;
+    double ft = std::abs((-point.normal_x) * pointq.x + (-point.normal_y) * pointq.y + (-point.normal_z) * pointq.z);
 
+    double fs = GetFs(objectId,neighborObject,vecObjectPoints[objectId].mypoints[k]);
 
-    vector<int> neighborObject;
-    GetNeighborObject(objectId, paraNearObject, neighborObject);
-    double fs = GetFs(objectId,neighborObject,point);
-    double f = pow(ft,0.3) * pow(fs,0.7);
+    //for debug
+    //if(fs<1){
+    //  std::cout<<"fs:"<<fs<<std::endl;
+    //}
+
+    double fd = nomalize / (vecObjectHypo[objectId].maxHeight - vecObjectHypo[objectId].minHeight); //I added it for some special factors
+
+    //double f = pow(ft,0.3) * pow(fs,0.7);
+    double f = pow(ft, 0.2) * pow(1 - fd, 0.3) * pow(fs, 0.5);
     ptScore.vecScore[k] = f;		
 
     if(f > fMax){
