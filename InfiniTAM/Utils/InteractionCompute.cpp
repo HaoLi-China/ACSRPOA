@@ -120,7 +120,8 @@ void CInteractionCompute::getTouchPointAndDir(const int objectId, Eigen::Vector3
 
   direction[0] = -vecObjectPoints[objectId].mypoints[max_score_index].normal_x;
   direction[1] = -vecObjectPoints[objectId].mypoints[max_score_index].normal_y; 
-  direction[2] = 0; 
+  direction[2] = -vecObjectPoints[objectId].mypoints[max_score_index].normal_z; 
+
   direction.normalize();
   
   //for debug

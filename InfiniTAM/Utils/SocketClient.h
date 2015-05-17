@@ -61,11 +61,11 @@ bool set_head_pose(SOCKET &sockClient, Eigen::Vector3f&head_focus);
 //close the socket
 bool close_socket(SOCKET &sockClient);
 
-//get left gripper touch point
-void get_l_touch_point(SOCKET &sockClient, const Eigen::Vector3f& input_position, Eigen::Vector3f& output_direction);
+//get left gripper touch point and direction
+void get_l_touch_point_and_dir(SOCKET &sockClient, const Eigen::Vector3f& input_position, const Eigen::Vector3f& input_dir, Eigen::Vector3f& output_position, Eigen::Vector3f& output_dir);
 
-//get right gripper touch point
-void get_r_touch_point(SOCKET &sockClient, const Eigen::Vector3f& input_position, Eigen::Vector3f& output_direction);
+//get right gripper touch point and direction
+void get_r_touch_point_and_dir(SOCKET &sockClient, const Eigen::Vector3f& input_position, const Eigen::Vector3f& input_dir, Eigen::Vector3f& output_position, Eigen::Vector3f& output_dir);
 
 ////push the object
 //void excute_set_arm_pose();
