@@ -20,7 +20,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v110</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -44,13 +44,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Program Files\OpenNI2\Include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Program Files\OpenNI2\Lib;E:\SIGGRAPH2015\InfiniTAM\IncludeLib\freeglut\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Program Files\OpenNI2\Include;$(IncludePath);E:\SIGGRAPH2015\ACSROA\IncludeLib\Boost\include;E:\SIGGRAPH2015\ACSROA\IncludeLib\Eigen\include;E:\SIGGRAPH2015\ACSROA\IncludeLib\flann\include;E:\SIGGRAPH2015\ACSROA\IncludeLib\PCL\include\pcl-1.7;E:\SIGGRAPH2015\ACSROA\IncludeLib\qhull\include;E:\SIGGRAPH2015\ACSROA\IncludeLib\VTK\include\vtk-5.8;E:\SIGGRAPH2015\ACSROA\IncludeLib\opencv\include;E:\SIGGRAPH2015\ACSROA\IncludeLib\GeometricTool\include;E:\SIGGRAPH2015\ACSROA\IncludeLib\vcglib;E:\SIGGRAPH2015\ACSROA\IncludeLib\trimesh\include</IncludePath>
+    <LibraryPath>C:\Program Files\OpenNI2\Lib;E:\SIGGRAPH2015\ACSROA\IncludeLib\freeglut\lib;E:\SIGGRAPH2015\ACSROA\IncludeLib\Boost\lib;E:\SIGGRAPH2015\ACSROA\IncludeLib\flann\lib;E:\SIGGRAPH2015\ACSROA\IncludeLib\PCL\lib;E:\SIGGRAPH2015\ACSROA\IncludeLib\qhull\lib;E:\SIGGRAPH2015\ACSROA\IncludeLib\VTK\lib\vtk-5.8;E:\SIGGRAPH2015\ACSROA\IncludeLib\opencv\lib\x64\vc10\lib;E:\SIGGRAPH2015\ACSROA\IncludeLib\GeometricTool\lib;E:\SIGGRAPH2015\ACSROA\IncludeLib\trimesh\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <LibraryPath>E:\HaoLi\GitHub\Modified-InfiniTAM\IncludeLib\freeglut\lib;C:\Program Files\OpenNI2\Lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>C:\Program Files\OpenNI2\Include;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;E:\HaoLi\GitHub\Modified-InfiniTAM\IncludeLib\freeglut\include;$(IncludePath)</IncludePath>
+    <LibraryPath>..\IncludeLib\freeglut\lib;C:\Program Files\OpenNI2\Lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Program Files\OpenNI2\Include;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.5\include;..\IncludeLib\freeglut\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
