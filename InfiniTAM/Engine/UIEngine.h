@@ -54,7 +54,7 @@ namespace InfiniTAM
 
       enum MainLoopAction
       {
-        PROCESS_PAUSED, PROCESS_FRAME, PROCESS_VIDEO, PROCESS_EXIT, SAVE_TO_DISK, OVER_SEG_FRAME, SEG_FRAME, UPDATE_SEG_FRAME
+        PROCESS_PAUSED, DEPTH_PAUSED, PROCESS_FRAME, PROCESS_VIDEO, PROCESS_EXIT, SAVE_TO_DISK, OVER_SEG_FRAME, SEG_FRAME, UPDATE_SEG_FRAME
       }mainLoopAction;//hao modified it
 
       ITMMainEngine *mainEngine;//hao modified it

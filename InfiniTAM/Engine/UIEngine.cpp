@@ -30,16 +30,22 @@ static void safe_glutBitmapString(void *font, const char *str)
   }
 }
 
+//hao modified it
 void UIEngine::glutDisplayFunction()
 {
   UIEngine *uiEngine = UIEngine::Instance();
 
-  // get updated images from processing thread
-  if (uiEngine->freeviewActive) 
-    uiEngine->mainEngine->GetImage(uiEngine->outImage[0], uiEngine->outImageType[0], uiEngine->colourActive, &uiEngine->freeviewPose, &uiEngine->freeviewIntrinsics);
-  else uiEngine->mainEngine->GetImage(uiEngine->outImage[0], uiEngine->outImageType[0], false);
+  if(uiEngine->mainLoopAction == DEPTH_PAUSED){
+    for (int w = 0; w < NUM_WIN; w++) uiEngine->mainEngine->GetDepthAndColorImageForPause(uiEngine->outImage[w], uiEngine->outImageType[w], false);
+  }
+  else{
+    // get updated images from processing thread
+    if (uiEngine->freeviewActive) 
+      uiEngine->mainEngine->GetImage(uiEngine->outImage[0], uiEngine->outImageType[0], uiEngine->colourActive, &uiEngine->freeviewPose, &uiEngine->freeviewIntrinsics);
+    else uiEngine->mainEngine->GetImage(uiEngine->outImage[0], uiEngine->outImageType[0], false);
 
-  for (int w = 1; w < NUM_WIN; w++) uiEngine->mainEngine->GetImage(uiEngine->outImage[w], uiEngine->outImageType[w], false);
+    for (int w = 1; w < NUM_WIN; w++) uiEngine->mainEngine->GetImage(uiEngine->outImage[w], uiEngine->outImageType[w], false);
+  }
 
   // do the actual drawing
   glClear(GL_COLOR_BUFFER_BIT);
@@ -136,7 +142,7 @@ void UIEngine::glutIdleFunction()
     }
 
     uiEngine->ProcessFrame(1); uiEngine->processedFrameNo++;
-    uiEngine->mainLoopAction = PROCESS_PAUSED;
+    uiEngine->mainLoopAction = DEPTH_PAUSED;
     uiEngine->needsRefresh = true;
     break;
   case SEG_FRAME:
@@ -150,7 +156,7 @@ void UIEngine::glutIdleFunction()
     }
 
     uiEngine->ProcessFrame(2); uiEngine->processedFrameNo++;
-    uiEngine->mainLoopAction = PROCESS_PAUSED;
+    uiEngine->mainLoopAction = DEPTH_PAUSED;
     uiEngine->needsRefresh = true;
     break;
   case UPDATE_SEG_FRAME:
@@ -204,6 +210,14 @@ void UIEngine::glutIdleFunction()
 #endif
     break;
   case PROCESS_PAUSED:
+    break;
+  case DEPTH_PAUSED:
+    {
+      if (!uiEngine->imageSource->hasMoreImages()) break;
+      uiEngine->imageSource->getImages(uiEngine->mainEngine->view);  
+      uiEngine->needsRefresh = true;
+      break;
+    }
   default:
     break;
   }
@@ -223,10 +237,12 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
   case '0':
     printf("show object seg result ...\n");
     UIEngine::Instance()->mainEngine->showSegmentResult(0);
+    glutPostRedisplay();
     break;
   case '1':
     printf("show confidence graph ...\n");
     UIEngine::Instance()->mainEngine->showSegmentResult(1);
+    glutPostRedisplay();
     break;
   case '2'://just for test
     {

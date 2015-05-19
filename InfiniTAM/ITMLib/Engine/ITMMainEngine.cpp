@@ -184,6 +184,42 @@ void ITMMainEngine::GetImage(ITMUChar4Image *out, GetImageType getImageType, boo
   };
 }
 
+//hao modified it
+void ITMMainEngine::GetDepthAndColorImageForPause(ITMUChar4Image *out, GetImageType getImageType, bool useColour, ITMPose *pose, ITMIntrinsics *intrinsics)
+{
+  out->Clear();
+
+  switch (getImageType)
+  {
+  case ITMMainEngine::InfiniTAM_IMAGE_ORIGINAL_RGB:
+    out->ChangeDims(view->rgb->noDims);
+    out->SetFrom(view->rgb);
+    break;
+  case ITMMainEngine::InfiniTAM_IMAGE_ORIGINAL_DEPTH:
+    out->ChangeDims(view->depth->noDims);
+    ITMVisualisationEngine<ITMVoxel,ITMVoxelIndex>::DepthToUchar4(out, view->depth);
+    break;
+  case ITMMainEngine::InfiniTAM_IMAGE_SCENERAYCAST:
+    if (settings->useGPU) trackingState->rendering->UpdateHostFromDevice();
+    out->ChangeDims(trackingState->rendering->noDims);
+    out->SetFrom(trackingState->rendering);
+    break;
+  case ITMMainEngine::InfiniTAM_IMAGE_SCENERAYCAST_FREECAMERA:
+    if (pose != NULL && intrinsics != NULL)
+    {
+      if (visualisationState == NULL) visualisationState = visualisationEngine->allocateInternalState(out->noDims);
+
+      visualisationEngine->FindVisibleBlocks(scene, pose, intrinsics, visualisationState);
+      visualisationEngine->CreateExpectedDepths(scene, pose, intrinsics, visualisationState->minmaxImage, visualisationState);
+      visualisationEngine->RenderImage(scene, pose, intrinsics, visualisationState, visualisationState->outputImage, useColour);
+
+      if (settings->useGPU) visualisationState->outputImage->UpdateHostFromDevice();
+      out->SetFrom(visualisationState->outputImage);
+    }
+    break;
+  };
+}
+
 void ITMMainEngine::turnOnIntegration()
 {
   fusionActive = true;
@@ -193,7 +229,6 @@ void ITMMainEngine::turnOffIntegration()
 {
   fusionActive = false;
 }
-
 
 //hao modified it
 void ITMMainEngine::overSegmentView()

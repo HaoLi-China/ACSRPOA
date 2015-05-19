@@ -113,6 +113,7 @@ namespace ITMLib
 
       /// Get a result image as output
       void GetImage(ITMUChar4Image *out, GetImageType getImageType, bool useColour, ITMPose *pose = NULL, ITMIntrinsics *intrinsics = NULL);
+      void GetDepthAndColorImageForPause(ITMUChar4Image *out, GetImageType getImageType, bool useColour, ITMPose *pose = NULL, ITMIntrinsics *intrinsics = NULL);//hao modified it
 
       void SaveAll();
 
