@@ -651,6 +651,7 @@ DWORD _stdcall autoscan(LPVOID lpParameter)
   //float pos_right_arm[] = {0.564, -0.328, 0.213, -1.222, 2.373, -2.014, -3.376};
   //float pos_right_arm[] = {0.564, 0.168, -0.040, -1.959, -3.629, -1.960, 2.948};
   Eigen::Vector3f head_focus(0.5, 0.0, 1.2);
+  //Eigen::Vector3f head_focus(1.5, 0.5, 0.6);
   float torso_up = 0.20;
   init_robot_pose(sockClient, pos_left_arm, pos_right_arm, head_focus, torso_up);
 
@@ -706,7 +707,7 @@ DWORD _stdcall autoscan(LPVOID lpParameter)
     cic.getTouchPointAndDir(i, position_under_kinect, direction_under_kinect, false);
 
     get_l_touch_point_and_dir(sockClient, position_under_kinect, direction_under_kinect, position, direction);
-
+    //test_calibration_result(sockClient, position_under_kinect, direction_under_kinect);
     set_head_pose(sockClient, position);
     l_push_object(sockClient, position, direction);
 

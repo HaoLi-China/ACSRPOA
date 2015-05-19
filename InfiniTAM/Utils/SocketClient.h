@@ -67,6 +67,9 @@ void get_l_touch_point_and_dir(SOCKET &sockClient, const Eigen::Vector3f& input_
 //get right gripper touch point and direction
 void get_r_touch_point_and_dir(SOCKET &sockClient, const Eigen::Vector3f& input_position, const Eigen::Vector3f& input_dir, Eigen::Vector3f& output_position, Eigen::Vector3f& output_dir);
 
+//just for test 
+bool test_calibration_result(SOCKET &sockClient, const Eigen::Vector3f& input_position, const Eigen::Vector3f& input_dir);
+
 ////push the object
 //void excute_set_arm_pose();
 //

@@ -469,6 +469,31 @@ void get_r_touch_point_and_dir(SOCKET &sockClient, const Eigen::Vector3f& input_
   }
 }
 
+//just for test
+bool test_calibration_result(SOCKET &sockClient, const Eigen::Vector3f& input_position, const Eigen::Vector3f& input_dir){
+  char tem[1024];
+  memset(tem, 0, sizeof(tem));
+
+  stringstream ss;
+  string s;
+  ss << "q:"; 
+
+  ss << input_position[0] << "," << input_position[1] << "," << input_position[2] << "," << input_dir[0] << "," << input_dir[1] << "," << input_dir[2] << ";";
+
+  ss >> s;
+  strcpy(tem, const_cast<char*>(s.c_str()));
+
+  send(sockClient,tem,strlen(tem)+1,0);
+
+  char recvBuf[256];
+  recv(sockClient,recvBuf,256,0);
+
+  if(strcmp(recvBuf,"finished")==0){
+    return true;
+  }
+  return false;
+}
+
 //close the socket
 bool close_socket(SOCKET &sockClient){
   send(sockClient,"z",strlen("z")+1,0);
