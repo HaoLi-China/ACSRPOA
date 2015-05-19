@@ -690,9 +690,10 @@ DWORD _stdcall autoscan(LPVOID lpParameter)
   //Eigen::Vector3f position_under_kinect(0.80, 0.40, 0.780);
   //Eigen::Vector3f direction(1, 0, 0);
   Eigen::Vector3f position;
+  Eigen::Vector3f direction;
 
   Eigen::Vector3f position_under_kinect;
-  Eigen::Vector3f direction;
+  Eigen::Vector3f direction_under_kinect;
 
   CInteractionCompute cic(UIEngine::Instance()->mainEngine->cPointCloudAnalysis);
 
@@ -702,9 +703,9 @@ DWORD _stdcall autoscan(LPVOID lpParameter)
       break;
     }
 
-    cic.getTouchPointAndDir(i, position_under_kinect, direction, false);
+    cic.getTouchPointAndDir(i, position_under_kinect, direction_under_kinect, false);
 
-    get_l_touch_point(sockClient, position_under_kinect, position);
+    get_l_touch_point_and_dir(sockClient, position_under_kinect, direction_under_kinect, position, direction);
 
     set_head_pose(sockClient, position);
     l_push_object(sockClient, position, direction);

@@ -245,6 +245,9 @@ bool r_put_down_kinect(SOCKET &sockClient){
 
 //left arm push object
 bool l_push_object(SOCKET &sockClient, Eigen::Vector3f& position, Eigen::Vector3f& direction){
+
+  direction.normalize();
+
   char tem[1024];
   memset(tem, 0, sizeof(tem));
 
@@ -374,7 +377,7 @@ bool r_take_back(SOCKET &sockClient, Eigen::Vector3f& position, Eigen::Vector3f&
 }
 
 //get left gripper touch point
-void get_l_touch_point(SOCKET &sockClient, const Eigen::Vector3f& input_position, Eigen::Vector3f& output_direction){
+void get_l_touch_point_and_dir(SOCKET &sockClient, const Eigen::Vector3f& input_position, const Eigen::Vector3f& input_dir, Eigen::Vector3f& output_position, Eigen::Vector3f& output_dir){
   char tem[1024];
   memset(tem, 0, sizeof(tem));
 
@@ -382,26 +385,35 @@ void get_l_touch_point(SOCKET &sockClient, const Eigen::Vector3f& input_position
   string s;
   ss << "o:"; 
 
-  ss << input_position[0] << "," << input_position[1] << "," << input_position[2] << ";";
+  ss << input_position[0] << "," << input_position[1] << "," << input_position[2] << "," 
+     << input_dir[0] << "," << input_dir[1] << "," << input_dir[2] << ";";
 
   ss >> s;
   strcpy(tem, const_cast<char*>(s.c_str()));
 
   send(sockClient,tem,strlen(tem)+1,0);
 
-  char recvBuf[256];
-  recv(sockClient,recvBuf,256,0);
+  char recvBuf[1024];
+  recv(sockClient,recvBuf,1024,0);
 
   char *ch = recvBuf;
   int index=0;
   int count=0;
   char temp[20];
 
+  //printf("recvBuf:%s\n", recvBuf);
+
   while(*ch!='\0'){
     if(*ch==','||*ch==';'){
       strncpy(temp,ch-index,index);
       temp[index]='\0';
-      output_direction[count]=str2float(temp);
+
+      if(count < 3){
+        output_position[count]=str2float(temp);
+      }
+      else{
+        output_dir[count-3]=str2float(temp);
+      }
       index=0;
       count++;
       ch++;
@@ -413,7 +425,7 @@ void get_l_touch_point(SOCKET &sockClient, const Eigen::Vector3f& input_position
 }
 
 //get right gripper touch point
-void get_r_touch_point(SOCKET &sockClient, const Eigen::Vector3f& input_position, Eigen::Vector3f& output_direction){
+void get_r_touch_point_and_dir(SOCKET &sockClient, const Eigen::Vector3f& input_position, const Eigen::Vector3f& input_dir, Eigen::Vector3f& output_position, Eigen::Vector3f& output_dir){
   char tem[1024];
   memset(tem, 0, sizeof(tem));
 
@@ -421,15 +433,15 @@ void get_r_touch_point(SOCKET &sockClient, const Eigen::Vector3f& input_position
   string s;
   ss << "p:"; 
 
-  ss << input_position[0] << "," << input_position[1] << "," << input_position[2] << ";";
+  ss << input_position[0] << "," << input_position[1] << "," << input_position[2] << "," << input_dir[0] << "," << input_dir[1] << "," << input_dir[2] << ";";
 
   ss >> s;
   strcpy(tem, const_cast<char*>(s.c_str()));
 
   send(sockClient,tem,strlen(tem)+1,0);
 
-  char recvBuf[256];
-  recv(sockClient,recvBuf,256,0);
+  char recvBuf[1024];
+  recv(sockClient,recvBuf,1024,0);
 
   char *ch = recvBuf;
   int index=0;
@@ -440,7 +452,13 @@ void get_r_touch_point(SOCKET &sockClient, const Eigen::Vector3f& input_position
     if(*ch==','||*ch==';'){
       strncpy(temp,ch-index,index);
       temp[index]='\0';
-      output_direction[count]=str2float(temp);
+
+      if(count < 3){
+        output_position[count]=str2float(temp);
+      }
+      else{
+        output_dir[count-3]=str2float(temp);
+      }
       index=0;
       count++;
       ch++;
