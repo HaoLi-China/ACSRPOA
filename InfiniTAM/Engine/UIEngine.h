@@ -41,6 +41,7 @@ namespace InfiniTAM
 			bool intergrationActive;
 			ITMPose freeviewPose;
 			ITMIntrinsics freeviewIntrinsics;
+      int show_mode;
 
 			int mouseState;
 			Vector2i mouseLastClick;

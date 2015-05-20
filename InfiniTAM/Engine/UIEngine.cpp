@@ -350,6 +350,33 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
     }
     uiEngine->needsRefresh = true;
     break;
+  case 'z':
+    if (uiEngine->show_mode == 0)
+    {
+      uiEngine->outImageType[0] = ITMMainEngine::InfiniTAM_IMAGE_ORIGINAL_DEPTH;
+      uiEngine->outImageType[1] = ITMMainEngine::InfiniTAM_IMAGE_SCENERAYCAST;
+      uiEngine->outImageType[2] = ITMMainEngine::InfiniTAM_IMAGE_ORIGINAL_RGB;
+
+      uiEngine->show_mode = 1;
+    }
+    else if (uiEngine->show_mode == 1)
+    {
+      uiEngine->outImageType[0] = ITMMainEngine::InfiniTAM_IMAGE_ORIGINAL_RGB;
+      uiEngine->outImageType[1] = ITMMainEngine::InfiniTAM_IMAGE_ORIGINAL_DEPTH;
+      uiEngine->outImageType[2] = ITMMainEngine::InfiniTAM_IMAGE_SCENERAYCAST;
+
+      uiEngine->show_mode = 2;
+    }
+    else if (uiEngine->show_mode == 2)
+    {
+      uiEngine->outImageType[0] = ITMMainEngine::InfiniTAM_IMAGE_SCENERAYCAST;
+      uiEngine->outImageType[1] = ITMMainEngine::InfiniTAM_IMAGE_ORIGINAL_DEPTH;
+      uiEngine->outImageType[2] = ITMMainEngine::InfiniTAM_IMAGE_ORIGINAL_RGB;
+
+      uiEngine->show_mode = 0;
+    }
+    uiEngine->needsRefresh = true;
+    break;
   case 'c':
     uiEngine->colourActive = !uiEngine->colourActive;
     uiEngine->needsRefresh = true;
@@ -358,6 +385,16 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
     uiEngine->intergrationActive = !uiEngine->intergrationActive;
     if (uiEngine->intergrationActive) uiEngine->mainEngine->turnOnIntegration();
     else uiEngine->mainEngine->turnOffIntegration();
+    break;
+  case 'x':
+    printf("PROCESS_PAUSED ...\n");
+    uiEngine->mainLoopAction = UIEngine::PROCESS_PAUSED;
+    uiEngine->needsRefresh = true;
+    break;
+  case 'y':
+    printf("DEPTH_PAUSED ...\n");
+    uiEngine->mainLoopAction = UIEngine::DEPTH_PAUSED;
+    uiEngine->needsRefresh = true;
     break;
   default:
     break;
@@ -480,6 +517,7 @@ void UIEngine::glutMouseWheelFunction(int button, int dir, int x, int y)
 
 void UIEngine::Initialise(int & argc, char** argv, ITMLibSettings *internalSettings, ImageSourceEngine *imageSource, ITMMainEngine *mainEngine, const char *outFolder)
 {
+  this->show_mode = 0;//hao modified it
   this->freeviewActive = false;
   this->colourActive = false;
   this->intergrationActive = true;
@@ -559,6 +597,7 @@ void UIEngine::Initialise(int & argc, char** argv, ITMLibSettings *internalSetti
 //hao modified it
 void UIEngine::resetEngine()
 {
+  this->show_mode = 0;//hao modified it
   this->freeviewActive = false;
   this->colourActive = false;
   this->intergrationActive = true;
