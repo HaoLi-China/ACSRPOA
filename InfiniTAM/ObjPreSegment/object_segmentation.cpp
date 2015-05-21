@@ -37,7 +37,7 @@ void shrinkCloudRange(PointCloudPtr_RGB_NORMAL source_cloud, const float range_x
 }
 
 //segment object
-void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, CPointCloudAnalysis &cpca, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud){
+void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, CPointCloudAnalysis &cpca, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud, vector<ushort> &objectIndexs){
   CPointCloudAnalysis cPointCloudAnalysis;
 
   PointCloudPtr_RGB_NORMAL shrinked_cloud(new PointCloud_RGB_NORMAL);
@@ -72,6 +72,7 @@ void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, CPointCloudAnalysis &c
     pt_rgb.b = 255;
     object_cloud->points.push_back(pt_rgb);
     confidence_cloud->points.push_back(pt_rgb);
+    objectIndexs.push_back(0);
   }
 
   cPointCloudAnalysis.tablePoint = tablePoint;
@@ -164,6 +165,7 @@ void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, CPointCloudAnalysis &c
           po.b = b;
 
           object_cloud->push_back(po);
+          objectIndexs.push_back(j+1);
         }
       }
     }

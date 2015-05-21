@@ -45,6 +45,7 @@ ITMMainEngine::ITMMainEngine(const ITMLibSettings *settings, const ITMRGBDCalib 
 
   objectColors = NULL;//hao modified it
   confidenceColors = NULL;//hao modified it
+  idCount = 1;
 }
 
 ITMMainEngine::~ITMMainEngine()
@@ -245,7 +246,7 @@ void ITMMainEngine::overSegmentView()
     ITMSafeCall(cudaMemset(points_device, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
     ITMSafeCall(cudaMalloc((void**)&normals_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
     ITMSafeCall(cudaMemset(normals_device, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
-    visualisationEngine->RealTimeSegment(scene, view, trackingState, points_device, normals_device);
+    visualisationEngine->GetRaycastImage(scene, view, trackingState, points_device, normals_device, NULL, NULL);
     ITMSafeCall(cudaMemcpy(points_host, points_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyDeviceToHost));
     ITMSafeCall(cudaMemcpy(normals_host, normals_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyDeviceToHost));
 
@@ -351,7 +352,7 @@ void ITMMainEngine::overSegmentView()
     ITMSafeCall(cudaMemcpy(colors_device, colors_host, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyHostToDevice));
     //pcl::io::savePLYFileBinary("Data/scan1.ply", *colored_cloud);
 
-    visualisationEngine->NewCreateICPMaps(scene, view, trackingState, colors_device);
+    visualisationEngine->NewCreateICPMaps(scene, view, trackingState, colors_device, NULL, 0);
 
     free(points_host);
     free(normals_host);
@@ -382,7 +383,7 @@ void ITMMainEngine::segmentView()
     ITMSafeCall(cudaMemset(points_device, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
     ITMSafeCall(cudaMalloc((void**)&normals_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
     ITMSafeCall(cudaMemset(normals_device, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
-    visualisationEngine->RealTimeSegment(scene, view, trackingState, points_device, normals_device);
+    visualisationEngine->GetRaycastImage(scene, view, trackingState, points_device, normals_device, NULL, NULL);
     ITMSafeCall(cudaMemcpy(points_host, points_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyDeviceToHost));
     ITMSafeCall(cudaMemcpy(normals_host, normals_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyDeviceToHost));
 
@@ -413,7 +414,8 @@ void ITMMainEngine::segmentView()
 
     PointCloudPtr_RGB object_cloud(new PointCloud_RGB);
     PointCloudPtr_RGB confidence_cloud(new PointCloud_RGB);
-    segmentObject(cloud, cPointCloudAnalysis, object_cloud, confidence_cloud);
+    vector<ushort> objectIndexs;
+    segmentObject(cloud, cPointCloudAnalysis, object_cloud, confidence_cloud, objectIndexs);
     //showPointCloud(segmented_cloud, "segmented_cloud");
 
     KDtree tree;
@@ -444,6 +446,7 @@ void ITMMainEngine::segmentView()
 
     PointCloudPtr_RGB colored_cloud0(new PointCloud_RGB);
     PointCloudPtr_RGB colored_cloud1(new PointCloud_RGB);
+    vector<ushort> objectIndexs_new;
     for(int i=0; i<cloud->size(); i++){
       Point_RGB p_tem;
       p_tem.x=0;
@@ -451,6 +454,7 @@ void ITMMainEngine::segmentView()
       p_tem.z=0;
       colored_cloud0->push_back(p_tem);
       colored_cloud1->push_back(p_tem);
+      objectIndexs_new.push_back(9999);
     }
 
     for(int i=0; i<object_cloud->size(); i++){
@@ -467,12 +471,16 @@ void ITMMainEngine::segmentView()
       colored_cloud1->points[gpu_indexes[i]].r = confidence_cloud->points[i].r;
       colored_cloud1->points[gpu_indexes[i]].g = confidence_cloud->points[i].g;
       colored_cloud1->points[gpu_indexes[i]].b = confidence_cloud->points[i].b;
+
+      objectIndexs_new[gpu_indexes[i]] = objectIndexs[i];
     }
 
     //showPointCloud(colored_cloud, "colored_cloud");
 
     objectColors = (Vector3f*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f));
     confidenceColors = (Vector3f*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f));
+    ushort *objectIds_host = (ushort*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(ushort));
+    memset(objectIds_host, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(ushort));
 
     int count=0;
     for(int i=0; i<view->depth->noDims.x*view->depth->noDims.y; i++){
@@ -485,6 +493,12 @@ void ITMMainEngine::segmentView()
           (*(confidenceColors+i))[0] = colored_cloud1->points[count].r;
           (*(confidenceColors+i))[1] = colored_cloud1->points[count].g;
           (*(confidenceColors+i))[2] = colored_cloud1->points[count].b;
+
+          if(objectIndexs_new[count] == 0){
+            (*(objectIds_host+i)) = 1;
+          }else{
+            (*(objectIds_host+i)) = idCount + objectIndexs_new[count];
+          }
         }
         else{
           (*(objectColors+i))[0] = -1;
@@ -509,25 +523,32 @@ void ITMMainEngine::segmentView()
       }
     }
 
+    idCount += (objectIndexs_new.size()-1);
+
     Vector3f *colors_device;
     ITMSafeCall(cudaMalloc((void**)&colors_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
     ITMSafeCall(cudaMemcpy(colors_device, objectColors, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyHostToDevice));
     //pcl::io::savePLYFileBinary("Data/scan1.ply", *colored_cloud);
 
-    visualisationEngine->NewCreateICPMaps(scene, view, trackingState, colors_device);
+    ushort *objectIds_device;
+    ITMSafeCall(cudaMalloc((void**)&objectIds_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(ushort)));
+    ITMSafeCall(cudaMemcpy(objectIds_device, objectIds_host, view->depth->noDims.x*view->depth->noDims.y*sizeof(ushort), cudaMemcpyHostToDevice));
+
+    visualisationEngine->NewCreateICPMaps(scene, view, trackingState, colors_device, objectIds_device, 1);
 
     free(points_host);
     free(normals_host);
-    //free(colors_host);
+    free(objectIds_host);
     free(id_array_host);
     points_host=NULL;
     normals_host=NULL;
-    //colors_host=NULL;
+    objectIds_host=NULL;
     id_array_host=NULL;
 
     ITMSafeCall(cudaFree(points_device));
     ITMSafeCall(cudaFree(normals_device));
     ITMSafeCall(cudaFree(colors_device));
+    ITMSafeCall(cudaFree(objectIds_device));
 #endif
   }
 }
@@ -545,7 +566,7 @@ void ITMMainEngine::showSegmentResult(int flag){
         ITMSafeCall(cudaMemcpy(colors_device, objectColors, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyHostToDevice));
         //pcl::io::savePLYFileBinary("Data/scan1.ply", *colored_cloud);
 
-        visualisationEngine->NewCreateICPMaps(scene, view, trackingState, colors_device);
+        visualisationEngine->NewCreateICPMaps(scene, view, trackingState, colors_device, NULL, 0);
 
         ITMSafeCall(cudaFree(colors_device));
         break;
@@ -557,7 +578,7 @@ void ITMMainEngine::showSegmentResult(int flag){
         ITMSafeCall(cudaMemcpy(colors_device, confidenceColors, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyHostToDevice));
         //pcl::io::savePLYFileBinary("Data/scan1.ply", *colored_cloud);
 
-        visualisationEngine->NewCreateICPMaps(scene, view, trackingState, colors_device);
+        visualisationEngine->NewCreateICPMaps(scene, view, trackingState, colors_device, NULL, 0);
 
         ITMSafeCall(cudaFree(colors_device));
         break;
@@ -581,7 +602,7 @@ void ITMMainEngine::saveViewPoints(){
     ITMSafeCall(cudaMemset(points_device, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
     ITMSafeCall(cudaMalloc((void**)&normals_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
     ITMSafeCall(cudaMemset(normals_device, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
-    visualisationEngine->RealTimeSegment(scene, view, trackingState, points_device, normals_device);
+    visualisationEngine->GetRaycastImage(scene, view, trackingState, points_device, normals_device, NULL, NULL);
     ITMSafeCall(cudaMemcpy(points_host, points_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyDeviceToHost));
     ITMSafeCall(cudaMemcpy(normals_host, normals_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyDeviceToHost));
 
@@ -630,7 +651,7 @@ void ITMMainEngine::saveViewPoints(ITMTrackingState *itmtrackingState){
     ITMSafeCall(cudaMemset(points_device, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
     ITMSafeCall(cudaMalloc((void**)&normals_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
     ITMSafeCall(cudaMemset(normals_device, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
-    visualisationEngine->RealTimeSegment(scene, view, itmtrackingState, points_device, normals_device);
+    visualisationEngine->GetRaycastImage(scene, view, trackingState, points_device, normals_device, NULL, NULL);
     ITMSafeCall(cudaMemcpy(points_host, points_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyDeviceToHost));
     ITMSafeCall(cudaMemcpy(normals_host, normals_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyDeviceToHost));
 
@@ -679,7 +700,7 @@ void ITMMainEngine::updateSegmentView(){
     ITMSafeCall(cudaMemset(points_device, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
     ITMSafeCall(cudaMalloc((void**)&normals_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
     ITMSafeCall(cudaMemset(normals_device, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
-    visualisationEngine->RealTimeSegment(scene, view, trackingStateTem, points_device, normals_device);
+    visualisationEngine->GetRaycastImage(scene, view, trackingState, points_device, normals_device, NULL, NULL);
     ITMSafeCall(cudaMemcpy(points_host, points_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyDeviceToHost));
     ITMSafeCall(cudaMemcpy(normals_host, normals_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyDeviceToHost));
 
@@ -873,7 +894,7 @@ void ITMMainEngine::updateSegmentView(){
     ITMSafeCall(cudaMemcpy(colors_device, objectColors, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyHostToDevice));
     //pcl::io::savePLYFileBinary("Data/scan1.ply", *colored_cloud);
 
-    visualisationEngine->NewCreateICPMaps(scene, view, trackingState, colors_device);
+    visualisationEngine->NewCreateICPMaps(scene, view, trackingState, colors_device, NULL, 0);
 
     free(points_host);
     free(normals_host);
@@ -901,7 +922,7 @@ void ITMMainEngine::detectChange(){
     ITMSafeCall(cudaMemset(points_device, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
     ITMSafeCall(cudaMalloc((void**)&normals_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
     ITMSafeCall(cudaMemset(normals_device, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
-    visualisationEngine->RealTimeSegment(scene, view, trackingStateTem, points_device, normals_device);
+    visualisationEngine->GetRaycastImage(scene, view, trackingState, points_device, normals_device, NULL, NULL);
     ITMSafeCall(cudaMemcpy(points_host, points_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyDeviceToHost));
     ITMSafeCall(cudaMemcpy(normals_host, normals_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyDeviceToHost));
 
@@ -1058,7 +1079,7 @@ void ITMMainEngine::detectChange(){
     ITMSafeCall(cudaMalloc((void**)&colors_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
     ITMSafeCall(cudaMemcpy(colors_device, colors_host, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyHostToDevice));
 
-    visualisationEngine->NewCreateICPMaps(scene, view, trackingStateTem, colors_device);
+    visualisationEngine->NewCreateICPMaps(scene, view, trackingStateTem, colors_device, NULL, 0);
 
     free(points_host);
     free(normals_host);

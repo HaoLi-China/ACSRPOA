@@ -140,6 +140,11 @@ struct ITMVoxel_s
 
 	static const bool hasColorInformation = false;
 
+  ushort id;//hao modified it 
+  uchar r;//hao modified it 
+  uchar g;//hao modified it 
+  uchar b;//hao modified it 
+
 	/** Value of the truncated signed distance transformation. */
 	short sdf;
 	/** Number of fused observations that make up @p sdf. */
@@ -147,10 +152,15 @@ struct ITMVoxel_s
 	/** Padding that may or may not improve performance on certain GPUs */
 	//uchar pad;
 
+  //hao modified it 
 	_CPU_AND_GPU_CODE_ ITMVoxel_s()
 	{
 		sdf = SDF_initialValue();
 		w_depth = 0;
+    id = 0;
+    r = 0;
+    g = 0;
+    b = 0;
 	}
 };
 

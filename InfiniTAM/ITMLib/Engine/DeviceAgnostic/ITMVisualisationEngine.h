@@ -4,6 +4,7 @@
 
 #include "../../Utils/ITMLibDefines.h"
 #include <vector>//hao modified it
+#include "math.h"//hao modified it
 
 using namespace std;//hao modified it
 
@@ -89,6 +90,7 @@ _CPU_AND_GPU_CODE_ inline void CreateRenderingBlocks(RenderingBlock *renderingBl
   }
 }
 
+//hao modified it
 template<class TVoxel, class TIndex>
 _CPU_AND_GPU_CODE_ inline bool castRay(Vector3f &pt_out, int x, int y, const TVoxel *voxelData, const typename TIndex::IndexData *voxelIndex, Matrix4f invM,
   Vector4f projParams, float oneOverVoxelSize, float mu, float viewFrustum_min, float viewFrustum_max)
@@ -118,6 +120,7 @@ _CPU_AND_GPU_CODE_ inline bool castRay(Vector3f &pt_out, int x, int y, const TVo
   enum { SEARCH_BLOCK_COARSE, SEARCH_BLOCK_FINE, SEARCH_SURFACE, BEHIND_SURFACE, WRONG_SIDE } state;
 
   sdfValue = readFromSDF_float_uninterpolated(voxelData, voxelIndex, pt_result, hash_found);
+
   if (!hash_found) state = SEARCH_BLOCK_COARSE;
   else if (sdfValue <= 0.0f) state = WRONG_SIDE;
   else state = SEARCH_SURFACE;
@@ -333,6 +336,11 @@ public:
   {
     drawRendering(foundPoint, angle, outRendering[locId]);
   }
+
+  //hao modified it
+  _CPU_AND_GPU_CODE_ inline void new_processPixel(int x, int y, int locId, bool foundPoint, const Vector3f & point, const Vector3f & outNormal, float angle, Vector3f color){
+    drawRendering(foundPoint, angle, outRendering[locId]);
+  }
 };
 
 template<class TVoxel, class TIndex>
@@ -351,6 +359,12 @@ public:
   {
     drawColourRendering<TVoxel,TIndex>(foundPoint, point, voxelData, voxelIndex, outRendering[locId]);
   }
+
+  //hao modified it
+  _CPU_AND_GPU_CODE_ inline void new_processPixel(int x, int y, int locId, bool foundPoint, const Vector3f & point, const Vector3f & outNormal, float angle, Vector3f color){
+    drawColourRendering<TVoxel,TIndex>(foundPoint, point, voxelData, voxelIndex, outRendering[locId]);
+  }
+
 };
 
 class RaycastRenderer_ICPMaps {
@@ -365,17 +379,10 @@ public:
     : outRendering(_outRendering), pointsMap(_pointsMap), normalsMap(_normalsMap), voxelSize(_voxelSize)
   {}
 
+  //hao modified it
   _CPU_AND_GPU_CODE_ inline void processPixel(int x, int y, int locId, bool foundPoint, const Vector3f & point, const Vector3f & outNormal, float angle)
   {
     drawRendering(foundPoint, angle, outRendering[locId]);
-
-    //if(foundPoint&&x%16==0){
-    //  outRendering[locId].x=255.0;
-    //  outRendering[locId].y=0;
-    //  outRendering[locId].z=0;
-    //  outRendering[locId].w=0;
-
-    //}
 
     if (foundPoint)
     {
@@ -399,15 +406,14 @@ public:
   }
 
   //hao modified it
-  _CPU_AND_GPU_CODE_ inline void new_processPixel(int x, int y, int locId, bool foundPoint, const Vector3f & point, const Vector3f & outNormal, float angle, Vector3f *colors)
+  _CPU_AND_GPU_CODE_ inline void new_processPixel(int x, int y, int locId, bool foundPoint, const Vector3f & point, const Vector3f & outNormal, float angle, Vector3f color)
   {
     drawRendering(foundPoint, angle, outRendering[locId]);
 
-    if(!((*(colors+locId))[0]==-1&&(*(colors+locId))[1]==-1&&(*(colors+locId))[2]==-1)){
-      outRendering[locId].x=(*(colors+locId))[0];
-      outRendering[locId].y=(*(colors+locId))[1];
-      outRendering[locId].z=(*(colors+locId))[2];
-      outRendering[locId].w=0;
+    if(!(color[0]==-1&&color[1]==-1&&color[2]==-1)){
+      outRendering[locId].x = (uchar)color[0];
+      outRendering[locId].y = (uchar)color[1];
+      outRendering[locId].z = (uchar)color[2];
     }
 
     if (foundPoint)
@@ -433,15 +439,21 @@ public:
 };
 
 
-
+//hao modified it
 template<class TVoxel, class TIndex, class TRaycastRenderer>
 _CPU_AND_GPU_CODE_ inline void genericRaycastAndRender(int x, int y, TRaycastRenderer & renderer,
-  const TVoxel *voxelData, const typename TIndex::IndexData *voxelIndex, Vector2i imgSize, Matrix4f invM, Vector4f projParams,
-  float oneOverVoxelSize, const Vector2f *minmaxdata, float mu, Vector3f lightSource)
+  TVoxel *voxelData, const typename TIndex::IndexData *voxelIndex, Vector2i imgSize, Matrix4f invM, Vector4f projParams,
+  float oneOverVoxelSize, const Vector2f *minmaxdata, float mu, Vector3f lightSource, Vector3f* colors, ushort* objectIds)
 {
   Vector3f pt_ray;
   Vector3f outNormal;
   float angle;
+
+  //ushort voxelId = 0;
+  //uchar voxelR;
+  //uchar voxelG;
+  //uchar voxelB;
+  bool hash_found;
 
   int locId = x + y * imgSize.x;
 
@@ -450,20 +462,41 @@ _CPU_AND_GPU_CODE_ inline void genericRaycastAndRender(int x, int y, TRaycastRen
 
   bool foundPoint = castRay<TVoxel,TIndex>(pt_ray, x, y, voxelData, voxelIndex, invM, projParams, oneOverVoxelSize, mu, viewFrustum_min, viewFrustum_max);
 
+  if(foundPoint){
+    if(objectIds[locId] != 0){
+      setVoxelIdAndRGB(voxelData, voxelIndex, pt_ray, hash_found, objectIds[locId], (uchar)(colors[locId].x), (uchar)(colors[locId].y), (uchar)(colors[locId].z));
+    }
+  }
+  //if(foundPoint){
+  //  readVoxelIdAndRGB(voxelData, voxelIndex, pt_ray, hash_found, voxelId, voxelR, voxelG, voxelB);
+  //  //test
+  //  printf("voxelG:%d\n",voxelG);
+  //}
+  
   computeNormalAndAngle<TVoxel,TIndex>(foundPoint, pt_ray, voxelData, voxelIndex, lightSource, outNormal, angle);
 
-  renderer.processPixel(x,y, locId, foundPoint, pt_ray, outNormal, angle);
+  if(objectIds[locId] == 0){
+    renderer.processPixel(x,y, locId, foundPoint, pt_ray, outNormal, angle);
+  }
+  else{
+    //Vector3f color;
+    //color[0] = voxelR;
+    //color[1] = voxelG;
+    //color[2] = voxelB;
+    renderer.new_processPixel(x,y, locId, foundPoint, pt_ray, outNormal, angle, colors[locId]);
+  }
 }
 
 //hao modified it
 template<class TVoxel, class TIndex, class TRaycastRenderer>
 _CPU_AND_GPU_CODE_ inline void new_genericRaycastAndRender(int x, int y, TRaycastRenderer & renderer,
-  const TVoxel *voxelData, const typename TIndex::IndexData *voxelIndex, Vector2i imgSize, Matrix4f invM, Vector4f projParams,
-  float oneOverVoxelSize, const Vector2f *minmaxdata, float mu, Vector3f lightSource, Vector3f *colors)
+  TVoxel *voxelData, const typename TIndex::IndexData *voxelIndex, Vector2i imgSize, Matrix4f invM, Vector4f projParams,
+  float oneOverVoxelSize, const Vector2f *minmaxdata, float mu, Vector3f lightSource, Vector3f *colors, ushort *objectIds, bool flag)
 {
   Vector3f pt_ray;
   Vector3f outNormal;
   float angle;
+  bool hash_found;
 
   int locId = x + y * imgSize.x;
 
@@ -474,18 +507,39 @@ _CPU_AND_GPU_CODE_ inline void new_genericRaycastAndRender(int x, int y, TRaycas
 
   computeNormalAndAngle<TVoxel,TIndex>(foundPoint, pt_ray, voxelData, voxelIndex, lightSource, outNormal, angle);
 
-  renderer.new_processPixel(x,y, locId, foundPoint, pt_ray, outNormal, angle,colors);
+  Vector3f color;
+  color[0]=(*(colors+locId))[0];
+  color[1]=(*(colors+locId))[1];
+  color[2]=(*(colors+locId))[2];
+
+  if(flag && objectIds!= NULL && foundPoint){
+    if(!(color[0]==-1&&color[1]==-1&&color[2]==-1)){
+    //test
+    //printf("testtesttest\n");
+    setVoxelIdAndRGB(voxelData, voxelIndex, pt_ray, hash_found, objectIds[locId], (uchar)color[0], (uchar)color[1], (uchar)color[2]);
+    }
+  }
+
+  ////test
+  //if(objectIds[locId]!=0){
+  //  printf("objectIds[locId]!=0\n");
+  //}
+
+  renderer.new_processPixel(x,y, locId, foundPoint, pt_ray, outNormal, angle, color);
 }
 
 //hao modified it
 template<class TVoxel, class TIndex, class TRaycastRenderer>
-_CPU_AND_GPU_CODE_ inline void getDepthValue(int x, int y, TRaycastRenderer & renderer,
-  const TVoxel *voxelData, const typename TIndex::IndexData *voxelIndex, Vector2i imgSize, Matrix4f invM, Vector4f projParams,
-  float oneOverVoxelSize, const Vector2f *minmaxdata, float mu, Vector3f lightSource, Vector3f *points, Vector3f *normals)
+_CPU_AND_GPU_CODE_ inline void getRaycastImage(int x, int y, TRaycastRenderer & renderer,
+  TVoxel *voxelData, const typename TIndex::IndexData *voxelIndex, Vector2i imgSize, Matrix4f invM, Vector4f projParams,
+  float oneOverVoxelSize, const Vector2f *minmaxdata, float mu, Vector3f lightSource, Vector3f *points, Vector3f *normals, 
+  Vector3f *colors, ushort *objectId)
 {
   Vector3f pt_ray;
+  Vector3f pt_ray_world;
   Vector3f outNormal;
   float angle;
+  bool hash_found;
 
   int locId = x + y * imgSize.x;
 
@@ -497,18 +551,107 @@ _CPU_AND_GPU_CODE_ inline void getDepthValue(int x, int y, TRaycastRenderer & re
   computeNormalAndAngle<TVoxel,TIndex>(foundPoint, pt_ray, voxelData, voxelIndex, lightSource, outNormal, angle);
 
   if(foundPoint){
-    pt_ray*=(1.0f/oneOverVoxelSize);
-    (*(points+locId))[0]=pt_ray[0];
-    (*(points+locId))[1]=pt_ray[1];
-    (*(points+locId))[2]=pt_ray[2];
+    pt_ray_world = pt_ray*(1.0f/oneOverVoxelSize);
+    (*(points+locId))[0]=pt_ray_world[0];
+    (*(points+locId))[1]=pt_ray_world[1];
+    (*(points+locId))[2]=pt_ray_world[2];
     (*(normals+locId))[0]=outNormal[0];
     (*(normals+locId))[1]=outNormal[1];
     (*(normals+locId))[2]=outNormal[2];
+    if(colors != NULL && objectId != NULL){
+      uchar voxelR;
+      uchar voxelG;
+      uchar voxelB;
+      readVoxelIdAndRGB(voxelData, voxelIndex, pt_ray, hash_found, objectId[locId], voxelR, voxelG, voxelB);
+
+      //test
+      //if(voxelG !=0 ){
+      //  printf("voxelG:%d\n",voxelG);
+      //}
+
+      //test
+      //if(objectId[locId]!=0){
+      //  printf("objectId[locId]:%d\n",objectId[locId]);
+      //  printf("(*(objectId+locId)):%d\n",(*(objectId+locId)));
+      //}
+      
+      colors[locId].x = voxelR;
+      colors[locId].y = voxelG;
+      colors[locId].z = voxelB;
+    }
   }
   else{
+    (*(points+locId))[0]=0;
+    (*(points+locId))[1]=0;
+    (*(points+locId))[2]=0;
     (*(normals+locId))[0]=outNormal[0];
     (*(normals+locId))[1]=outNormal[1];
     (*(normals+locId))[2]=outNormal[2];
   }
 }
+
+//hao modified it
+_CPU_AND_GPU_CODE_ inline void genIdMaps(int x, int y, Vector2i imgSize, Vector3f *points, Vector3f *colors, ushort *objectId)
+{
+  int cenIndex = x + y * imgSize.x;
+
+  if(objectId[cenIndex] != 0){
+    //test
+    //printf("hahahaha\n");
+
+    int upIndex = cenIndex - imgSize.x;
+    int downIndex = cenIndex + imgSize.x;
+    int leftIndex = cenIndex - 1;
+    int rightIndex = cenIndex + 1;
+
+    if(y - 1 >= 0){
+      if(objectId[upIndex]==0&&points[upIndex]!=0){
+        double dis = sqrt(pow(points[cenIndex].x - points[upIndex].x, 2) + pow(points[cenIndex].y - points[upIndex].y, 2) + pow(points[cenIndex].z - points[upIndex].z, 2));
+     
+        if(dis < 0.005){
+          objectId[upIndex] = objectId[cenIndex];
+          colors[upIndex] = colors[cenIndex];
+          //genIdMaps(x, y-1, imgSize, points, colors, objectId);
+        }
+      }
+    }
+
+    if(y + 1 < imgSize.y){
+      if(objectId[downIndex]==0&&points[upIndex]!=0){
+        double dis = sqrt(pow(points[cenIndex].x - points[downIndex].x, 2) + pow(points[cenIndex].y - points[downIndex].y, 2) + pow(points[cenIndex].z - points[downIndex].z, 2));
+
+        if(dis < 0.005){
+          objectId[downIndex] = objectId[cenIndex];
+          colors[downIndex] = colors[cenIndex];
+          //genIdMaps(x, y+1, imgSize, points, colors, objectId);
+        }
+      }
+    }
+
+    if(x - 1 >= 0){
+      if(objectId[leftIndex]==0&&points[upIndex]!=0){
+        double dis = sqrt(pow(points[cenIndex].x - points[leftIndex].x, 2) + pow(points[cenIndex].y - points[leftIndex].y, 2) + pow(points[cenIndex].z - points[leftIndex].z, 2));
+
+        if(dis < 0.005){
+          objectId[leftIndex] = objectId[cenIndex];
+          colors[leftIndex] = colors[cenIndex];
+          //genIdMaps(x-1, y, imgSize, points, colors, objectId);
+        }
+      }
+    }
+
+    if(x + 1 < imgSize.x){
+      if(objectId[rightIndex]==0&&points[upIndex]!=0){
+        double dis = sqrt(pow(points[cenIndex].x - points[rightIndex].x, 2) + pow(points[cenIndex].y - points[rightIndex].y, 2) + pow(points[cenIndex].z - points[rightIndex].z, 2));
+
+        if(dis < 0.005){
+          objectId[rightIndex] = objectId[cenIndex];
+          colors[rightIndex] = colors[cenIndex];
+          //genIdMaps(x+1, y, imgSize, points, colors, objectId);
+        }
+      }
+    }
+  }
+}
+
 

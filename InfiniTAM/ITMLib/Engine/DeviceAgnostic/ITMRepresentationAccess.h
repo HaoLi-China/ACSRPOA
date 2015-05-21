@@ -142,6 +142,77 @@ _CPU_AND_GPU_CODE_ inline TVoxel readVoxel(const TVoxel *voxelData, const ITMPla
 	return readVoxel(voxelData, voxelIndex, point_orig, isFound);
 }
 
+//hao modified it
+template<class TVoxel, class TAccess>
+_CPU_AND_GPU_CODE_ inline void readVoxelIdAndRGB(const TVoxel *voxelData, const TAccess *voxelIndex, Vector3f point, bool &isFound, ushort &id, uchar &r, uchar &g, uchar &b)
+{
+  TVoxel res = readVoxel(voxelData, voxelIndex, point.toIntRound(), isFound);
+  id = res.id;
+  r = res.r;
+  g = res.g;
+  b = res.b;
+}
+
+//hao modified it
+template<class TVoxel, class TAccess>
+_CPU_AND_GPU_CODE_ inline void setVoxelIdAndRGB(TVoxel *voxelData, const TAccess *voxelIndex, Vector3f point, bool &isFound, ushort id, uchar r, uchar g, uchar b)
+{
+  const ITMHashEntry *hashTable = voxelIndex->entries_all;
+  Vector3i blockPos; int offsetExcess = 0;
+
+  int linearIdx = pointPosParse(point.toIntRound(), blockPos);
+  int hashIdx = hashIndex(blockPos, SDF_HASH_MASK) * SDF_ENTRY_NUM_PER_BUCKET;
+
+  isFound = false;
+
+  //check ordered list
+  for (int inBucketIdx = 0; inBucketIdx < SDF_ENTRY_NUM_PER_BUCKET; inBucketIdx++) 
+  {
+    const ITMHashEntry &hashEntry = hashTable[hashIdx + inBucketIdx];
+    offsetExcess = hashEntry.offset - 1;
+
+    //printf("hashEntry.offset%d\n", (hashEntry.offset));
+
+    if (hashEntry.pos == blockPos && hashEntry.ptr >= 0)
+    {
+      isFound = true;
+      voxelData[(hashEntry.ptr * SDF_BLOCK_SIZE3) + linearIdx].id = id;
+      voxelData[(hashEntry.ptr * SDF_BLOCK_SIZE3) + linearIdx].r = r;
+      voxelData[(hashEntry.ptr * SDF_BLOCK_SIZE3) + linearIdx].g = g;
+      voxelData[(hashEntry.ptr * SDF_BLOCK_SIZE3) + linearIdx].b = b;
+    }
+  }
+
+  //check excess list
+  while (offsetExcess >= 0)
+  {
+    const ITMHashEntry &hashEntry = hashTable[SDF_BUCKET_NUM * SDF_ENTRY_NUM_PER_BUCKET + offsetExcess];
+
+    if (hashEntry.pos == blockPos && hashEntry.ptr >= 0)
+    {
+      isFound = true;
+      voxelData[(hashEntry.ptr * SDF_BLOCK_SIZE3) + linearIdx].id = id;
+      voxelData[(hashEntry.ptr * SDF_BLOCK_SIZE3) + linearIdx].r = r;
+      voxelData[(hashEntry.ptr * SDF_BLOCK_SIZE3) + linearIdx].g = g;
+      voxelData[(hashEntry.ptr * SDF_BLOCK_SIZE3) + linearIdx].b = b;
+    }
+
+    offsetExcess = hashEntry.offset - 1;
+  }
+
+  //if(id ==1 ){
+  //  bool boo;
+  //  ushort vexelId;
+  //  uchar vexelR;
+  //  uchar vexelG;
+  //  uchar vexelB;
+  //  readVoxelIdAndRGB(voxelData, voxelIndex, point, boo, vexelId, vexelR, vexelG, vexelB);
+
+  //  printf("vexelId:%d\n", vexelId);
+  //}
+}
+
+
 template<class TVoxel, class TAccess>
 _CPU_AND_GPU_CODE_ inline float readFromSDF_float_uninterpolated(const TVoxel *voxelData, const TAccess *voxelIndex, Vector3f point, bool &isFound)
 {

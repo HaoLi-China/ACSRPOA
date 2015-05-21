@@ -56,25 +56,25 @@ namespace ITMLib
         const ITMIntrinsics *intrinsics, ITMFloat2Image *minmaxImg, const ITMVisualisationState *state = NULL) = 0;
 
       /** This will render an image using raycasting. */
-      virtual void RenderImage(const ITMScene<TVoxel,TIndex> *scene, const ITMPose *pose, const ITMIntrinsics *intrinsics, const ITMVisualisationState *state, ITMUChar4Image *outputImage, bool useColour) = 0;
+      virtual void RenderImage(ITMScene<TVoxel,TIndex> *scene, const ITMPose *pose, const ITMIntrinsics *intrinsics, const ITMVisualisationState *state, ITMUChar4Image *outputImage, bool useColour) = 0;
 
       /** Create a point cloud as required by the
       ITMLib::Engine::ITMColorTracker classes.
       */
-      virtual void CreatePointCloud(const ITMScene<TVoxel,TIndex> *scene, const ITMView *view, ITMTrackingState *trackingState, bool skipPoints) = 0;
+      virtual void CreatePointCloud(ITMScene<TVoxel,TIndex> *scene, const ITMView *view, ITMTrackingState *trackingState, bool skipPoints) = 0;
 
       /** Create an image of reference points and normals as
       required by the ITMLib::Engine::ITMDepthTracker
       classes.
       */
-      virtual void CreateICPMaps(const ITMScene<TVoxel,TIndex> *scene, const ITMView *view, ITMTrackingState *trackingState) = 0;
+      virtual void CreateICPMaps(ITMScene<TVoxel,TIndex> *scene, const ITMView *view, ITMTrackingState *trackingState) = 0;
 
       //hao modified it
       virtual void GetAllPoints(const ITMScene<TVoxel,TIndex> *scene) = 0;
       //hao modified it
-      virtual void RealTimeSegment(const ITMScene<TVoxel,ITMVoxelBlockHash> *scene, const ITMView *view, ITMTrackingState *trackingState, Vector3f *points, Vector3f *normals) = 0;
+      virtual void GetRaycastImage(ITMScene<TVoxel,ITMVoxelBlockHash> *scene, const ITMView *view, ITMTrackingState *trackingState, Vector3f *points, Vector3f *normals, Vector3f *colors, ushort *objectId) = 0;
       //hao modified it
-      virtual void NewCreateICPMaps(const ITMScene<TVoxel,TIndex> *scene, const ITMView *view, ITMTrackingState *trackingState, Vector3f *colors) = 0;
+      virtual void NewCreateICPMaps(ITMScene<TVoxel,TIndex> *scene, const ITMView *view, ITMTrackingState *trackingState, Vector3f *colors, ushort *objectIds, bool flag) = 0;
     };
   }
 }
