@@ -118,7 +118,7 @@ namespace ITMLib
 
       void SaveAll();
 
-      void savePoints(vector<Vector3f> &points);//hao modified it
+      void savePoints();//hao modified it
       void saveViewPoints();//hao modified it
       void saveViewPoints(ITMTrackingState *trackingState);//hao modified it
       void overSegmentView();//hao modified it
@@ -126,6 +126,7 @@ namespace ITMLib
       void showSegmentResult(int flag);//hao modified it
       void updateSegmentView();//hao modified it
       void detectChange();//hao modified it
+      void changeObjectIds(ushort oldID, ushort newId, uchar newR, uchar newG, uchar newB);//hao modified it
 
       void saveMesh(); //ccjn modified it
 

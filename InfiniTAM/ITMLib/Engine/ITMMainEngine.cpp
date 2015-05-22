@@ -1098,7 +1098,46 @@ void ITMMainEngine::detectChange(){
 }
 
 //hao modified it
-void ITMMainEngine::savePoints(vector<Vector3f> &points)
+void ITMMainEngine::changeObjectIds(ushort oldID, ushort newId, uchar newR, uchar newG, uchar newB){
+  
+  ITMVoxelIndex::IndexData *hashData_host = new ITMVoxelIndex::IndexData;
+  ITMVoxel *voxels = (ITMVoxel*)malloc(SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3 * sizeof(ITMVoxel));
+
+  bool flag = false;
+#ifndef COMPILE_WITHOUT_CUDA
+  flag=true;
+#endif
+  if(flag){
+    ITMSafeCall(cudaMemcpy(hashData_host, scene->index.getIndexData(), sizeof(ITMVoxelIndex::IndexData), cudaMemcpyDeviceToHost));
+    ITMSafeCall(cudaMemcpy(voxels, scene->localVBA.GetVoxelBlocks(), SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3*sizeof(ITMVoxel), cudaMemcpyDeviceToHost));
+  }
+  else{
+    memcpy(hashData_host, scene->index.getIndexData(), sizeof(ITMVoxelIndex::IndexData));
+    memcpy(voxels, scene->localVBA.GetVoxelBlocks(), SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3 * sizeof(ITMVoxel));
+  }
+
+  const ITMHashEntry *hashTable = hashData_host->entries_all;
+
+  for(int i=0; i<SDF_BUCKET_NUM * SDF_ENTRY_NUM_PER_BUCKET + SDF_EXCESS_LIST_SIZE; i++){
+    const ITMHashEntry &hashEntry = hashTable[i];
+
+    if(hashEntry.ptr >= 0){
+      for(int j=0; j<SDF_BLOCK_SIZE3; j++){
+        ITMVoxel res = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j];
+
+        if(res.id == oldID){
+          voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j].id = newId;
+          voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j].r = newR;
+          voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j].g = newG;
+          voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j].b = newB;
+        }
+      }
+    }
+  }
+}
+
+//hao modified it
+void ITMMainEngine::savePoints()
 {
   //visualisationEngine->GetAllPoints(scene);
   PointCloudPtr cloud(new PointCloud);
@@ -1130,103 +1169,29 @@ void ITMMainEngine::savePoints(vector<Vector3f> &points)
         ITMVoxel res = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j];
 
         float value = ITMVoxel::SDF_valueToFloat(res.sdf);
-        if(value<mu/16.0&&value>-mu/16.0){
+        if(value<10*mu&&value>-10*mu){
           //cout<<"value:"<<value<<endl;
 
-          Vector3f p;
-          float voxelSize = scene->sceneParams->voxelSize;
-          p.x=(hashEntry.pos.x+j%SDF_BLOCK_SIZE)*voxelSize+0.5f*voxelSize;
-          p.y=(hashEntry.pos.y+(j%(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE))/SDF_BLOCK_SIZE)*voxelSize+0.5f*voxelSize;
-          p.z=(hashEntry.pos.z+(j/(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE)))*voxelSize+0.5f*voxelSize;
-          points.push_back(p);
+          Point p;
+          float voxelSize = 0.125f;
+          float blockSizeWorld = scene->sceneParams->voxelSize*SDF_BLOCK_SIZE; // = 0.005*8;
 
-          Point pt;
-          pt.x=p.x;
-          pt.y=p.y;
-          pt.z=p.z;
-          /* pt.r=res.clr[0];
-          pt.g=res.clr[1];
-          pt.b=res.clr[2];*/
-          cloud->points.push_back(pt);
+          p.z = (hashEntry.pos.z+(j/(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE)+0.5f)*voxelSize)*blockSizeWorld;
+          p.y = (hashEntry.pos.y+((j%(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE))/SDF_BLOCK_SIZE+0.5f)*voxelSize)*blockSizeWorld;
+          p.x = (hashEntry.pos.x+((j%(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE))%SDF_BLOCK_SIZE+0.5f)*voxelSize)*blockSizeWorld;
+
+          cloud->points.push_back(p);
         }
       }
     }
   }
-  printf("points.size:%d\n", points.size());
 
-
-  //for(int i=0; i<points.size(); i++){
-  //  cloud->points.push_back(Point(points[i].x, points[i].y, points[i].z));
-  //}
-
-  //showPointCloud2(cloud, "cloud");
-
-  pcl::io::savePLYFileBinary("Data/scan.ply", *cloud);
+  pcl::io::savePLYFileBinary("Data/scan_points.ply", *cloud);
 
   free(voxels);
+  free(hashData_host);
   voxels=NULL;
-
-
-
-  //printf("aaaaaaaaaa\n");
-
-  //int count = 0;
-
-  //const ITMHashEntry *hashTable = scene->index.getIndexData()->entries_all;
-
-  ////printf("sizeof(scene->index.getIndexData()->entries_all)/(SDF_BUCKET_NUM * SDF_ENTRY_NUM_PER_BUCKET + SDF_EXCESS_LIST_SIZE):%d\n", sizeof(scene->index.getIndexData()->entries_all)/(SDF_BUCKET_NUM * SDF_ENTRY_NUM_PER_BUCKET + SDF_EXCESS_LIST_SIZE));
-
-  //float mu = scene->sceneParams->mu;
-
-  // cout<<"mu:"<<mu<<endl;
-
-  //printf("bbbbbbbbbbb\n");
-
-  //for(int i=0; i<SDF_BUCKET_NUM * SDF_ENTRY_NUM_PER_BUCKET + SDF_EXCESS_LIST_SIZE; i++){
-  //  const ITMHashEntry &hashEntry = hashTable[i];
-
-  //  printf("ccccccccccc\n");
-  //  /* printf("sizeof(hashTable[i]):%d\n", sizeof(hashTable[i]));
-  //  printf("sizeof(hashEntry):%d\n", sizeof(hashEntry));
-  //  printf("sizeof(ITMHashEntry):%d\n", sizeof(ITMHashEntry));
-  //  printf("sizeof(int):%d\n", sizeof(int));
-  //  printf("sizeof(short):%d\n", sizeof(short));
-  //  printf("sizeof(Vector3s):%d\n", sizeof(Vector3s));
-  //  printf("sizeof(hashEntry.offset):%d\n", sizeof(hashEntry.offset));
-  //  printf("sizeof(hashEntry.ptr):%d\n", sizeof(hashEntry.ptr));
-  //  printf("sizeof(hashEntry.pos):%d\n", sizeof(hashEntry.pos));*/
-
-  //  cout<<"hashEntry.ptr:"<<hashEntry.ptr<<endl;
-
-  //  if(hashEntry.ptr >= 0){
-  //    printf("ggggggggggg\n");
-
-  //    for(int j=0; j<SDF_BLOCK_SIZE*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE; j++){
-  //      printf("dddddddddddd\n");
-
-  //      ITMVoxel *voxels = scene->globalCache->GetStoredVoxelBlocks();
-  //      printf("eeeeeeeeeeee\n");
-  //      ITMVoxel res = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j];
-  //      printf("ffffffffffff\n");
-  //      float value = ITMVoxel::SDF_valueToFloat(res.sdf);
-
-  //      if(value<mu&&value<-mu){
-  //        count++;
-  //        printf("cout:%d\n", cout);
-
-  //        Vector3f p;
-  //        p.x=0;
-  //        p.y=0;
-  //        p.z=0;
-  //        points.push_back(p);
-  //      }
-  //    }
-  //  }
-
-  //  printf("hhhhhhhhhhhh\n");
-  //}
-
-  //printf("points.size:%d\n", points.size());
+  hashData_host=NULL;
 }
 
 //ccjn modified it
@@ -1555,7 +1520,7 @@ void ITMMainEngine::saveMesh()
   //string filename = "Data/Mesh.off";
   //writeToFileOFF(filename, g_triangles);
 
-  string filename = "Data/scan.ply";
+  string filename = "Data/scan_mesh.ply";
   writeToFilePly(filename, g_triangles);
   std::cout<<"writing finished!"<<endl;
 

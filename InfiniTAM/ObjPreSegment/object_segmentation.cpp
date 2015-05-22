@@ -41,7 +41,7 @@ void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, CPointCloudAnalysis &c
   CPointCloudAnalysis cPointCloudAnalysis;
 
   PointCloudPtr_RGB_NORMAL shrinked_cloud(new PointCloud_RGB_NORMAL);
-  shrinkCloudRange(source_cloud, 0.6, 0.6, 1.5, shrinked_cloud);
+  shrinkCloudRange(source_cloud, 0.5, 0.5, 1.0, shrinked_cloud);
 
   /******************detect table************************/
   PointCloudPtr_RGB_NORMAL tabletopCloud(new PointCloud_RGB_NORMAL());
@@ -210,7 +210,7 @@ void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, CPointCloudAnalysis &c
 //over segment object
 void overSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RGB result_cloud){
   PointCloudPtr_RGB_NORMAL shrinked_cloud(new PointCloud_RGB_NORMAL);
-  shrinkCloudRange(source_cloud, 0.6, 0.6, 1.5, shrinked_cloud);
+  shrinkCloudRange(source_cloud, 0.5, 0.5, 1.0, shrinked_cloud);
 
   /******************detect table************************/
   PointCloudPtr_RGB_NORMAL tabletopCloud(new PointCloud_RGB_NORMAL());
@@ -284,7 +284,7 @@ void overSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RGB 
 void updateSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RGB_NORMAL change_cloudA, PointCloudPtr_RGB_NORMAL change_cloudB, CPointCloudAnalysis &cpca, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud){
   
   PointCloudPtr_RGB_NORMAL shrinked_cloud(new PointCloud_RGB_NORMAL);
-  shrinkCloudRange(source_cloud, 0.6, 0.6, 1.5, shrinked_cloud);
+  shrinkCloudRange(source_cloud, 0.5, 0.5, 1.0, shrinked_cloud);
 
   std::vector<MyPointCloud_RGB_NORMAL> change_cluster;
   object_seg_ECE(change_cloudB, change_cluster);

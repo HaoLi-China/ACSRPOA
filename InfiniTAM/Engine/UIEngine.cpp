@@ -298,22 +298,10 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
     uiEngine->mainLoopAction = UIEngine::PROCESS_VIDEO;
     break;
   case 's'://hao modified it
-    /* if (uiEngine->isRecording)
-    {
-    printf("stopped recoding disk ...\n");
-    uiEngine->isRecording = false;
-    }
-    else
-    {
-    printf("started recoding disk ...\n");
-    uiEngine->currentFrameNo = 0;
-    uiEngine->isRecording = true;
-    }*/
     {
       printf("save points ...\n");
       uiEngine->mainLoopAction = UIEngine::PROCESS_PAUSED;
-      vector<Vector3f> points_res;
-      uiEngine->mainEngine->savePoints(points_res);
+      uiEngine->mainEngine->savePoints();
     }
     break;
 
