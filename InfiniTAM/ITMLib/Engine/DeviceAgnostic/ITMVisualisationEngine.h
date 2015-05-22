@@ -308,6 +308,28 @@ _CPU_AND_GPU_CODE_ inline void drawRendering(const bool & foundPoint, const floa
   dest = Vector4u((uchar)outRes);
 }
 
+//hao modified it
+_CPU_AND_GPU_CODE_ inline void newDrawRendering(const bool & foundPoint, const float & angle, Vector4u & dest, Vector3f color)
+{
+  if (!foundPoint)
+  {
+    dest = Vector4u((const uchar&)0);
+    return;
+  }
+
+  float outRes = (0.8f * angle + 0.2f);
+
+  if(!(color[0]==-1&&color[1]==-1&&color[2]==-1)){
+    dest.x = (uchar)(color[0]*outRes);
+    dest.y = (uchar)(color[1]*outRes);
+    dest.z = (uchar)(color[2]*outRes);
+    dest.w = outRes;
+  }
+  else{
+    dest = Vector4u((uchar)(outRes*255));
+  }
+}
+
 template<class TVoxel, class TIndex>
 _CPU_AND_GPU_CODE_ inline void drawColourRendering(const bool & foundPoint, const Vector3f & point, const TVoxel *voxelBlockData, const typename TIndex::IndexData *indexData, Vector4u & dest)
 {
@@ -408,13 +430,7 @@ public:
   //hao modified it
   _CPU_AND_GPU_CODE_ inline void new_processPixel(int x, int y, int locId, bool foundPoint, const Vector3f & point, const Vector3f & outNormal, float angle, Vector3f color)
   {
-    drawRendering(foundPoint, angle, outRendering[locId]);
-
-    if(!(color[0]==-1&&color[1]==-1&&color[2]==-1)){
-      outRendering[locId].x = (uchar)color[0];
-      outRendering[locId].y = (uchar)color[1];
-      outRendering[locId].z = (uchar)color[2];
-    }
+    newDrawRendering(foundPoint, angle, outRendering[locId], color);
 
     if (foundPoint)
     {
@@ -533,7 +549,7 @@ template<class TVoxel, class TIndex, class TRaycastRenderer>
 _CPU_AND_GPU_CODE_ inline void getRaycastImage(int x, int y, TRaycastRenderer & renderer,
   TVoxel *voxelData, const typename TIndex::IndexData *voxelIndex, Vector2i imgSize, Matrix4f invM, Vector4f projParams,
   float oneOverVoxelSize, const Vector2f *minmaxdata, float mu, Vector3f lightSource, Vector3f *points, Vector3f *normals, 
-  Vector3f *colors, ushort *objectId)
+  Vector3f *colors, ushort *objectIds, Vector3f* table_sum_normal)
 {
   Vector3f pt_ray;
   Vector3f pt_ray_world;
@@ -558,11 +574,15 @@ _CPU_AND_GPU_CODE_ inline void getRaycastImage(int x, int y, TRaycastRenderer & 
     (*(normals+locId))[0]=outNormal[0];
     (*(normals+locId))[1]=outNormal[1];
     (*(normals+locId))[2]=outNormal[2];
-    if(colors != NULL && objectId != NULL){
+    if(colors != NULL && objectIds != NULL){
       uchar voxelR;
       uchar voxelG;
       uchar voxelB;
-      readVoxelIdAndRGB(voxelData, voxelIndex, pt_ray, hash_found, objectId[locId], voxelR, voxelG, voxelB);
+      readVoxelIdAndRGB(voxelData, voxelIndex, pt_ray, hash_found, objectIds[locId], voxelR, voxelG, voxelB);
+
+      if(table_sum_normal!=NULL&&objectIds[locId] == 1){
+        table_sum_normal[locId] = outNormal;
+      }
 
       //test
       //if(voxelG !=0 ){
@@ -591,7 +611,7 @@ _CPU_AND_GPU_CODE_ inline void getRaycastImage(int x, int y, TRaycastRenderer & 
 }
 
 //hao modified it
-_CPU_AND_GPU_CODE_ inline void genIdMaps(int x, int y, Vector2i imgSize, Vector3f *points, Vector3f *colors, ushort *objectId)
+_CPU_AND_GPU_CODE_ inline void genIdMaps(int x, int y, Vector2i imgSize, Vector3f *points, Vector3f *normals, Vector3f *colors, ushort *objectId, Vector3f* table_avg_normal)
 {
   int cenIndex = x + y * imgSize.x;
 
@@ -609,45 +629,78 @@ _CPU_AND_GPU_CODE_ inline void genIdMaps(int x, int y, Vector2i imgSize, Vector3
         double dis = sqrt(pow(points[cenIndex].x - points[upIndex].x, 2) + pow(points[cenIndex].y - points[upIndex].y, 2) + pow(points[cenIndex].z - points[upIndex].z, 2));
      
         if(dis < 0.005){
-          objectId[upIndex] = objectId[cenIndex];
-          colors[upIndex] = colors[cenIndex];
-          //genIdMaps(x, y-1, imgSize, points, colors, objectId);
+          if(objectId[cenIndex] != 1){
+            objectId[upIndex] = objectId[cenIndex];
+            colors[upIndex] = colors[cenIndex];
+            //genIdMaps(x, y-1, imgSize, points, colors, objectId);
+          }
+          else{
+            double dotvalue = (normals[upIndex].x * (*table_avg_normal).x) + (normals[upIndex].y * (*table_avg_normal).y) + (normals[upIndex].z * (*table_avg_normal).z);
+            if(dotvalue>0.9){
+              objectId[upIndex] = objectId[cenIndex];
+              colors[upIndex] = colors[cenIndex];
+            }
+          }
         }
       }
     }
 
     if(y + 1 < imgSize.y){
-      if(objectId[downIndex]==0&&points[upIndex]!=0){
+      if(objectId[downIndex]==0&&points[downIndex]!=0){
         double dis = sqrt(pow(points[cenIndex].x - points[downIndex].x, 2) + pow(points[cenIndex].y - points[downIndex].y, 2) + pow(points[cenIndex].z - points[downIndex].z, 2));
 
         if(dis < 0.005){
-          objectId[downIndex] = objectId[cenIndex];
-          colors[downIndex] = colors[cenIndex];
-          //genIdMaps(x, y+1, imgSize, points, colors, objectId);
+          if(objectId[cenIndex] != 1){
+            objectId[downIndex] = objectId[cenIndex];
+            colors[downIndex] = colors[cenIndex];
+          }
+          else{
+            double dotvalue = (normals[downIndex].x * (*table_avg_normal).x) + (normals[downIndex].y * (*table_avg_normal).y) + (normals[downIndex].z * (*table_avg_normal).z);
+            if(dotvalue>0.9){
+              objectId[downIndex] = objectId[cenIndex];
+              colors[downIndex] = colors[cenIndex];
+            }
+          }
         }
       }
     }
 
     if(x - 1 >= 0){
-      if(objectId[leftIndex]==0&&points[upIndex]!=0){
+      if(objectId[leftIndex]==0&&points[leftIndex]!=0){
         double dis = sqrt(pow(points[cenIndex].x - points[leftIndex].x, 2) + pow(points[cenIndex].y - points[leftIndex].y, 2) + pow(points[cenIndex].z - points[leftIndex].z, 2));
 
         if(dis < 0.005){
-          objectId[leftIndex] = objectId[cenIndex];
-          colors[leftIndex] = colors[cenIndex];
-          //genIdMaps(x-1, y, imgSize, points, colors, objectId);
+          if(objectId[cenIndex] != 1){
+            objectId[leftIndex] = objectId[cenIndex];
+            colors[leftIndex] = colors[cenIndex];
+          }
+          else{
+            double dotvalue = (normals[leftIndex].x * (*table_avg_normal).x) + (normals[leftIndex].y * (*table_avg_normal).y) + (normals[leftIndex].z * (*table_avg_normal).z);
+            if(dotvalue>0.9){
+              objectId[leftIndex] = objectId[cenIndex];
+              colors[leftIndex] = colors[cenIndex];
+            }
+          }
         }
       }
     }
 
     if(x + 1 < imgSize.x){
-      if(objectId[rightIndex]==0&&points[upIndex]!=0){
+      if(objectId[rightIndex]==0&&points[rightIndex]!=0){
         double dis = sqrt(pow(points[cenIndex].x - points[rightIndex].x, 2) + pow(points[cenIndex].y - points[rightIndex].y, 2) + pow(points[cenIndex].z - points[rightIndex].z, 2));
 
         if(dis < 0.005){
-          objectId[rightIndex] = objectId[cenIndex];
-          colors[rightIndex] = colors[cenIndex];
-          //genIdMaps(x+1, y, imgSize, points, colors, objectId);
+          if(objectId[cenIndex] != 1){
+            objectId[rightIndex] = objectId[cenIndex];
+            colors[rightIndex] = colors[cenIndex];
+          }
+          else{
+            double dotvalue = (normals[rightIndex].x * (*table_avg_normal).x) + (normals[rightIndex].y * (*table_avg_normal).y) + (normals[rightIndex].z * (*table_avg_normal).z);
+            if(dotvalue>0.9){
+              objectId[rightIndex] = objectId[cenIndex];
+              colors[rightIndex] = colors[cenIndex];
+            }
+          }
         }
       }
     }

@@ -60,7 +60,7 @@ void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, CPointCloudAnalysis &c
     point.z = planeCloud->at(i).z;
     point.r = 255;
     point.g = 255;
-    point.b = 255;
+    point.b = 0;
     tablePoint.mypoints.push_back(point);
 
     Point_RGB pt_rgb;
@@ -69,7 +69,7 @@ void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, CPointCloudAnalysis &c
     pt_rgb.z = planeCloud->at(i).z;
     pt_rgb.r = 255;
     pt_rgb.g = 255;
-    pt_rgb.b = 255;
+    pt_rgb.b = 0;
     object_cloud->points.push_back(pt_rgb);
     confidence_cloud->points.push_back(pt_rgb);
     objectIndexs.push_back(0);
@@ -228,7 +228,7 @@ void overSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RGB 
     pt_rgb.z = planeCloud->at(i).z;
     pt_rgb.r = 255;
     pt_rgb.g = 255;
-    pt_rgb.b = 255;
+    pt_rgb.b = 0;
     result_cloud->points.push_back(pt_rgb);
   }
 
@@ -349,7 +349,7 @@ void updateSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RG
     point.z = planeCloud->at(i).z;
     point.r = 255;
     point.g = 255;
-    point.b = 255;
+    point.b = 0;
     tablePoint.mypoints.push_back(point);
 
     Point_RGB pt_rgb;
@@ -358,7 +358,7 @@ void updateSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RG
     pt_rgb.z = planeCloud->at(i).z;
     pt_rgb.r = 255;
     pt_rgb.g = 255;
-    pt_rgb.b = 255;
+    pt_rgb.b = 0;
     object_cloud->points.push_back(pt_rgb);
     confidence_cloud->points.push_back(pt_rgb);
   }

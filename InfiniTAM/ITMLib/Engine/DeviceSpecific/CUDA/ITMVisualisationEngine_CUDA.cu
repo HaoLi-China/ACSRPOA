@@ -52,10 +52,13 @@ template<class TVoxel, class TIndex, class TRaycastRenderer>
 __global__ void getRaycastImage_device(TRaycastRenderer renderer,
 	TVoxel *voxelData, const typename TIndex::IndexData *voxelIndex, Vector2i imgSize, Matrix4f invM, Vector4f projParams, 
 	float oneOverVoxelSize, const Vector2f *minmaxdata, float mu, Vector3f lightSource, Vector3f *points, Vector3f *normals, 
-  Vector3f *colors, ushort *objectIds);
+  Vector3f *colors, ushort *objectIds, Vector3f *table_sum_normal);
 
 //hao modified it
-__global__ void genIdMaps_device(Vector2i imgSize, Vector3f *points, Vector3f *colors, ushort *objectIds);
+__global__ void genIdMaps_device(Vector2i imgSize, Vector3f *points, Vector3f *normals, Vector3f *colors, ushort *objectIds, Vector3f* table_avg_normal);
+
+//hao modified it
+__global__ void copute_table_avg_normal_device(Vector3f *table_sum_normal, int length, Vector3f* table_avg_normal);
 
 // class implementation
 
@@ -348,6 +351,7 @@ static void CreatePointCloud_common(ITMScene<TVoxel,TIndex> *scene, const ITMVie
 	ITMSafeCall(cudaMemcpy(&trackingState->pointCloud->noTotalPoints, noTotalPoints_device, sizeof(uint), cudaMemcpyDeviceToHost));
 }
 
+//hao modified it
 template<class TVoxel, class TIndex>
 void CreateICPMaps_common(ITMScene<TVoxel,TIndex> *scene, const ITMView *view, ITMTrackingState *trackingState)
 { //printf("222222222222222\n");
@@ -377,6 +381,7 @@ void CreateICPMaps_common(ITMScene<TVoxel,TIndex> *scene, const ITMView *view, I
   Vector3f *normals;
   Vector3f *colors;
   ushort *objectIds;
+  Vector3f *table_sum_normal;
   ITMSafeCall(cudaMalloc((void**)&points, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
   ITMSafeCall(cudaMemset(points, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
   ITMSafeCall(cudaMalloc((void**)&normals, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
@@ -385,20 +390,33 @@ void CreateICPMaps_common(ITMScene<TVoxel,TIndex> *scene, const ITMView *view, I
   ITMSafeCall(cudaMemset(colors, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
   ITMSafeCall(cudaMalloc((void**)&objectIds, view->depth->noDims.x*view->depth->noDims.y*sizeof(ushort)));
   ITMSafeCall(cudaMemset(objectIds, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(ushort)));
+  ITMSafeCall(cudaMalloc((void**)&table_sum_normal, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
+  ITMSafeCall(cudaMemset(table_sum_normal, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
+  
   //printf("000000\n");
-  getRaycastImage_device<TVoxel,TIndex> << <gridSize, cudaBlockSize >> >(renderer, scene->localVBA.GetVoxelBlocks(), scene->index.getIndexData(), imgSize, invM, projParams, oneOverVoxelSize, minmaxdata, mu, lightSource, points, normals, colors, objectIds);
+  getRaycastImage_device<TVoxel,TIndex> << <gridSize, cudaBlockSize >> >(renderer, scene->localVBA.GetVoxelBlocks(), scene->index.getIndexData(), imgSize, invM, projParams, oneOverVoxelSize, minmaxdata, mu, lightSource, points, normals, colors, objectIds, table_sum_normal);
   ITMSafeCall(cudaThreadSynchronize());
+  
+  Vector3f* table_avg_normal;
+  ITMSafeCall(cudaMalloc((void**)&table_avg_normal, sizeof(Vector3f)));
+  ITMSafeCall(cudaMemset(table_avg_normal, 0, sizeof(Vector3f)));
   //printf("111111\n");
-  genIdMaps_device << <gridSize, cudaBlockSize >> >(imgSize, points, colors, objectIds);
+  copute_table_avg_normal_device << <dim3(1), dim3(1) >> >(table_sum_normal, view->depth->noDims.x*view->depth->noDims.y, table_avg_normal);
   ITMSafeCall(cudaThreadSynchronize());
+  //printf("222222\n");
 
+  genIdMaps_device << <gridSize, cudaBlockSize >> >(imgSize, points, normals, colors, objectIds, table_avg_normal);
+  ITMSafeCall(cudaThreadSynchronize());
+  //printf("333333\n");
 	genericRaycastAndRender_device<TVoxel,TIndex> << <gridSize, cudaBlockSize >> >(renderer, scene->localVBA.GetVoxelBlocks(), scene->index.getIndexData(), imgSize, invM, projParams, oneOverVoxelSize, minmaxdata, mu, lightSource, colors, objectIds);
 	ITMSafeCall(cudaThreadSynchronize());
-  //printf("222222\n");
+  //printf("444444\n");
   ITMSafeCall(cudaFree(points));
   ITMSafeCall(cudaFree(normals));
   ITMSafeCall(cudaFree(colors));
   ITMSafeCall(cudaFree(objectIds));
+  ITMSafeCall(cudaFree(table_sum_normal));
+  ITMSafeCall(cudaFree(table_avg_normal));
 }
 
 template<class TVoxel, class TIndex>
@@ -533,7 +551,7 @@ void ITMVisualisationEngine_CUDA<TVoxel,TIndex>::GetRaycastImage(ITMScene<TVoxel
 
 	RaycastRenderer_ICPMaps renderer(outRendering, pointsMap, normalsMap, voxelSize);
 
-	getRaycastImage_device<TVoxel,TIndex> << <gridSize, cudaBlockSize >> >(renderer, scene->localVBA.GetVoxelBlocks(), scene->index.getIndexData(), imgSize, invM, projParams, oneOverVoxelSize, minmaxdata, mu, lightSource, points, normals, colors, objectId);
+	getRaycastImage_device<TVoxel,TIndex> << <gridSize, cudaBlockSize >> >(renderer, scene->localVBA.GetVoxelBlocks(), scene->index.getIndexData(), imgSize, invM, projParams, oneOverVoxelSize, minmaxdata, mu, lightSource, points, normals, colors, objectId, NULL);
 
 	ITMSafeCall(cudaThreadSynchronize());
 }
@@ -566,7 +584,7 @@ void ITMVisualisationEngine_CUDA<TVoxel,ITMVoxelBlockHash>::GetRaycastImage(ITMS
 
 	RaycastRenderer_ICPMaps renderer(outRendering, pointsMap, normalsMap, voxelSize);
 
-	getRaycastImage_device<TVoxel,ITMVoxelBlockHash> << <gridSize, cudaBlockSize >> >(renderer, scene->localVBA.GetVoxelBlocks(), scene->index.getIndexData(), imgSize, invM, projParams, oneOverVoxelSize, minmaxdata, mu, lightSource, points, normals, colors, objectId);
+	getRaycastImage_device<TVoxel,ITMVoxelBlockHash> << <gridSize, cudaBlockSize >> >(renderer, scene->localVBA.GetVoxelBlocks(), scene->index.getIndexData(), imgSize, invM, projParams, oneOverVoxelSize, minmaxdata, mu, lightSource, points, normals, colors, objectId, NULL);
 
 	ITMSafeCall(cudaThreadSynchronize());
 }
@@ -775,24 +793,42 @@ template<class TVoxel, class TIndex, class TRaycastRenderer>
 __global__ void getRaycastImage_device(TRaycastRenderer renderer,
 	TVoxel *voxelData, const typename TIndex::IndexData *voxelIndex, Vector2i imgSize, Matrix4f invM, Vector4f projParams, 
 	float oneOverVoxelSize, const Vector2f *minmaxdata, float mu, Vector3f lightSource, Vector3f *points, Vector3f *normals, 
-  Vector3f *colors, ushort *objectIds)
+  Vector3f *colors, ushort *objectIds, Vector3f *table_sum_normal)
 {
 	int x = (threadIdx.x + blockIdx.x * blockDim.x), y = (threadIdx.y + blockIdx.y * blockDim.y);
 
 	if (x >= imgSize.x || y >= imgSize.y) return;
 
-  getRaycastImage<TVoxel,TIndex>(x,y, renderer, voxelData, voxelIndex, imgSize, invM, projParams, oneOverVoxelSize, minmaxdata, mu, lightSource, points, normals, colors, objectIds);
+  getRaycastImage<TVoxel,TIndex>(x,y, renderer, voxelData, voxelIndex, imgSize, invM, projParams, oneOverVoxelSize, minmaxdata, mu, lightSource, points, normals, colors, objectIds, table_sum_normal);
 	//getDepthValue<TVoxel,TIndex>(x,y, renderer, voxelData, voxelIndex, imgSize, invM, projParams, oneOverVoxelSize, minmaxdata, mu, lightSource, points, normals);
 }
 
 //hao modified it
-__global__ void genIdMaps_device(Vector2i imgSize, Vector3f *points, Vector3f *colors, ushort *objectIds)
+__global__ void genIdMaps_device(Vector2i imgSize, Vector3f *points, Vector3f *normals, Vector3f *colors, ushort *objectIds, Vector3f *table_avg_normal)
 {
 	int x = (threadIdx.x + blockIdx.x * blockDim.x), y = (threadIdx.y + blockIdx.y * blockDim.y);
 
 	if (x >= imgSize.x || y >= imgSize.y) return;
 
-  genIdMaps(x, y, imgSize, points, colors, objectIds);
+  genIdMaps(x, y, imgSize, points, normals, colors, objectIds, table_avg_normal);
+}
+
+//hao modified it
+__global__ void copute_table_avg_normal_device(Vector3f *table_sum_normal, int length, Vector3f* table_avg_normal){
+  Vector3f tem(0,0,0);
+
+  for(int i=0; i<length; i+=10){
+    tem+=table_sum_normal[i];
+  }
+
+  if(!(tem.x == 0&&tem.y == 0&&tem.z == 0)){
+  (*table_avg_normal) = tem/sqrt(tem.x*tem.x+tem.y*tem.y+tem.z*tem.z);
+  }
+ 
+  //printf("length:%d\n", length);
+  //printf("table_avg_normal[0].x:%f\n", table_avg_normal[0].x);
+  //printf("table_avg_normal[0].y:%f\n", table_avg_normal[0].y);
+  //printf("table_avg_normal[0].z:%f\n", table_avg_normal[0].z);
 }
 
 //hao modified it
