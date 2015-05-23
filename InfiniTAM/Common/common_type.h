@@ -64,6 +64,19 @@ typedef struct MyPoint_RGB_NORMAL{
   float normal_z;
 }MyPt_RGB_NORMAL;
 
+typedef struct MyPoint_RGB_NORMAL_ID{
+  float x;
+  float y;
+  float z;
+  float r;
+  float g;
+  float b;
+  float normal_x;
+  float normal_y;
+  float normal_z;
+  int id;
+}MyPt_RGB_NORMAL_ID;
+
 class MyPointCloud{
 public:
   MyPointCloud();
@@ -89,6 +102,15 @@ public:
 
 public:
   vector<MyPt_RGB_NORMAL> mypoints;
+};
+
+class MyPointCloud_RGB_NORMAL_ID{
+public:
+  MyPointCloud_RGB_NORMAL_ID();
+  ~MyPointCloud_RGB_NORMAL_ID();
+
+public:
+  vector<MyPt_RGB_NORMAL_ID> mypoints;
 };
 
 class MyLine{
@@ -130,47 +152,47 @@ void CopyMyPointCloud(MyPointCloud& source, MyPointCloud& target);
 //shiyifei types
 struct GRAPHSHOW
 {
-	vector<MyPt_RGB_NORMAL> vecNodes;
-	vector<pair<MyPt_RGB_NORMAL,MyPt_RGB_NORMAL> > vecEdges;
+  vector<MyPt_RGB_NORMAL> vecNodes;
+  vector<pair<MyPt_RGB_NORMAL,MyPt_RGB_NORMAL> > vecEdges;
 
-	vector<bool> vecNodeFlag;
-	vector<bool> vecEdgeFlag;
-	vector<float> vecEdgeColor; 
+  vector<bool> vecNodeFlag;
+  vector<bool> vecEdgeFlag;
+  vector<float> vecEdgeColor; 
 };
 
 struct Normalt 
 {
-	float normal_x, normal_y, normal_z;
+  float normal_x, normal_y, normal_z;
 };
 
 struct Face3
 {
-	int p0,p1,p2;
-	double r,g,b;
-	bool validFlag;
+  int p0,p1,p2;
+  double r,g,b;
+  bool validFlag;
 };
 
 struct MeshFace
 {
-	vector<Face3> vecFace;
+  vector<Face3> vecFace;
 };
 
 struct MeshVertex
 {
-	vector<Point_RGB_NORMAL> vecVertex;
-	vector<ColorType> objectColor;
-	vector<ColorType> objectnessColor;
-	vector<ColorType> patchColor;
+  vector<Point_RGB_NORMAL> vecVertex;
+  vector<ColorType> objectColor;
+  vector<ColorType> objectnessColor;
+  vector<ColorType> patchColor;
 };
 
 struct Face3V
 {
-	Point_RGB_NORMAL pv0,pv1,pv2;
+  Point_RGB_NORMAL pv0,pv1,pv2;
 };
 
 struct FaceShow
 {
-	vector<Face3V> vecFaceV;
+  vector<Face3V> vecFaceV;
 };
 
 

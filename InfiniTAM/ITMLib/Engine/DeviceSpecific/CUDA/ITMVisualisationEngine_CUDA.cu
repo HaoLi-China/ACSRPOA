@@ -45,7 +45,11 @@ __global__ void new_genericRaycastAndRender_device(TRaycastRenderer renderer,
 
 //hao modified it
 template<class TVoxel, class TIndex>
-__global__ void getAllPoints_device(const TVoxel *voxelData, const typename TIndex::IndexData *voxelIndex);
+__global__ void getAllPoints_device(const TVoxel *voxelData, const typename TIndex::IndexData *voxelIndex, float mu, Vector3f *points, Vector3f *normals, Vector3f *colors, ushort *objectId, int &num);
+
+//hao modified it
+template<class TVoxel, class TIndex>
+__global__ void computePointNormal_device(const TVoxel *voxelData, Vector3f pt, Vector3f *normal);
 
 //hao modified it
 template<class TVoxel, class TIndex, class TRaycastRenderer>
@@ -591,19 +595,39 @@ void ITMVisualisationEngine_CUDA<TVoxel,ITMVoxelBlockHash>::GetRaycastImage(ITMS
 
 //hao modified it
 template<class TVoxel, class TIndex>
-void ITMVisualisationEngine_CUDA<TVoxel,TIndex>::GetAllPoints(const ITMScene<TVoxel,TIndex> *scene){
+void ITMVisualisationEngine_CUDA<TVoxel,TIndex>::GetAllPoints(const ITMScene<TVoxel,TIndex> *scene, Vector3f *points, Vector3f *normals, Vector3f *colors, ushort *objectId, int &num){
   dim3 cudaBlockSize(1);
 	dim3 gridSize(1);
-  getAllPoints_device<TVoxel,ITMVoxelBlockHash> << <gridSize, cudaBlockSize >> >(scene->localVBA.GetVoxelBlocks(), scene->index.getIndexData());
- }
+  getAllPoints_device<TVoxel,ITMVoxelBlockHash> << <gridSize, cudaBlockSize >> >(scene->localVBA.GetVoxelBlocks(), scene->index.getIndexData(), scene->sceneParams->mu, points, normals, colors, objectId, num);
+  ITMSafeCall(cudaThreadSynchronize()); 
+}
 
 //hao modified it
 template<class TVoxel>
-void ITMVisualisationEngine_CUDA<TVoxel,ITMVoxelBlockHash>::GetAllPoints(const ITMScene<TVoxel,ITMVoxelBlockHash> *scene){
+void ITMVisualisationEngine_CUDA<TVoxel,ITMVoxelBlockHash>::GetAllPoints(const ITMScene<TVoxel,ITMVoxelBlockHash> *scene, Vector3f *points, Vector3f *normals, Vector3f *colors, ushort *objectId, int &num){
   dim3 cudaBlockSize(1);
 	dim3 gridSize(1);
-  getAllPoints_device<TVoxel,ITMVoxelBlockHash> << <gridSize, cudaBlockSize >> >(scene->localVBA.GetVoxelBlocks(), scene->index.getIndexData());
- }
+  getAllPoints_device<TVoxel,ITMVoxelBlockHash> << <gridSize, cudaBlockSize >> >(scene->localVBA.GetVoxelBlocks(), scene->index.getIndexData(), scene->sceneParams->mu, points, normals, colors, objectId, num);
+  ITMSafeCall(cudaThreadSynchronize()); 
+}
+
+//hao modified it
+template<class TVoxel, class TIndex>
+void ITMVisualisationEngine_CUDA<TVoxel,TIndex>::computePointNormal(ITMScene<TVoxel,TIndex> *scene, Vector3f pt, Vector3f *normal){
+  dim3 cudaBlockSize(1);
+	dim3 gridSize(1);
+  computePointNormal_device<TVoxel,TIndex> << <gridSize, cudaBlockSize >> >(scene->localVBA.GetVoxelBlocks(), scene->index.getIndexData(), pt, normal);
+  ITMSafeCall(cudaThreadSynchronize()); 
+}
+
+//hao modified it
+template<class TVoxel>
+void ITMVisualisationEngine_CUDA<TVoxel,ITMVoxelBlockHash>::computePointNormal(ITMScene<TVoxel,ITMVoxelBlockHash> *scene, Vector3f pt, Vector3f *normal){
+  dim3 cudaBlockSize(1);
+	dim3 gridSize(1);
+  computePointNormal_device<TVoxel,ITMVoxelBlockHash> << <gridSize, cudaBlockSize >> >(scene->localVBA.GetVoxelBlocks(), scene->index.getIndexData(), pt, normal);
+  ITMSafeCall(cudaThreadSynchronize()); 
+}
 
 //device implementations
 
@@ -833,12 +857,51 @@ __global__ void copute_table_avg_normal_device(Vector3f *table_sum_normal, int l
 
 //hao modified it
 template<class TVoxel, class TIndex>
-__global__ void getAllPoints_device(const TVoxel *voxelData, const typename TIndex::IndexData *voxelIndex){
+__global__ void getAllPoints_device(const TVoxel *voxelData, const typename TIndex::IndexData *voxelIndex, float mu, Vector3f *points, Vector3f *normals, Vector3f *colors, ushort *objectId, int &num){
+
+  //ITMVoxelIndex::IndexData *hashData_host = new ITMVoxelIndex::IndexData;voxelIndex
+  //ITMVoxel *voxels = (ITMVoxel*)malloc(SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3 * sizeof(ITMVoxel));voxelData
+
   const ITMHashEntry *hashTable = voxelIndex->entries_all;
+  int cout = 0;
+
   for(int i=0; i<SDF_BUCKET_NUM * SDF_ENTRY_NUM_PER_BUCKET + SDF_EXCESS_LIST_SIZE; i++){
     const ITMHashEntry &hashEntry = hashTable[i];
+
+    if(hashEntry.ptr >= 0){
+      for(int j=0; j<SDF_BLOCK_SIZE3; j++){
+        ITMVoxel res = voxelData[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j];
+
+        float value = ITMVoxel::SDF_valueToFloat(res.sdf);
+        if(value<10*mu&&value>-10*mu){
+
+          float voxelSize = 0.125f;
+          float blockSizeWorld = 0.005*SDF_BLOCK_SIZE; // = 0.005*8;
+
+          (*(points+cout))[2] = (hashEntry.pos.z+(j/(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE)+0.5f)*voxelSize)*blockSizeWorld;
+          (*(points+cout))[1] = (hashEntry.pos.y+((j%(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE))/SDF_BLOCK_SIZE+0.5f)*voxelSize)*blockSizeWorld;
+          (*(points+cout))[0] = (hashEntry.pos.x+((j%(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE))%SDF_BLOCK_SIZE+0.5f)*voxelSize)*blockSizeWorld;
+          (*(colors+cout))[0] = res.r;
+          (*(colors+cout))[1] = res.g;
+          (*(colors+cout))[2] = res.b;
+
+          Vector3f pt((hashEntry.pos.x*SDF_BLOCK_SIZE+((j%(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE))%SDF_BLOCK_SIZE+0.5f)), (hashEntry.pos.y*SDF_BLOCK_SIZE+((j%(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE))/SDF_BLOCK_SIZE+0.5f)), (hashEntry.pos.z*SDF_BLOCK_SIZE+(j/(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE)+0.5f)));
+
+          (*(normals+cout)) = computeSingleNormalFromSDF(voxelData, voxelIndex, pt);
+
+          cout++;
+        }
+      }
+    }
   }
 }
+
+//hao modified it
+template<class TVoxel, class TIndex>
+__global__ void computePointNormal_device(const TVoxel *voxelData, const typename TIndex::IndexData *voxelIndex, Vector3f pt, Vector3f *normal){
+  (*normal) = computeSingleNormalFromSDF(voxelData, voxelIndex, pt);
+}
+
 
 ////hao modified it
 //template<class TVoxel, class TIndex>

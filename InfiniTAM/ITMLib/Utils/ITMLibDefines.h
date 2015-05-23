@@ -138,12 +138,19 @@ struct ITMVoxel_s
 	_CPU_AND_GPU_CODE_ static float SDF_valueToFloat(float x) { return (float)(x) / 32767.0f; }
 	_CPU_AND_GPU_CODE_ static short SDF_floatToValue(float x) { return (short)((x) * 32767.0f); }
 
+  //_CPU_AND_GPU_CODE_ static short NORMAL_initialValue() { return 0; }//hao modified it 
+  //_CPU_AND_GPU_CODE_ static float NORMAL_valueToFloat(float x) { return (float)(x) / 32767.0f; }//hao modified it 
+  //_CPU_AND_GPU_CODE_ static short NORMAL_floatToValue(float x) { return (short)((x) * 32767.0f); }//hao modified it 
+
 	static const bool hasColorInformation = false;
 
   ushort id;//hao modified it 
   uchar r;//hao modified it 
   uchar g;//hao modified it 
   uchar b;//hao modified it 
+  //short normal_x;//hao modified it 
+  //short normal_y;//hao modified it 
+  //short normal_z;//hao modified it 
 
 	/** Value of the truncated signed distance transformation. */
 	short sdf;
@@ -158,9 +165,12 @@ struct ITMVoxel_s
 		sdf = SDF_initialValue();
 		w_depth = 0;
     id = 0;
-    r = 0;
-    g = 0;
-    b = 0;
+    r = 255;
+    g = 255;
+    b = 255;
+    //normal_x = NORMAL_initialValue();
+    //normal_y = NORMAL_initialValue();
+    //normal_z = NORMAL_initialValue();
 	}
 };
 

@@ -415,7 +415,9 @@ void ITMMainEngine::segmentView()
     PointCloudPtr_RGB object_cloud(new PointCloud_RGB);
     PointCloudPtr_RGB confidence_cloud(new PointCloud_RGB);
     vector<ushort> objectIndexs;
-    segmentObject(cloud, cPointCloudAnalysis, object_cloud, confidence_cloud, objectIndexs);
+    Eigen::Vector3f range(0.5, 0.5, 1.0);
+    int objectNum;
+    segmentObject(cloud, range, cPointCloudAnalysis, object_cloud, confidence_cloud, objectIndexs, objectNum);
     //showPointCloud(segmented_cloud, "segmented_cloud");
 
     KDtree tree;
@@ -523,7 +525,7 @@ void ITMMainEngine::segmentView()
       }
     }
 
-    idCount += (objectIndexs_new.size()-1);
+    idCount += objectNum;
 
     Vector3f *colors_device;
     ITMSafeCall(cudaMalloc((void**)&colors_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
@@ -557,36 +559,36 @@ void ITMMainEngine::segmentView()
 void ITMMainEngine::showSegmentResult(int flag){
   {
 #ifndef COMPILE_WITHOUT_CUDA
-  if(objectColors!=NULL&&confidenceColors!=NULL){
-    switch(flag){
-    case 0:
-      {
-        Vector3f *colors_device;
-        ITMSafeCall(cudaMalloc((void**)&colors_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
-        ITMSafeCall(cudaMemcpy(colors_device, objectColors, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyHostToDevice));
-        //pcl::io::savePLYFileBinary("Data/scan1.ply", *colored_cloud);
+    if(objectColors!=NULL&&confidenceColors!=NULL){
+      switch(flag){
+      case 0:
+        {
+          Vector3f *colors_device;
+          ITMSafeCall(cudaMalloc((void**)&colors_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
+          ITMSafeCall(cudaMemcpy(colors_device, objectColors, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyHostToDevice));
+          //pcl::io::savePLYFileBinary("Data/scan1.ply", *colored_cloud);
 
-        visualisationEngine->NewCreateICPMaps(scene, view, trackingState, colors_device, NULL, 0);
+          visualisationEngine->NewCreateICPMaps(scene, view, trackingState, colors_device, NULL, 0);
 
-        ITMSafeCall(cudaFree(colors_device));
-        break;
-      }
-    case 1:
-      {
-        Vector3f *colors_device;
-        ITMSafeCall(cudaMalloc((void**)&colors_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
-        ITMSafeCall(cudaMemcpy(colors_device, confidenceColors, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyHostToDevice));
-        //pcl::io::savePLYFileBinary("Data/scan1.ply", *colored_cloud);
+          ITMSafeCall(cudaFree(colors_device));
+          break;
+        }
+      case 1:
+        {
+          Vector3f *colors_device;
+          ITMSafeCall(cudaMalloc((void**)&colors_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
+          ITMSafeCall(cudaMemcpy(colors_device, confidenceColors, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyHostToDevice));
+          //pcl::io::savePLYFileBinary("Data/scan1.ply", *colored_cloud);
 
-        visualisationEngine->NewCreateICPMaps(scene, view, trackingState, colors_device, NULL, 0);
+          visualisationEngine->NewCreateICPMaps(scene, view, trackingState, colors_device, NULL, 0);
 
-        ITMSafeCall(cudaFree(colors_device));
-        break;
+          ITMSafeCall(cudaFree(colors_device));
+          break;
+        }
       }
     }
-  }
 #endif
-}
+  }
 }
 
 //hao modified it
@@ -690,224 +692,224 @@ void ITMMainEngine::saveViewPoints(ITMTrackingState *itmtrackingState){
 
 //hao modified it
 void ITMMainEngine::updateSegmentView(){
-  {
-#ifndef COMPILE_WITHOUT_CUDA
-    Vector3f *points_device;
-    Vector3f *points_host = (Vector3f*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f));
-    Vector3f *normals_device;
-    Vector3f *normals_host = (Vector3f*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f));
-    ITMSafeCall(cudaMalloc((void**)&points_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
-    ITMSafeCall(cudaMemset(points_device, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
-    ITMSafeCall(cudaMalloc((void**)&normals_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
-    ITMSafeCall(cudaMemset(normals_device, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
-    visualisationEngine->GetRaycastImage(scene, view, trackingState, points_device, normals_device, NULL, NULL);
-    ITMSafeCall(cudaMemcpy(points_host, points_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyDeviceToHost));
-    ITMSafeCall(cudaMemcpy(normals_host, normals_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyDeviceToHost));
-
-    int *id_array_host = (int*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(int));
-    PointCloudPtr_RGB_NORMAL cloud(new PointCloud_RGB_NORMAL);
-
-    for(int i=0; i<view->depth->noDims.x*view->depth->noDims.y; i++){
-      if(!((*(points_host+i))[0]==0&&(*(points_host+i))[1]==0&&(*(points_host+i))[2]==0)){
-        Point_RGB_NORMAL pt;
-        pt.x=(*(points_host+i))[0];
-        pt.y=(*(points_host+i))[1];
-        pt.z=(*(points_host+i))[2];
-        pt.r=255;
-        pt.g=255;
-        pt.b=255;
-        pt.normal_x=(*(normals_host+i))[0];
-        pt.normal_y=(*(normals_host+i))[1];
-        pt.normal_z=(*(normals_host+i))[2];
-        cloud->points.push_back(pt);
-        *(id_array_host+i)=i;
-      }else{
-        *(id_array_host+i)=-1;
-      }
-    }
-
-    //currentViewCloud.mypoints.clear();
-    //PointCloud_RGB_NORMAL2MyPointCloud_RGB_NORMAL(cloud, currentViewCloud);
-
-    //showPointCloud3(cloud, "cloud");
-
-    PointCloudPtr_RGB_NORMAL cloudA (new PointCloud_RGB_NORMAL);
-    PointCloudPtr_RGB_NORMAL cloudB (new PointCloud_RGB_NORMAL);
-
-    MyPointCloud_RGB_NORMAL2PointCloud_RGB_NORMAL(myCloudOne, cloudA);
-    MyPointCloud_RGB_NORMAL2PointCloud_RGB_NORMAL(myCloudTwo, cloudB);
-
-    //showPointCloud3(cloudA, "cloudA");
-    //showPointCloud3(cloudB, "cloudB");
-
-    PointCloudPtr_RGB_NORMAL planeCloudA(new PointCloud_RGB_NORMAL);
-    PointCloudPtr rect_cloudA(new PointCloud());
-    PointCloudPtr_RGB_NORMAL remainingCloudA(new PointCloud_RGB_NORMAL);
-    pcl::ModelCoefficients coefficientsA;
-    PointCloudPtr_RGB_NORMAL planeCloudB(new PointCloud_RGB_NORMAL);
-    PointCloudPtr rect_cloudB(new PointCloud());
-    PointCloudPtr_RGB_NORMAL remainingCloudB(new PointCloud_RGB_NORMAL);
-    pcl::ModelCoefficients coefficientsB;
-    detect_table(cloudA, coefficientsA, planeCloudA, rect_cloudA, remainingCloudA);
-    detect_table(cloudB, coefficientsB, planeCloudB, rect_cloudB, remainingCloudB);
-
-    /* showPointCloud(planeCloudA, "planeCloudA");
-    showPointCloud(remainingCloudA, "remainingCloudA");
-    showPointCloud(planeCloudB, "planeCloudB");
-    showPointCloud(remainingCloudB, "remainingCloudB");*/
-
-    Eigen::Matrix4f matrix_transformA;
-    Eigen::Matrix4f matrix_transformA_r;
-    Eigen::Matrix4f matrix_transformB;
-    Eigen::Matrix4f matrix_transformB_r;
-
-    getTemTransformMatrix(coefficientsA, matrix_transformA, matrix_transformA_r);
-    getTemTransformMatrix(coefficientsB, matrix_transformB, matrix_transformB_r);
-
-    PointCloudPtr_RGB_NORMAL tabletopCloudA_tem(new PointCloud_RGB_NORMAL());
-    PointCloudPtr_RGB_NORMAL tabletopCloudB_tem(new PointCloud_RGB_NORMAL());
-    getCloudOnTable(remainingCloudA, rect_cloudA, matrix_transformA, matrix_transformA_r, tabletopCloudA_tem);
-    getCloudOnTable(remainingCloudB, rect_cloudB, matrix_transformB, matrix_transformB_r, tabletopCloudB_tem);
-
-    PointCloudPtr_RGB_NORMAL tabletopCloudA(new PointCloud_RGB_NORMAL());
-    PointCloudPtr_RGB_NORMAL tabletopCloudB(new PointCloud_RGB_NORMAL());
-    for(int i=0; i<tabletopCloudA_tem->size(); i++){
-      if(!(tabletopCloudA_tem->points[i].z>1||tabletopCloudA_tem->points[i].x<-0.5||tabletopCloudA_tem->points[i].x>0.5||tabletopCloudA_tem->points[i].y<-0.5||tabletopCloudA_tem->points[i].y>0.5)){
-        tabletopCloudA->push_back(tabletopCloudA_tem->points[i]);
-      }
-    }
-
-    for(int i=0; i<tabletopCloudB_tem->size(); i++){
-      if(!(tabletopCloudB_tem->points[i].z>1||tabletopCloudB_tem->points[i].x<-0.5||tabletopCloudB_tem->points[i].x>0.5||tabletopCloudB_tem->points[i].y<-0.5||tabletopCloudB_tem->points[i].y>0.5)){
-        tabletopCloudB->push_back(tabletopCloudB_tem->points[i]);
-      }
-    }
-    //showPointCloud3(tabletopCloudA, "tabletopCloudA");
-    //showPointCloud3(tabletopCloudB, "tabletopCloudB");
-
-    PointCloudPtr_RGB_NORMAL resultA (new PointCloud_RGB_NORMAL);
-    PointCloudPtr_RGB_NORMAL resultB (new PointCloud_RGB_NORMAL);
-    detect_change(tabletopCloudA, tabletopCloudB, resultA, resultB);
-
-    //showPointCloud3(resultA, "resultA");
-    //showPointCloud3(resultB, "resultB");
-
-    PointCloudPtr_RGB object_cloud(new PointCloud_RGB);
-    PointCloudPtr_RGB confidence_cloud(new PointCloud_RGB);
-    updateSegmentObject(cloud, resultA, resultB, cPointCloudAnalysis, object_cloud, confidence_cloud);
-
-    KDtree tree;
-    CUDA_KDTree GPU_tree;
-    int max_tree_levels = 13; // play around with this value to get the best result
-
-    vector<KDPoint> data(cloud->size());
-    vector<KDPoint> queries(object_cloud->size());
-
-    for(int i=0; i<cloud->size(); i++){
-      data[i].coords[0] = cloud->points[i].x;
-      data[i].coords[1] = cloud->points[i].y;
-      data[i].coords[2] = cloud->points[i].z;
-    }
-
-    for(int i=0; i<object_cloud->size(); i++){
-      queries[i].coords[0] = object_cloud->points[i].x;
-      queries[i].coords[1] = object_cloud->points[i].y;
-      queries[i].coords[2] = object_cloud->points[i].z;
-    }
-
-    vector <int> gpu_indexes;
-    vector <float> gpu_dists;
-
-    tree.Create(data, max_tree_levels);
-    GPU_tree.CreateKDTree(tree.GetRoot(), tree.GetNumNodes(), data);
-    GPU_tree.Search(queries, gpu_indexes, gpu_dists);
-
-    PointCloudPtr_RGB colored_cloud0(new PointCloud_RGB);
-    PointCloudPtr_RGB colored_cloud1(new PointCloud_RGB);
-    for(int i=0; i<cloud->size(); i++){
-      Point_RGB p_tem;
-      p_tem.x=0;
-      p_tem.y=0;
-      p_tem.z=0;
-      colored_cloud0->push_back(p_tem);
-      colored_cloud1->push_back(p_tem);
-    }
-
-    for(int i=0; i<object_cloud->size(); i++){
-      colored_cloud0->points[gpu_indexes[i]].x = object_cloud->points[i].x;
-      colored_cloud0->points[gpu_indexes[i]].y = object_cloud->points[i].y;
-      colored_cloud0->points[gpu_indexes[i]].z = object_cloud->points[i].z;
-      colored_cloud0->points[gpu_indexes[i]].r = object_cloud->points[i].r;
-      colored_cloud0->points[gpu_indexes[i]].g = object_cloud->points[i].g;
-      colored_cloud0->points[gpu_indexes[i]].b = object_cloud->points[i].b;
-
-      colored_cloud1->points[gpu_indexes[i]].x = confidence_cloud->points[i].x;
-      colored_cloud1->points[gpu_indexes[i]].y = confidence_cloud->points[i].y;
-      colored_cloud1->points[gpu_indexes[i]].z = confidence_cloud->points[i].z;
-      colored_cloud1->points[gpu_indexes[i]].r = confidence_cloud->points[i].r;
-      colored_cloud1->points[gpu_indexes[i]].g = confidence_cloud->points[i].g;
-      colored_cloud1->points[gpu_indexes[i]].b = confidence_cloud->points[i].b;
-    }
-
-    //showPointCloud(colored_cloud, "colored_cloud");
-
-    objectColors = (Vector3f*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f));
-    confidenceColors = (Vector3f*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f));
-
-    int count=0;
-    for(int i=0; i<view->depth->noDims.x*view->depth->noDims.y; i++){
-      if(*(id_array_host+i)!=-1){
-        if(!(colored_cloud0->points[count].x==0&&colored_cloud0->points[count].y==0&&colored_cloud0->points[count].z==0)){
-          (*(objectColors+i))[0] = colored_cloud0->points[count].r;
-          (*(objectColors+i))[1] = colored_cloud0->points[count].g;
-          (*(objectColors+i))[2] = colored_cloud0->points[count].b;
-
-          (*(confidenceColors+i))[0] = colored_cloud1->points[count].r;
-          (*(confidenceColors+i))[1] = colored_cloud1->points[count].g;
-          (*(confidenceColors+i))[2] = colored_cloud1->points[count].b;
-        }
-        else{
-          (*(objectColors+i))[0] = -1;
-          (*(objectColors+i))[1] = -1;
-          (*(objectColors+i))[2] = -1;
-
-          (*(confidenceColors+i))[0] = -1;
-          (*(confidenceColors+i))[1] = -1;
-          (*(confidenceColors+i))[2] = -1;
-        }
-
-        count++;
-      }
-      else{
-        (*(objectColors+i))[0] = -1;
-        (*(objectColors+i))[1] = -1;
-        (*(objectColors+i))[2] = -1;
-
-        (*(confidenceColors+i))[0] = -1;
-        (*(confidenceColors+i))[1] = -1;
-        (*(confidenceColors+i))[2] = -1;
-      }
-    }
-
-    Vector3f *colors_device;
-    ITMSafeCall(cudaMalloc((void**)&colors_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
-    ITMSafeCall(cudaMemcpy(colors_device, objectColors, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyHostToDevice));
-    //pcl::io::savePLYFileBinary("Data/scan1.ply", *colored_cloud);
-
-    visualisationEngine->NewCreateICPMaps(scene, view, trackingState, colors_device, NULL, 0);
-
-    free(points_host);
-    free(normals_host);
-    free(id_array_host);
-    points_host=NULL;
-    normals_host=NULL;
-    id_array_host=NULL;
-
-    ITMSafeCall(cudaFree(points_device));
-    ITMSafeCall(cudaFree(normals_device));
-    ITMSafeCall(cudaFree(colors_device));
-#endif
-  }
+//  {
+//#ifndef COMPILE_WITHOUT_CUDA
+//    Vector3f *points_device;
+//    Vector3f *points_host = (Vector3f*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f));
+//    Vector3f *normals_device;
+//    Vector3f *normals_host = (Vector3f*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f));
+//    ITMSafeCall(cudaMalloc((void**)&points_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
+//    ITMSafeCall(cudaMemset(points_device, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
+//    ITMSafeCall(cudaMalloc((void**)&normals_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
+//    ITMSafeCall(cudaMemset(normals_device, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
+//    visualisationEngine->GetRaycastImage(scene, view, trackingState, points_device, normals_device, NULL, NULL);
+//    ITMSafeCall(cudaMemcpy(points_host, points_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyDeviceToHost));
+//    ITMSafeCall(cudaMemcpy(normals_host, normals_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyDeviceToHost));
+//
+//    int *id_array_host = (int*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(int));
+//    PointCloudPtr_RGB_NORMAL cloud(new PointCloud_RGB_NORMAL);
+//
+//    for(int i=0; i<view->depth->noDims.x*view->depth->noDims.y; i++){
+//      if(!((*(points_host+i))[0]==0&&(*(points_host+i))[1]==0&&(*(points_host+i))[2]==0)){
+//        Point_RGB_NORMAL pt;
+//        pt.x=(*(points_host+i))[0];
+//        pt.y=(*(points_host+i))[1];
+//        pt.z=(*(points_host+i))[2];
+//        pt.r=255;
+//        pt.g=255;
+//        pt.b=255;
+//        pt.normal_x=(*(normals_host+i))[0];
+//        pt.normal_y=(*(normals_host+i))[1];
+//        pt.normal_z=(*(normals_host+i))[2];
+//        cloud->points.push_back(pt);
+//        *(id_array_host+i)=i;
+//      }else{
+//        *(id_array_host+i)=-1;
+//      }
+//    }
+//
+//    //currentViewCloud.mypoints.clear();
+//    //PointCloud_RGB_NORMAL2MyPointCloud_RGB_NORMAL(cloud, currentViewCloud);
+//
+//    //showPointCloud3(cloud, "cloud");
+//
+//    PointCloudPtr_RGB_NORMAL cloudA (new PointCloud_RGB_NORMAL);
+//    PointCloudPtr_RGB_NORMAL cloudB (new PointCloud_RGB_NORMAL);
+//
+//    MyPointCloud_RGB_NORMAL2PointCloud_RGB_NORMAL(myCloudOne, cloudA);
+//    MyPointCloud_RGB_NORMAL2PointCloud_RGB_NORMAL(myCloudTwo, cloudB);
+//
+//    //showPointCloud3(cloudA, "cloudA");
+//    //showPointCloud3(cloudB, "cloudB");
+//
+//    PointCloudPtr_RGB_NORMAL planeCloudA(new PointCloud_RGB_NORMAL);
+//    PointCloudPtr rect_cloudA(new PointCloud());
+//    PointCloudPtr_RGB_NORMAL remainingCloudA(new PointCloud_RGB_NORMAL);
+//    pcl::ModelCoefficients coefficientsA;
+//    PointCloudPtr_RGB_NORMAL planeCloudB(new PointCloud_RGB_NORMAL);
+//    PointCloudPtr rect_cloudB(new PointCloud());
+//    PointCloudPtr_RGB_NORMAL remainingCloudB(new PointCloud_RGB_NORMAL);
+//    pcl::ModelCoefficients coefficientsB;
+//    detect_table(cloudA, coefficientsA, planeCloudA, rect_cloudA, remainingCloudA);
+//    detect_table(cloudB, coefficientsB, planeCloudB, rect_cloudB, remainingCloudB);
+//
+//    /* showPointCloud(planeCloudA, "planeCloudA");
+//    showPointCloud(remainingCloudA, "remainingCloudA");
+//    showPointCloud(planeCloudB, "planeCloudB");
+//    showPointCloud(remainingCloudB, "remainingCloudB");*/
+//
+//    Eigen::Matrix4f matrix_transformA;
+//    Eigen::Matrix4f matrix_transformA_r;
+//    Eigen::Matrix4f matrix_transformB;
+//    Eigen::Matrix4f matrix_transformB_r;
+//
+//    getTemTransformMatrix(coefficientsA, matrix_transformA, matrix_transformA_r);
+//    getTemTransformMatrix(coefficientsB, matrix_transformB, matrix_transformB_r);
+//
+//    PointCloudPtr_RGB_NORMAL tabletopCloudA_tem(new PointCloud_RGB_NORMAL());
+//    PointCloudPtr_RGB_NORMAL tabletopCloudB_tem(new PointCloud_RGB_NORMAL());
+//    getCloudOnTable(remainingCloudA, rect_cloudA, matrix_transformA, matrix_transformA_r, tabletopCloudA_tem);
+//    getCloudOnTable(remainingCloudB, rect_cloudB, matrix_transformB, matrix_transformB_r, tabletopCloudB_tem);
+//
+//    PointCloudPtr_RGB_NORMAL tabletopCloudA(new PointCloud_RGB_NORMAL());
+//    PointCloudPtr_RGB_NORMAL tabletopCloudB(new PointCloud_RGB_NORMAL());
+//    for(int i=0; i<tabletopCloudA_tem->size(); i++){
+//      if(!(tabletopCloudA_tem->points[i].z>1||tabletopCloudA_tem->points[i].x<-0.5||tabletopCloudA_tem->points[i].x>0.5||tabletopCloudA_tem->points[i].y<-0.5||tabletopCloudA_tem->points[i].y>0.5)){
+//        tabletopCloudA->push_back(tabletopCloudA_tem->points[i]);
+//      }
+//    }
+//
+//    for(int i=0; i<tabletopCloudB_tem->size(); i++){
+//      if(!(tabletopCloudB_tem->points[i].z>1||tabletopCloudB_tem->points[i].x<-0.5||tabletopCloudB_tem->points[i].x>0.5||tabletopCloudB_tem->points[i].y<-0.5||tabletopCloudB_tem->points[i].y>0.5)){
+//        tabletopCloudB->push_back(tabletopCloudB_tem->points[i]);
+//      }
+//    }
+//    //showPointCloud3(tabletopCloudA, "tabletopCloudA");
+//    //showPointCloud3(tabletopCloudB, "tabletopCloudB");
+//
+//    PointCloudPtr_RGB_NORMAL resultA (new PointCloud_RGB_NORMAL);
+//    PointCloudPtr_RGB_NORMAL resultB (new PointCloud_RGB_NORMAL);
+//    detect_change(tabletopCloudA, tabletopCloudB, resultA, resultB);
+//
+//    //showPointCloud3(resultA, "resultA");
+//    //showPointCloud3(resultB, "resultB");
+//
+//    PointCloudPtr_RGB object_cloud(new PointCloud_RGB);
+//    PointCloudPtr_RGB confidence_cloud(new PointCloud_RGB);
+//    updateSegmentObject(cloud, resultA, resultB, cPointCloudAnalysis, object_cloud, confidence_cloud);
+//
+//    KDtree tree;
+//    CUDA_KDTree GPU_tree;
+//    int max_tree_levels = 13; // play around with this value to get the best result
+//
+//    vector<KDPoint> data(cloud->size());
+//    vector<KDPoint> queries(object_cloud->size());
+//
+//    for(int i=0; i<cloud->size(); i++){
+//      data[i].coords[0] = cloud->points[i].x;
+//      data[i].coords[1] = cloud->points[i].y;
+//      data[i].coords[2] = cloud->points[i].z;
+//    }
+//
+//    for(int i=0; i<object_cloud->size(); i++){
+//      queries[i].coords[0] = object_cloud->points[i].x;
+//      queries[i].coords[1] = object_cloud->points[i].y;
+//      queries[i].coords[2] = object_cloud->points[i].z;
+//    }
+//
+//    vector <int> gpu_indexes;
+//    vector <float> gpu_dists;
+//
+//    tree.Create(data, max_tree_levels);
+//    GPU_tree.CreateKDTree(tree.GetRoot(), tree.GetNumNodes(), data);
+//    GPU_tree.Search(queries, gpu_indexes, gpu_dists);
+//
+//    PointCloudPtr_RGB colored_cloud0(new PointCloud_RGB);
+//    PointCloudPtr_RGB colored_cloud1(new PointCloud_RGB);
+//    for(int i=0; i<cloud->size(); i++){
+//      Point_RGB p_tem;
+//      p_tem.x=0;
+//      p_tem.y=0;
+//      p_tem.z=0;
+//      colored_cloud0->push_back(p_tem);
+//      colored_cloud1->push_back(p_tem);
+//    }
+//
+//    for(int i=0; i<object_cloud->size(); i++){
+//      colored_cloud0->points[gpu_indexes[i]].x = object_cloud->points[i].x;
+//      colored_cloud0->points[gpu_indexes[i]].y = object_cloud->points[i].y;
+//      colored_cloud0->points[gpu_indexes[i]].z = object_cloud->points[i].z;
+//      colored_cloud0->points[gpu_indexes[i]].r = object_cloud->points[i].r;
+//      colored_cloud0->points[gpu_indexes[i]].g = object_cloud->points[i].g;
+//      colored_cloud0->points[gpu_indexes[i]].b = object_cloud->points[i].b;
+//
+//      colored_cloud1->points[gpu_indexes[i]].x = confidence_cloud->points[i].x;
+//      colored_cloud1->points[gpu_indexes[i]].y = confidence_cloud->points[i].y;
+//      colored_cloud1->points[gpu_indexes[i]].z = confidence_cloud->points[i].z;
+//      colored_cloud1->points[gpu_indexes[i]].r = confidence_cloud->points[i].r;
+//      colored_cloud1->points[gpu_indexes[i]].g = confidence_cloud->points[i].g;
+//      colored_cloud1->points[gpu_indexes[i]].b = confidence_cloud->points[i].b;
+//    }
+//
+//    //showPointCloud(colored_cloud, "colored_cloud");
+//
+//    objectColors = (Vector3f*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f));
+//    confidenceColors = (Vector3f*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f));
+//
+//    int count=0;
+//    for(int i=0; i<view->depth->noDims.x*view->depth->noDims.y; i++){
+//      if(*(id_array_host+i)!=-1){
+//        if(!(colored_cloud0->points[count].x==0&&colored_cloud0->points[count].y==0&&colored_cloud0->points[count].z==0)){
+//          (*(objectColors+i))[0] = colored_cloud0->points[count].r;
+//          (*(objectColors+i))[1] = colored_cloud0->points[count].g;
+//          (*(objectColors+i))[2] = colored_cloud0->points[count].b;
+//
+//          (*(confidenceColors+i))[0] = colored_cloud1->points[count].r;
+//          (*(confidenceColors+i))[1] = colored_cloud1->points[count].g;
+//          (*(confidenceColors+i))[2] = colored_cloud1->points[count].b;
+//        }
+//        else{
+//          (*(objectColors+i))[0] = -1;
+//          (*(objectColors+i))[1] = -1;
+//          (*(objectColors+i))[2] = -1;
+//
+//          (*(confidenceColors+i))[0] = -1;
+//          (*(confidenceColors+i))[1] = -1;
+//          (*(confidenceColors+i))[2] = -1;
+//        }
+//
+//        count++;
+//      }
+//      else{
+//        (*(objectColors+i))[0] = -1;
+//        (*(objectColors+i))[1] = -1;
+//        (*(objectColors+i))[2] = -1;
+//
+//        (*(confidenceColors+i))[0] = -1;
+//        (*(confidenceColors+i))[1] = -1;
+//        (*(confidenceColors+i))[2] = -1;
+//      }
+//    }
+//
+//    Vector3f *colors_device;
+//    ITMSafeCall(cudaMalloc((void**)&colors_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
+//    ITMSafeCall(cudaMemcpy(colors_device, objectColors, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyHostToDevice));
+//    //pcl::io::savePLYFileBinary("Data/scan1.ply", *colored_cloud);
+//
+//    visualisationEngine->NewCreateICPMaps(scene, view, trackingState, colors_device, NULL, 0);
+//
+//    free(points_host);
+//    free(normals_host);
+//    free(id_array_host);
+//    points_host=NULL;
+//    normals_host=NULL;
+//    id_array_host=NULL;
+//
+//    ITMSafeCall(cudaFree(points_device));
+//    ITMSafeCall(cudaFree(normals_device));
+//    ITMSafeCall(cudaFree(colors_device));
+//#endif
+//  }
 }
 
 //hao modified it
@@ -1098,10 +1100,12 @@ void ITMMainEngine::detectChange(){
 }
 
 //hao modified it
-void ITMMainEngine::changeObjectIds(ushort oldID, ushort newId, uchar newR, uchar newG, uchar newB){
-  
+void ITMMainEngine::changeObjectIds(const vector<ushort> &oldIDs, const vector<ushort> &newIds, const vector<uchar> &newRs, const vector<uchar> &newGs, const vector<uchar> &newBs){
+
   ITMVoxelIndex::IndexData *hashData_host = new ITMVoxelIndex::IndexData;
   ITMVoxel *voxels = (ITMVoxel*)malloc(SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3 * sizeof(ITMVoxel));
+
+  //printf("aaaaaa\n");
 
   bool flag = false;
 #ifndef COMPILE_WITHOUT_CUDA
@@ -1115,7 +1119,7 @@ void ITMMainEngine::changeObjectIds(ushort oldID, ushort newId, uchar newR, ucha
     memcpy(hashData_host, scene->index.getIndexData(), sizeof(ITMVoxelIndex::IndexData));
     memcpy(voxels, scene->localVBA.GetVoxelBlocks(), SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3 * sizeof(ITMVoxel));
   }
-
+  //printf("bbbbbb\n");
   const ITMHashEntry *hashTable = hashData_host->entries_all;
 
   for(int i=0; i<SDF_BUCKET_NUM * SDF_ENTRY_NUM_PER_BUCKET + SDF_EXCESS_LIST_SIZE; i++){
@@ -1125,22 +1129,46 @@ void ITMMainEngine::changeObjectIds(ushort oldID, ushort newId, uchar newR, ucha
       for(int j=0; j<SDF_BLOCK_SIZE3; j++){
         ITMVoxel res = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j];
 
-        if(res.id == oldID){
-          voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j].id = newId;
-          voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j].r = newR;
-          voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j].g = newG;
-          voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j].b = newB;
+        //if(res.id == 3){
+        //  printf("dddddd\n");
+        //}
+
+        for(int k=0; k<oldIDs.size(); k++){
+          if(res.id == oldIDs[k]){
+            voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j].id = newIds[k];
+            voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j].r = newRs[k];
+            voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j].g = newGs[k];
+            voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j].b = newBs[k];
+          }
         }
       }
     }
   }
+
+  if(flag){
+    ITMSafeCall(cudaMemcpy(scene->localVBA.GetVoxelBlocks(), voxels, SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3*sizeof(ITMVoxel), cudaMemcpyHostToDevice));
+  }
+  else{
+    memcpy(scene->localVBA.GetVoxelBlocks(), voxels, SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3 * sizeof(ITMVoxel));
+  }
+
+  //printf("cccccc\n");
+  free(voxels);
+  free(hashData_host);
+  voxels=NULL;
+  hashData_host=NULL;
 }
 
 //hao modified it
 void ITMMainEngine::savePoints()
 {
   //visualisationEngine->GetAllPoints(scene);
-  PointCloudPtr cloud(new PointCloud);
+  PointCloudPtr_RGB_NORMAL cloud(new PointCloud_RGB_NORMAL);
+  //int num=0;
+  Vector3f *normal_device;
+  ITMSafeCall(cudaMalloc((void**)&normal_device, sizeof(Vector3f)));
+
+  Vector3f *normal_host = (Vector3f*)malloc(sizeof(Vector3f));
 
   ITMVoxelIndex::IndexData *hashData_host = new ITMVoxelIndex::IndexData;
   ITMVoxel *voxels = (ITMVoxel*)malloc(SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3 * sizeof(ITMVoxel));
@@ -1172,26 +1200,56 @@ void ITMMainEngine::savePoints()
         if(value<10*mu&&value>-10*mu){
           //cout<<"value:"<<value<<endl;
 
-          Point p;
+          Point_RGB_NORMAL p;
           float voxelSize = 0.125f;
           float blockSizeWorld = scene->sceneParams->voxelSize*SDF_BLOCK_SIZE; // = 0.005*8;
 
           p.z = (hashEntry.pos.z+(j/(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE)+0.5f)*voxelSize)*blockSizeWorld;
           p.y = (hashEntry.pos.y+((j%(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE))/SDF_BLOCK_SIZE+0.5f)*voxelSize)*blockSizeWorld;
           p.x = (hashEntry.pos.x+((j%(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE))%SDF_BLOCK_SIZE+0.5f)*voxelSize)*blockSizeWorld;
+          p.r = res.r;
+          p.g = res.g;
+          p.b = res.b;
+
+          Vector3f pt((hashEntry.pos.x*SDF_BLOCK_SIZE+((j%(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE))%SDF_BLOCK_SIZE+0.5f)), (hashEntry.pos.y*SDF_BLOCK_SIZE+((j%(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE))/SDF_BLOCK_SIZE+0.5f)), (hashEntry.pos.z*SDF_BLOCK_SIZE+(j/(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE)+0.5f)));
+          ITMSafeCall(cudaMemset(normal_device, 0, sizeof(Vector3f)));
+          memset(normal_host, 0, sizeof(Vector3f));
+
+          visualisationEngine->computePointNormal(scene, pt, normal_device);
+          ITMSafeCall(cudaMemcpy(normal_host, normal_device, sizeof(Vector3f), cudaMemcpyDeviceToHost));
+
+          float normScale = 1.0f / sqrtf((*normal_host).x * (*normal_host).x + (*normal_host).y * (*normal_host).y + (*normal_host).z * (*normal_host).z);
+          (*normal_host) *= normScale;
+
+          Vector3f pn((*normal_host)[0], (*normal_host)[1], (*normal_host)[2]);
+          Vector3f tem(-p.x, -p.y, -p.z);
+
+          double dotvalue = pn.x*tem.x + pn.y*tem.y + pn.z*tem.z;
+          if(dotvalue<0){
+            pn = -pn;
+          }
+
+          p.normal_x = pn.x;
+          p.normal_y = pn.y;
+          p.normal_z = pn.z;
 
           cloud->points.push_back(p);
         }
       }
     }
   }
-
   pcl::io::savePLYFileBinary("Data/scan_points.ply", *cloud);
 
   free(voxels);
   free(hashData_host);
   voxels=NULL;
   hashData_host=NULL;
+
+  free(normal_host);
+  normal_host= NULL;
+  ITMSafeCall(cudaFree(normal_device));
+
+  printf("savePoints finished.\n");
 }
 
 //ccjn modified it
@@ -1230,8 +1288,6 @@ int FindVBIndex(const Vector3s blockPos, const ITMHashEntry *hashTable)
 
   return -1;
 }
-
-
 
 //ccjn modified it
 void ITMMainEngine::saveMesh()
@@ -1277,7 +1333,7 @@ void ITMMainEngine::saveMesh()
       if(ExceedX != -1){
         hashEntryEX = hashTable[ExceedX];
       }
-      
+
       ITMHashEntry hashEntryEY;
       if(ExceedY != -1){
         hashEntryEY = hashTable[ExceedY];
@@ -1526,4 +1582,693 @@ void ITMMainEngine::saveMesh()
 
   g_triangles.clear();
   //writeToFile(g_triangles);
+}
+
+//hao modified it
+void ITMMainEngine::getGlobalCloud(bool withNormals){
+  globalCloud.mypoints.clear();
+
+  //PointCloudPtr cloud(new PointCloud);
+
+  Vector3f *normal_device;
+  ITMSafeCall(cudaMalloc((void**)&normal_device, sizeof(Vector3f)));
+  Vector3f *normal_host = (Vector3f*)malloc(sizeof(Vector3f));
+
+  ITMVoxelIndex::IndexData *hashData_host = new ITMVoxelIndex::IndexData;
+  ITMVoxel *voxels = (ITMVoxel*)malloc(SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3 * sizeof(ITMVoxel));
+
+  bool flag = false;
+#ifndef COMPILE_WITHOUT_CUDA
+  flag=true;
+#endif
+  if(flag){
+    ITMSafeCall(cudaMemcpy(hashData_host, scene->index.getIndexData(), sizeof(ITMVoxelIndex::IndexData), cudaMemcpyDeviceToHost));
+    ITMSafeCall(cudaMemcpy(voxels, scene->localVBA.GetVoxelBlocks(), SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3*sizeof(ITMVoxel), cudaMemcpyDeviceToHost));
+  }
+  else{
+    memcpy(hashData_host, scene->index.getIndexData(), sizeof(ITMVoxelIndex::IndexData));
+    memcpy(voxels, scene->localVBA.GetVoxelBlocks(), SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3 * sizeof(ITMVoxel));
+  }
+
+  const ITMHashEntry *hashTable = hashData_host->entries_all;
+  float mu = scene->sceneParams->mu;
+
+  for(int i=0; i<SDF_BUCKET_NUM * SDF_ENTRY_NUM_PER_BUCKET + SDF_EXCESS_LIST_SIZE; i++){
+    const ITMHashEntry &hashEntry = hashTable[i];
+
+    if(hashEntry.ptr >= 0){
+      for(int j=0; j<SDF_BLOCK_SIZE3; j++){
+        ITMVoxel res = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j];
+
+        float value = ITMVoxel::SDF_valueToFloat(res.sdf);
+        if(value<10*mu&&value>-10*mu){
+          //cout<<"value:"<<value<<endl;
+
+          MyPoint_RGB_NORMAL_ID p;
+          float voxelSize = 0.125f;
+          float blockSizeWorld = scene->sceneParams->voxelSize*SDF_BLOCK_SIZE; // = 0.005*8;
+
+          p.z = (hashEntry.pos.z+(j/(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE)+0.5f)*voxelSize)*blockSizeWorld;
+          p.y = (hashEntry.pos.y+((j%(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE))/SDF_BLOCK_SIZE+0.5f)*voxelSize)*blockSizeWorld;
+          p.x = (hashEntry.pos.x+((j%(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE))%SDF_BLOCK_SIZE+0.5f)*voxelSize)*blockSizeWorld;
+          p.r = res.r;
+          p.g = res.g;
+          p.b = res.b;
+          p.id = res.id;
+
+          if(withNormals){
+          ITMSafeCall(cudaMemset(normal_device, 0, sizeof(Vector3f)));
+          memset(normal_host, 0, sizeof(Vector3f));
+
+          Vector3f pt((hashEntry.pos.x*SDF_BLOCK_SIZE+((j%(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE))%SDF_BLOCK_SIZE+0.5f)), (hashEntry.pos.y*SDF_BLOCK_SIZE+((j%(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE))/SDF_BLOCK_SIZE+0.5f)), (hashEntry.pos.z*SDF_BLOCK_SIZE+(j/(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE)+0.5f)));
+          visualisationEngine->computePointNormal(scene, pt, normal_device);
+          ITMSafeCall(cudaMemcpy(normal_host, normal_device, sizeof(Vector3f), cudaMemcpyDeviceToHost));
+
+          float normScale = 1.0f / sqrtf((*normal_host).x * (*normal_host).x + (*normal_host).y * (*normal_host).y + (*normal_host).z * (*normal_host).z);
+          (*normal_host) *= normScale;
+
+          Vector3f pn((*normal_host)[0], (*normal_host)[1], (*normal_host)[2]);
+          Vector3f tem(-p.x, -p.y, -p.z);
+
+          double dotvalue = pn.x*tem.x + pn.y*tem.y + pn.z*tem.z;
+          if(dotvalue<0){
+            pn = -pn;
+          }
+
+          p.normal_x = pn.x;
+          p.normal_y = pn.y;
+          p.normal_z = pn.z;
+          }
+
+          globalCloud.mypoints.push_back(p);
+        }
+      }
+    }
+  }
+
+  free(voxels);
+  free(hashData_host);
+  voxels=NULL;
+  hashData_host=NULL;
+
+  free(normal_host);
+  normal_host= NULL;
+  ITMSafeCall(cudaFree(normal_device));
+
+  //pcl::NormalEstimation<Point, pcl::Normal> ne;    
+  //ne.setInputCloud (cloud); 
+  ////search::OrganizedNeighbor<PointXYZRGBA>::Ptr tree(new search::OrganizedNeighbor<PointXYZRGBA>());  
+  //pcl::search::KdTree<Point>::Ptr pcl_tree (new pcl::search::KdTree<Point> ());     
+  //ne.setSearchMethod (pcl_tree);  
+  //ne.setRadiusSearch (0.02);
+  ////normObj.setKSearch(30);  
+  //pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>);
+  //ne.compute (*normals);
+
+  //PointCloudPtr_RGB pc_rgb (new PointCloud_RGB);
+
+  //for(int i=0; i<globalCloud.mypoints.size(); i++){
+  //  Vector3f pn(normals->points[i].normal_x, normals->points[i].normal_y, normals->points[i].normal_z);
+  //  Vector3f tem(-globalCloud.mypoints[i].x, -globalCloud.mypoints[i].y, -globalCloud.mypoints[i].z);
+
+  //  //cout<<"normals->points[i].normal_x:"<<normals->points[i].normal_x<<endl;
+  //  //cout<<"normals->points[i].normal_y:"<<normals->points[i].normal_y<<endl;
+  //  //cout<<"normals->points[i].normal_z:"<<normals->points[i].normal_z<<endl;
+
+  //  double dotvalue = pn.x*tem.x + pn.y*tem.y + pn.z*tem.z;
+  //  if(dotvalue<0){
+  //    pn = -pn;
+  //  }
+
+  //  globalCloud.mypoints[i].normal_x = pn.x;
+  //  globalCloud.mypoints[i].normal_y = pn.y;
+  //  globalCloud.mypoints[i].normal_z = pn.z;
+
+  //  Point_RGB pt;
+  //  pt.x = globalCloud.mypoints[i].x;
+  //  pt.y = globalCloud.mypoints[i].y;
+  //  pt.z = globalCloud.mypoints[i].z;
+  //  pt.r = globalCloud.mypoints[i].r;
+  //  pt.g = globalCloud.mypoints[i].g;
+  //  pt.b = globalCloud.mypoints[i].b;
+  //  pc_rgb->push_back(pt);
+  //}
+
+  //Visualizer vs;
+  //vs.viewer->addPointCloud <Point_RGB> (pc_rgb);
+  //vs.viewer->addPointCloudNormals <Point_RGB, pcl::Normal> (pc_rgb, normals, 100, 0.02, "normal", 0);
+  //vs.show();
+}
+
+//hao modified it
+void ITMMainEngine::changeVoxelValue(ITMVoxel *voxels, const ITMHashEntry *hashTable, Point_RGB pt, ushort objectId){
+
+  float voxelSize = 0.125f;
+  float blockSizeWorld = scene->sceneParams->voxelSize*SDF_BLOCK_SIZE; // = 0.005*8;
+
+  Vector3s blockPos;
+  blockPos.x = floor(pt.x/blockSizeWorld);
+  blockPos.y = floor(pt.y/blockSizeWorld);
+  blockPos.z = floor(pt.z/blockSizeWorld);
+
+  Vector3s voxelPoseInBlock;
+  voxelPoseInBlock.x = floor((pt.x/blockSizeWorld - blockPos.x)/voxelSize);
+  voxelPoseInBlock.y = floor((pt.y/blockSizeWorld - blockPos.y)/voxelSize);
+  voxelPoseInBlock.z = floor((pt.z/blockSizeWorld - blockPos.z)/voxelSize);
+
+  int lineIndex = voxelPoseInBlock.x + voxelPoseInBlock.y*SDF_BLOCK_SIZE + voxelPoseInBlock.z*SDF_BLOCK_SIZE*SDF_BLOCK_SIZE;
+
+  int res = FindVBIndex(blockPos, hashTable);
+
+  if(res!=-1){
+    const ITMHashEntry &hashEntry = hashTable[res];
+    voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + lineIndex].r = pt.r;
+    voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + lineIndex].g = pt.g;
+    voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + lineIndex].b = pt.b;
+    voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + lineIndex].id = objectId;
+  }
+}
+
+//hao modified it
+void ITMMainEngine::updateVoxelsValues(PointCloudPtr_RGB cloud, vector<ushort> objectIds){
+  ITMVoxelIndex::IndexData *hashData_host = new ITMVoxelIndex::IndexData;
+  ITMVoxel *voxels = (ITMVoxel*)malloc(SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3 * sizeof(ITMVoxel));
+
+  bool flag = false;
+#ifndef COMPILE_WITHOUT_CUDA
+  flag=true;
+#endif
+  if(flag){
+    ITMSafeCall(cudaMemcpy(hashData_host, scene->index.getIndexData(), sizeof(ITMVoxelIndex::IndexData), cudaMemcpyDeviceToHost));
+    ITMSafeCall(cudaMemcpy(voxels, scene->localVBA.GetVoxelBlocks(), SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3*sizeof(ITMVoxel), cudaMemcpyDeviceToHost));
+  }
+  else{
+    memcpy(hashData_host, scene->index.getIndexData(), sizeof(ITMVoxelIndex::IndexData));
+    memcpy(voxels, scene->localVBA.GetVoxelBlocks(), SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3 * sizeof(ITMVoxel));
+  }
+
+  const ITMHashEntry *hashTable = hashData_host->entries_all;
+
+  for(int i=0; i<cloud->size(); i++){
+    ushort objectId = 0;
+    if(objectIds[i]==0){
+      objectId = 1;
+    }
+    else{
+      objectId = objectIds[i]+idCount;
+    }
+
+    //if(objectId == 3){
+    //  printf("aaaaaa\n");
+    //}
+
+    changeVoxelValue(voxels, hashTable, cloud->points[i], objectId);
+  }
+
+  if(flag){
+    ITMSafeCall(cudaMemcpy(scene->localVBA.GetVoxelBlocks(), voxels, SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3*sizeof(ITMVoxel), cudaMemcpyHostToDevice));
+  }
+  else{
+    memcpy(scene->localVBA.GetVoxelBlocks(), voxels, SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3 * sizeof(ITMVoxel));
+  }
+
+  free(voxels);
+  free(hashData_host);
+  voxels=NULL;
+  hashData_host=NULL;
+}
+
+//hao modified it
+void ITMMainEngine::segmentGlobal(){
+  PointCloudPtr_RGB_NORMAL source_cloud(new PointCloud_RGB_NORMAL);
+
+  getGlobalCloud();
+
+  for(int i=0; i<globalCloud.mypoints.size(); i++){
+    Point_RGB_NORMAL pt;
+    pt.x = globalCloud.mypoints[i].x;
+    pt.y = globalCloud.mypoints[i].y;
+    pt.z = globalCloud.mypoints[i].z;
+    pt.r = 255;
+    pt.g = 255;
+    pt.b = 255;
+    pt.normal_x = globalCloud.mypoints[i].normal_x;
+    pt.normal_y = globalCloud.mypoints[i].normal_y;
+    pt.normal_z = globalCloud.mypoints[i].normal_z;
+    source_cloud->push_back(pt);
+  }
+
+  PointCloudPtr_RGB object_cloud(new PointCloud_RGB);
+  PointCloudPtr_RGB confidence_cloud(new PointCloud_RGB);
+  vector<ushort> objectIndexs;
+  Eigen::Vector3f range(0.5, 0.5, 1.0);
+  int objectNum;
+  //showPointCloud3(source_cloud, "source_cloud");
+
+  segmentObject(source_cloud, range, cPointCloudAnalysis, object_cloud, confidence_cloud, objectIndexs, objectNum);
+
+  //showPointCloud(object_cloud, "object_cloud");
+
+  updateVoxelsValues(object_cloud, objectIndexs);
+
+  idCount += objectNum;
+
+  printf("segmentGlobal finished.\n");
+}
+
+//hao modified it
+void ITMMainEngine::segmentPortionInGlobal(const vector<ushort> &objectIds){
+  vector<ushort> newIds;
+  vector<uchar> newRs;
+  vector<uchar> newGs;
+  vector<uchar> newBs;
+  for(int i=0; i<objectIds.size(); i++){
+    newIds.push_back(0);
+    newRs.push_back(255);
+    newGs.push_back(255);
+    newBs.push_back(255);
+  }
+
+  changeObjectIds(objectIds, newIds, newRs, newGs, newBs);
+
+  getGlobalCloud();
+
+  PointCloudPtr_RGB_NORMAL source_cloud(new PointCloud_RGB_NORMAL);
+
+  for(int i=0; i<globalCloud.mypoints.size(); i++){
+    Point_RGB_NORMAL pt;
+    pt.x = globalCloud.mypoints[i].x;
+    pt.y = globalCloud.mypoints[i].y;
+    pt.z = globalCloud.mypoints[i].z;
+    pt.r = globalCloud.mypoints[i].r;
+    pt.g = globalCloud.mypoints[i].g;
+    pt.b = globalCloud.mypoints[i].b;
+    pt.normal_x = globalCloud.mypoints[i].normal_x;
+    pt.normal_y = globalCloud.mypoints[i].normal_y;
+    pt.normal_z = globalCloud.mypoints[i].normal_z;
+    source_cloud->push_back(pt);
+  }
+
+
+  PointCloudPtr_RGB object_cloud(new PointCloud_RGB);
+  PointCloudPtr_RGB confidence_cloud(new PointCloud_RGB);
+  vector<ushort> objectIndexs;
+  Eigen::Vector3f range(0.5, 0.5, 1.0);
+  int objectNum;
+  segmentSepcialObjects(source_cloud, range, cPointCloudAnalysis, object_cloud, confidence_cloud, objectIndexs, objectNum);
+
+  updateVoxelsValues(object_cloud, objectIndexs);
+
+  idCount += objectNum;
+}
+
+//hao modified it
+void ITMMainEngine::refineSegment(){
+  vector<ushort> objectIds;
+  objectIds.push_back(2);
+
+  segmentPortionInGlobal(objectIds);
+
+  printf("refineSegment finished.\n");
+}
+
+//hao modified it
+void ITMMainEngine::interactedSegment(){
+  saveViewPoints(this->trackingStateTem);
+  {
+#ifndef COMPILE_WITHOUT_CUDA
+    Vector3f *points_device;
+    Vector3f *points_host = (Vector3f*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f));
+    Vector3f *normals_device;
+    Vector3f *normals_host = (Vector3f*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f));
+    Vector3f *colors_device;
+    Vector3f *colors_host = (Vector3f*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f));
+    ushort *objectIds_device;
+    ushort *objectIds_host = (ushort*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(ushort));
+    ITMSafeCall(cudaMalloc((void**)&points_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
+    ITMSafeCall(cudaMemset(points_device, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
+    ITMSafeCall(cudaMalloc((void**)&normals_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
+    ITMSafeCall(cudaMemset(normals_device, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
+    ITMSafeCall(cudaMalloc((void**)&colors_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
+    ITMSafeCall(cudaMemset(colors_device, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
+    ITMSafeCall(cudaMalloc((void**)&objectIds_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(ushort)));
+    ITMSafeCall(cudaMemset(objectIds_device, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(ushort)));
+    visualisationEngine->GetRaycastImage(scene, view, trackingState, points_device, normals_device, colors_device, objectIds_device);
+    ITMSafeCall(cudaMemcpy(points_host, points_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyDeviceToHost));
+    ITMSafeCall(cudaMemcpy(normals_host, normals_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyDeviceToHost));
+    ITMSafeCall(cudaMemcpy(colors_host, colors_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyDeviceToHost));
+    ITMSafeCall(cudaMemcpy(objectIds_host, objectIds_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(ushort), cudaMemcpyDeviceToHost));
+
+    int *id_array_host = (int*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(int));
+    PointCloudPtr_RGB_NORMAL cloud(new PointCloud_RGB_NORMAL);
+
+    for(int i=0; i<view->depth->noDims.x*view->depth->noDims.y; i++){
+      if(!((*(points_host+i))[0]==0&&(*(points_host+i))[1]==0&&(*(points_host+i))[2]==0)){
+        Point_RGB_NORMAL pt;
+        pt.x=(*(points_host+i))[0];
+        pt.y=(*(points_host+i))[1];
+        pt.z=(*(points_host+i))[2];
+        pt.r=(*(colors_host+i))[0];
+        pt.g=(*(colors_host+i))[1];
+        pt.b=(*(colors_host+i))[2];
+        pt.normal_x=(*(normals_host+i))[0];
+        pt.normal_y=(*(normals_host+i))[1];
+        pt.normal_z=(*(normals_host+i))[2];
+        cloud->points.push_back(pt);
+        *(id_array_host+i)=i;
+      }else{
+        *(id_array_host+i)=-1;
+      }
+    }
+
+    PointCloudPtr_RGB_NORMAL cloudA (new PointCloud_RGB_NORMAL);
+    PointCloudPtr_RGB_NORMAL cloudB (new PointCloud_RGB_NORMAL);
+
+    MyPointCloud_RGB_NORMAL2PointCloud_RGB_NORMAL(myCloudOne, cloudA);
+    MyPointCloud_RGB_NORMAL2PointCloud_RGB_NORMAL(myCloudTwo, cloudB);
+
+    PointCloudPtr_RGB_NORMAL planeCloudA(new PointCloud_RGB_NORMAL);
+    PointCloudPtr rect_cloudA(new PointCloud());
+    PointCloudPtr_RGB_NORMAL remainingCloudA(new PointCloud_RGB_NORMAL);
+    pcl::ModelCoefficients coefficientsA;
+    PointCloudPtr_RGB_NORMAL planeCloudB(new PointCloud_RGB_NORMAL);
+    PointCloudPtr rect_cloudB(new PointCloud());
+    PointCloudPtr_RGB_NORMAL remainingCloudB(new PointCloud_RGB_NORMAL);
+    pcl::ModelCoefficients coefficientsB;
+    detect_table(cloudA, coefficientsA, planeCloudA, rect_cloudA, remainingCloudA);
+    detect_table(cloudB, coefficientsB, planeCloudB, rect_cloudB, remainingCloudB);
+
+    Eigen::Matrix4f matrix_transformA;
+    Eigen::Matrix4f matrix_transformA_r;
+    Eigen::Matrix4f matrix_transformB;
+    Eigen::Matrix4f matrix_transformB_r;
+
+    getTemTransformMatrix(coefficientsA, matrix_transformA, matrix_transformA_r);
+    getTemTransformMatrix(coefficientsB, matrix_transformB, matrix_transformB_r);
+
+    PointCloudPtr_RGB_NORMAL tabletopCloudA_tem(new PointCloud_RGB_NORMAL());
+    PointCloudPtr_RGB_NORMAL tabletopCloudB_tem(new PointCloud_RGB_NORMAL());
+    getCloudOnTable(remainingCloudA, rect_cloudA, matrix_transformA, matrix_transformA_r, tabletopCloudA_tem);
+    getCloudOnTable(remainingCloudB, rect_cloudB, matrix_transformB, matrix_transformB_r, tabletopCloudB_tem);
+
+    PointCloudPtr_RGB_NORMAL tabletopCloudA(new PointCloud_RGB_NORMAL());
+    PointCloudPtr_RGB_NORMAL tabletopCloudB(new PointCloud_RGB_NORMAL());
+    for(int i=0; i<tabletopCloudA_tem->size(); i++){
+      if(!(tabletopCloudA_tem->points[i].z>1||tabletopCloudA_tem->points[i].x<-0.5||tabletopCloudA_tem->points[i].x>0.5||tabletopCloudA_tem->points[i].y<-0.5||tabletopCloudA_tem->points[i].y>0.5)){
+        tabletopCloudA->push_back(tabletopCloudA_tem->points[i]);
+      }
+    }
+
+    for(int i=0; i<tabletopCloudB_tem->size(); i++){
+      if(!(tabletopCloudB_tem->points[i].z>1||tabletopCloudB_tem->points[i].x<-0.5||tabletopCloudB_tem->points[i].x>0.5||tabletopCloudB_tem->points[i].y<-0.5||tabletopCloudB_tem->points[i].y>0.5)){
+        tabletopCloudB->push_back(tabletopCloudB_tem->points[i]);
+      }
+    }
+
+    PointCloudPtr_RGB_NORMAL resultA (new PointCloud_RGB_NORMAL);
+    PointCloudPtr_RGB_NORMAL resultB (new PointCloud_RGB_NORMAL);
+    detect_change(tabletopCloudA, tabletopCloudB, resultA, resultB);
+
+    PointCloudPtr_RGB object_cloud(new PointCloud_RGB);
+    PointCloudPtr_RGB confidence_cloud(new PointCloud_RGB);
+
+    vector<ushort> objectIndexs;
+    int objectNum;
+    Eigen::Vector3f range(0.5, 0.5, 1.0);
+    updateSegmentObject(cloud, range, resultA, resultB, cPointCloudAnalysis, object_cloud, confidence_cloud, objectIndexs, objectNum);
+
+    KDtree tree;
+    CUDA_KDTree GPU_tree;
+    int max_tree_levels = 13; // play around with this value to get the best result
+
+    vector<KDPoint> data(cloud->size());
+    vector<KDPoint> queries(object_cloud->size());
+
+    for(int i=0; i<cloud->size(); i++){
+      data[i].coords[0] = cloud->points[i].x;
+      data[i].coords[1] = cloud->points[i].y;
+      data[i].coords[2] = cloud->points[i].z;
+    }
+
+    for(int i=0; i<object_cloud->size(); i++){
+      queries[i].coords[0] = object_cloud->points[i].x;
+      queries[i].coords[1] = object_cloud->points[i].y;
+      queries[i].coords[2] = object_cloud->points[i].z;
+    }
+
+    vector <int> gpu_indexes;
+    vector <float> gpu_dists;
+
+    tree.Create(data, max_tree_levels);
+    GPU_tree.CreateKDTree(tree.GetRoot(), tree.GetNumNodes(), data);
+    GPU_tree.Search(queries, gpu_indexes, gpu_dists);
+
+    PointCloudPtr_RGB colored_cloud0(new PointCloud_RGB);
+    PointCloudPtr_RGB colored_cloud1(new PointCloud_RGB);
+    vector<ushort> objectIndexs_new;
+    for(int i=0; i<cloud->size(); i++){
+      Point_RGB p_tem;
+      p_tem.x=0;
+      p_tem.y=0;
+      p_tem.z=0;
+      colored_cloud0->push_back(p_tem);
+      colored_cloud1->push_back(p_tem);
+      objectIndexs_new.push_back(9999);
+    }
+
+    for(int i=0; i<object_cloud->size(); i++){
+      colored_cloud0->points[gpu_indexes[i]].x = object_cloud->points[i].x;
+      colored_cloud0->points[gpu_indexes[i]].y = object_cloud->points[i].y;
+      colored_cloud0->points[gpu_indexes[i]].z = object_cloud->points[i].z;
+      colored_cloud0->points[gpu_indexes[i]].r = object_cloud->points[i].r;
+      colored_cloud0->points[gpu_indexes[i]].g = object_cloud->points[i].g;
+      colored_cloud0->points[gpu_indexes[i]].b = object_cloud->points[i].b;
+
+      colored_cloud1->points[gpu_indexes[i]].x = confidence_cloud->points[i].x;
+      colored_cloud1->points[gpu_indexes[i]].y = confidence_cloud->points[i].y;
+      colored_cloud1->points[gpu_indexes[i]].z = confidence_cloud->points[i].z;
+      colored_cloud1->points[gpu_indexes[i]].r = confidence_cloud->points[i].r;
+      colored_cloud1->points[gpu_indexes[i]].g = confidence_cloud->points[i].g;
+      colored_cloud1->points[gpu_indexes[i]].b = confidence_cloud->points[i].b;
+
+      objectIndexs_new[gpu_indexes[i]] = objectIndexs[i];
+    }
+
+    //showPointCloud(colored_cloud, "colored_cloud");
+
+
+    objectColors = (Vector3f*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f));
+    confidenceColors = (Vector3f*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f));
+    memset(objectIds_host, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(ushort));
+
+    int count=0;
+    for(int i=0; i<view->depth->noDims.x*view->depth->noDims.y; i++){
+      if(*(id_array_host+i)!=-1){
+        if(!(colored_cloud0->points[count].x==0&&colored_cloud0->points[count].y==0&&colored_cloud0->points[count].z==0)){
+          (*(objectColors+i))[0] = colored_cloud0->points[count].r;
+          (*(objectColors+i))[1] = colored_cloud0->points[count].g;
+          (*(objectColors+i))[2] = colored_cloud0->points[count].b;
+
+          (*(confidenceColors+i))[0] = colored_cloud1->points[count].r;
+          (*(confidenceColors+i))[1] = colored_cloud1->points[count].g;
+          (*(confidenceColors+i))[2] = colored_cloud1->points[count].b;
+
+          if(objectIndexs_new[count] == 0){
+            (*(objectIds_host+i)) = 1;
+          }else{
+            (*(objectIds_host+i)) = idCount + objectIndexs_new[count];
+          }
+        }
+        else{
+          (*(objectColors+i))[0] = -1;
+          (*(objectColors+i))[1] = -1;
+          (*(objectColors+i))[2] = -1;
+
+          (*(confidenceColors+i))[0] = -1;
+          (*(confidenceColors+i))[1] = -1;
+          (*(confidenceColors+i))[2] = -1;
+        }
+
+        count++;
+      }
+      else{
+        (*(objectColors+i))[0] = -1;
+        (*(objectColors+i))[1] = -1;
+        (*(objectColors+i))[2] = -1;
+
+        (*(confidenceColors+i))[0] = -1;
+        (*(confidenceColors+i))[1] = -1;
+        (*(confidenceColors+i))[2] = -1;
+      }
+    }
+
+    idCount += objectNum;
+
+    ITMSafeCall(cudaMemcpy(colors_device, objectColors, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyHostToDevice));
+    //pcl::io::savePLYFileBinary("Data/scan1.ply", *colored_cloud);
+
+    ITMSafeCall(cudaMemcpy(objectIds_device, objectIds_host, view->depth->noDims.x*view->depth->noDims.y*sizeof(ushort), cudaMemcpyHostToDevice));
+
+    visualisationEngine->NewCreateICPMaps(scene, view, trackingState, colors_device, objectIds_device, 1);
+
+    free(points_host);
+    free(normals_host);
+    free(objectIds_host);
+    free(colors_host);
+    free(id_array_host);
+    points_host=NULL;
+    normals_host=NULL;
+    objectIds_host=NULL;
+    id_array_host=NULL;
+    colors_host=NULL;
+
+    ITMSafeCall(cudaFree(points_device));
+    ITMSafeCall(cudaFree(normals_device));
+    ITMSafeCall(cudaFree(colors_device));
+    ITMSafeCall(cudaFree(objectIds_device));
+#endif
+  }
+
+  printf("interactedSegment finished.\n");
+}
+
+//hao modified it
+void ITMMainEngine::getIntsObjectsIds(const ushort targetObjectId, vector<ushort> &objectIds){
+  objectIds.push_back(targetObjectId);
+
+  //getGlobalCloud(false);
+
+  //PointCloudPtr pc(new PointCloud);
+
+  //for(int i=0; i<globalCloud.mypoints.size(); i++){
+  //  if(globalCloud.mypoints[i].id!=0&&globalCloud.mypoints[i].id!=1){
+  //    Point_RGB pt;
+  //    pt.x = globalCloud.mypoints[i].x;
+  //    pt.y = globalCloud.mypoints[i].y;
+  //    pt.z = globalCloud.mypoints[i].z;
+  //  }
+  //}
+
+  //pcl::search::KdTree<Point_RGB_NORMAL>::Ptr tree (new pcl::search::KdTree<Point_RGB_NORMAL>);
+  //tree->setInputCloud (pc);
+
+  //std::vector<pcl::PointIndices> cluster_indices;
+  //pcl::EuclideanClusterExtraction<Point_RGB_NORMAL> ec;
+  //ec.setClusterTolerance (0.010); // 2cm
+  //ec.setMinClusterSize (100);
+  //ec.setMaxClusterSize (500000);
+  //ec.setSearchMethod (tree);
+  //ec.setInputCloud (cloud);
+  //ec.extract (cluster_indices);
+
+  //int j = 0;
+  //for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)
+  //{
+  //  PointCloudPtr_RGB_NORMAL cloud_cluster (new PointCloud_RGB_NORMAL);
+  //  for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); pit++){
+  //    cloud_cluster->points.push_back (cloud->points[*pit]); //*
+  //  }
+
+  //  MyPointCloud_RGB_NORMAL mpc;
+  //  PointCloud_RGB_NORMAL2MyPointCloud_RGB_NORMAL(cloud_cluster, mpc);
+  //  cluster_points.push_back(mpc);
+
+  //  j++;
+  //}
+
+
+}
+
+void ITMMainEngine::preWorkForIntSeg(){
+  saveViewPoints();
+
+  ushort targetObjectId = 2;
+  vector<ushort> objectIds;
+  getIntsObjectsIds(targetObjectId, objectIds);
+
+  vector<ushort> newIds;
+  vector<uchar> newRs;
+  vector<uchar> newGs;
+  vector<uchar> newBs;
+  for(int i=0; i<objectIds.size(); i++){
+    newIds.push_back(0);
+    newRs.push_back(255);
+    newGs.push_back(255);
+    newBs.push_back(255);
+  }
+
+  changeObjectIds(objectIds, newIds, newRs, newGs, newBs);
+
+  printf("preWorkForIntSeg finished.\n");
+}
+
+//hao modified it
+void ITMMainEngine::switchShowModel(uchar mode){
+  ITMVoxelIndex::IndexData *hashData_host = new ITMVoxelIndex::IndexData;
+  ITMVoxel *voxels = (ITMVoxel*)malloc(SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3 * sizeof(ITMVoxel));
+
+  //printf("aaaaaa\n");
+
+  bool flag = false;
+#ifndef COMPILE_WITHOUT_CUDA
+  flag=true;
+#endif
+  if(flag){
+    ITMSafeCall(cudaMemcpy(hashData_host, scene->index.getIndexData(), sizeof(ITMVoxelIndex::IndexData), cudaMemcpyDeviceToHost));
+    ITMSafeCall(cudaMemcpy(voxels, scene->localVBA.GetVoxelBlocks(), SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3*sizeof(ITMVoxel), cudaMemcpyDeviceToHost));
+  }
+  else{
+    memcpy(hashData_host, scene->index.getIndexData(), sizeof(ITMVoxelIndex::IndexData));
+    memcpy(voxels, scene->localVBA.GetVoxelBlocks(), SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3 * sizeof(ITMVoxel));
+  }
+  //printf("bbbbbb\n");
+  const ITMHashEntry *hashTable = hashData_host->entries_all;
+
+  for(int i=0; i<SDF_BUCKET_NUM * SDF_ENTRY_NUM_PER_BUCKET + SDF_EXCESS_LIST_SIZE; i++){
+    const ITMHashEntry &hashEntry = hashTable[i];
+
+    if(hashEntry.ptr >= 0){
+      for(int j=0; j<SDF_BLOCK_SIZE3; j++){
+        ITMVoxel res = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j];
+
+        switch(mode){
+        case 0://show object result
+          {
+            for(map<ushort,objectAttri>::iterator it = objectMap.begin(); it != objectMap.end(); ++it) {
+              if(res.id == it->first){
+                voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j].r = it->second.oR;
+                voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j].g = it->second.oG;
+                voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j].b = it->second.oB;
+              }
+            }
+            break;
+          }
+        case 1://show confidence result
+          {
+            for(map<ushort,objectAttri>::iterator it = objectMap.begin(); it != objectMap.end(); ++it) {
+              if(res.id == it->first){
+                voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j].r = it->second.cR;
+                voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j].g = it->second.cG;
+                voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j].b = it->second.cB;
+              }
+            }
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  if(flag){
+    ITMSafeCall(cudaMemcpy(scene->localVBA.GetVoxelBlocks(), voxels, SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3*sizeof(ITMVoxel), cudaMemcpyHostToDevice));
+  }
+  else{
+    memcpy(scene->localVBA.GetVoxelBlocks(), voxels, SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3 * sizeof(ITMVoxel));
+  }
+
+  //printf("cccccc\n");
+  free(voxels);
+  free(hashData_host);
+  voxels=NULL;
+  hashData_host=NULL;
 }

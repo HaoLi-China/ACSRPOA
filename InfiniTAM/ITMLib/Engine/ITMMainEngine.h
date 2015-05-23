@@ -16,6 +16,7 @@
 #include "../../Common/CUDA_KDtree.h"//hao modified it
 #include "../../ChangeDetection/detect_change.h"//hao modified it
 //#include <pcl/octree/octree.h>//hao modified it
+#include <map> //hao modified it
 
 //ccjn modified it
 #include "../Utils/MarchingCubeUtils.h"
@@ -31,6 +32,16 @@ For use of ITMLib in your own project, the class
 @ref ITMLib::Engine::ITMMainEngine should be the main interface and entry
 point to the library.
 */
+
+struct objectAttri{
+  uchar oR;
+  uchar oG;
+  uchar oB;
+  uchar cR;
+  uchar cG;
+  uchar cB;
+  float confidence;
+};
 
 namespace ITMLib
 {
@@ -103,6 +114,25 @@ namespace ITMLib
       CPointCloudAnalysis cPointCloudAnalysis;//hao modified it
       ushort idCount;//hao modified it
 
+
+
+
+      MyPointCloud_RGB_NORMAL_ID globalCloud;//hao modified it
+      map<ushort, objectAttri> objectMap;//hao modified it
+      void changeObjectIds(const vector<ushort> &oldIDs, const vector<ushort> &newIds, const vector<uchar> &newRs, const vector<uchar> &newGs, const vector<uchar> &newBs);//hao modified it
+      void getGlobalCloud(bool withNormals = true);//hao modified it
+      void changeVoxelValue(ITMVoxel *voxels, const ITMHashEntry *hashTable, Point_RGB pt, ushort objectId);//hao modified it
+      void updateVoxelsValues(PointCloudPtr_RGB cloud, vector<ushort> objectIds);//hao modified it
+      void segmentGlobal();//hao modified it
+      void segmentPortionInGlobal(const vector<ushort> &objectIds);//hao modified it
+      void getIntsObjectsIds(const ushort targetObjectId, vector<ushort> &objectIds);//hao modified it
+      void refineSegment();//hao modified it
+      void interactedSegment();//hao modified it
+      void preWorkForIntSeg();//hao modified it
+      void switchShowModel(uchar mode);//hao modified it
+
+
+
       /// Gives access to the current input frame
       ITMView* GetView() { return view; }
 
@@ -123,10 +153,10 @@ namespace ITMLib
       void saveViewPoints(ITMTrackingState *trackingState);//hao modified it
       void overSegmentView();//hao modified it
       void segmentView();//hao modified it
-      void showSegmentResult(int flag);//hao modified it
       void updateSegmentView();//hao modified it
+      void showSegmentResult(int flag);//hao modified it
+     
       void detectChange();//hao modified it
-      void changeObjectIds(ushort oldID, ushort newId, uchar newR, uchar newG, uchar newB);//hao modified it
 
       void saveMesh(); //ccjn modified it
 

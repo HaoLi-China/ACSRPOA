@@ -70,11 +70,14 @@ namespace ITMLib
       virtual void CreateICPMaps(ITMScene<TVoxel,TIndex> *scene, const ITMView *view, ITMTrackingState *trackingState) = 0;
 
       //hao modified it
-      virtual void GetAllPoints(const ITMScene<TVoxel,TIndex> *scene) = 0;
+      virtual void GetAllPoints(const ITMScene<TVoxel,TIndex> *scene, Vector3f *points, Vector3f *normals, Vector3f *colors, ushort *objectId, int &num) = 0;
       //hao modified it
       virtual void GetRaycastImage(ITMScene<TVoxel,ITMVoxelBlockHash> *scene, const ITMView *view, ITMTrackingState *trackingState, Vector3f *points, Vector3f *normals, Vector3f *colors, ushort *objectId) = 0;
       //hao modified it
-      virtual void NewCreateICPMaps(ITMScene<TVoxel,TIndex> *scene, const ITMView *view, ITMTrackingState *trackingState, Vector3f *colors, ushort *objectIds, bool flag) = 0;
+      virtual void NewCreateICPMaps(ITMScene<TVoxel,TIndex> *scene, const ITMView *view, ITMTrackingState *trackingState, Vector3f *colors, ushort *objectIds, bool flag) = 0;   
+      //hao modified it
+      virtual void computePointNormal(ITMScene<TVoxel,TIndex> *scene, Vector3f pt, Vector3f *normal) = 0;   
+
     };
   }
 }

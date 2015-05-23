@@ -384,6 +384,26 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
     uiEngine->mainLoopAction = UIEngine::DEPTH_PAUSED;
     uiEngine->needsRefresh = true;
     break;
+  case '9':
+    printf("segment global points ...\n");
+    uiEngine->mainLoopAction = UIEngine::PROCESS_PAUSED;
+    uiEngine->mainEngine->segmentGlobal();
+    break;
+  case '8':
+    printf("refine segment ...\n");
+    uiEngine->mainLoopAction = UIEngine::PROCESS_PAUSED;
+    uiEngine->mainEngine->refineSegment();
+    break;
+  case '7':
+    printf("update segment ...\n");
+    uiEngine->mainLoopAction = UIEngine::PROCESS_PAUSED;
+    uiEngine->mainEngine->interactedSegment();
+    break;
+  case '6':
+    printf("preWorkForIntSeg start ...\n");
+    uiEngine->mainLoopAction = UIEngine::PROCESS_PAUSED;
+    uiEngine->mainEngine->preWorkForIntSeg();
+    break;
   default:
     break;
   }

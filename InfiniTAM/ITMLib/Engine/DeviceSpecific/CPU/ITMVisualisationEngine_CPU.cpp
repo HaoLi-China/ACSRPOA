@@ -382,12 +382,12 @@ void ITMVisualisationEngine_CPU<TVoxel,ITMVoxelBlockHash>::CreateICPMaps(ITMScen
 
 //hao modified it
 template<class TVoxel, class TIndex>
-void ITMVisualisationEngine_CPU<TVoxel,TIndex>::GetAllPoints(const ITMScene<TVoxel,TIndex> *scene){
+void ITMVisualisationEngine_CPU<TVoxel,TIndex>::GetAllPoints(const ITMScene<TVoxel,TIndex> *scene, Vector3f *points, Vector3f *normals, Vector3f *colors, ushort *objectId, int &num){
 }
 
 //hao modified it
 template<class TVoxel>
-void ITMVisualisationEngine_CPU<TVoxel,ITMVoxelBlockHash>::GetAllPoints(const ITMScene<TVoxel,ITMVoxelBlockHash> *scene){
+void ITMVisualisationEngine_CPU<TVoxel,ITMVoxelBlockHash>::GetAllPoints(const ITMScene<TVoxel,ITMVoxelBlockHash> *scene, Vector3f *points, Vector3f *normals, Vector3f *colors, ushort *objectId, int &num){
 }
 
 //hao modified it
@@ -409,6 +409,16 @@ void ITMVisualisationEngine_CPU<TVoxel,TIndex>::NewCreateICPMaps(ITMScene<TVoxel
 //hao modified it
 template<class TVoxel>
 void ITMVisualisationEngine_CPU<TVoxel,ITMVoxelBlockHash>::NewCreateICPMaps(ITMScene<TVoxel,ITMVoxelBlockHash> *scene, const ITMView *view, ITMTrackingState *trackingState, Vector3f *colors, ushort *objectIds, bool flag){
+}
+
+//hao modified it
+template<class TVoxel, class TIndex>
+void ITMVisualisationEngine_CPU<TVoxel,TIndex>::computePointNormal(ITMScene<TVoxel,TIndex> *scene, Vector3f pt, Vector3f *normal){
+}
+
+//hao modified it
+template<class TVoxel>
+void ITMVisualisationEngine_CPU<TVoxel,ITMVoxelBlockHash>::computePointNormal(ITMScene<TVoxel,ITMVoxelBlockHash> *scene, Vector3f pt, Vector3f *normal){
 }
 
 template class ITMLib::Engine::ITMVisualisationEngine_CPU<ITMVoxel, ITMVoxelIndex>;

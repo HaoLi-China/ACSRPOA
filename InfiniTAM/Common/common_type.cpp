@@ -24,6 +24,14 @@ MyPointCloud_RGB_NORMAL::~MyPointCloud_RGB_NORMAL(){
 
 }
 
+MyPointCloud_RGB_NORMAL_ID::MyPointCloud_RGB_NORMAL_ID(){
+
+}
+
+MyPointCloud_RGB_NORMAL_ID::~MyPointCloud_RGB_NORMAL_ID(){
+
+}
+
 MyLine::MyLine(){
 
 }
