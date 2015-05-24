@@ -1,6 +1,7 @@
 // Copyright 2014 Isis Innovation Limited and the authors of InfiniTAM
 
 #include "ITMMainEngine.h"
+#include "../Engine/DeviceAgnostic/ITMSceneReconstructionEngine.h"
 
 #include "ITMTrackerFactory.h"
 using namespace ITMLib::Engine;
@@ -131,7 +132,7 @@ void ITMMainEngine::ProcessFrame(short segFlag)
       segmentView();
     }
     else if(segFlag==3){
-      updateSegmentView();
+      interactedSegment();
     }
 
     break;
@@ -647,228 +648,6 @@ void ITMMainEngine::saveViewPoints(ITMTrackingState *itmtrackingState){
 }
 
 //hao modified it
-void ITMMainEngine::updateSegmentView(){
-//  {
-//#ifndef COMPILE_WITHOUT_CUDA
-//    Vector3f *points_device;
-//    Vector3f *points_host = (Vector3f*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f));
-//    Vector3f *normals_device;
-//    Vector3f *normals_host = (Vector3f*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f));
-//    ITMSafeCall(cudaMalloc((void**)&points_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
-//    ITMSafeCall(cudaMemset(points_device, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
-//    ITMSafeCall(cudaMalloc((void**)&normals_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
-//    ITMSafeCall(cudaMemset(normals_device, 0, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
-//    visualisationEngine->GetRaycastImage(scene, view, trackingState, points_device, normals_device, NULL, NULL);
-//    ITMSafeCall(cudaMemcpy(points_host, points_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyDeviceToHost));
-//    ITMSafeCall(cudaMemcpy(normals_host, normals_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyDeviceToHost));
-//
-//    int *id_array_host = (int*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(int));
-//    PointCloudPtr_RGB_NORMAL cloud(new PointCloud_RGB_NORMAL);
-//
-//    for(int i=0; i<view->depth->noDims.x*view->depth->noDims.y; i++){
-//      if(!((*(points_host+i))[0]==0&&(*(points_host+i))[1]==0&&(*(points_host+i))[2]==0)){
-//        Point_RGB_NORMAL pt;
-//        pt.x=(*(points_host+i))[0];
-//        pt.y=(*(points_host+i))[1];
-//        pt.z=(*(points_host+i))[2];
-//        pt.r=255;
-//        pt.g=255;
-//        pt.b=255;
-//        pt.normal_x=(*(normals_host+i))[0];
-//        pt.normal_y=(*(normals_host+i))[1];
-//        pt.normal_z=(*(normals_host+i))[2];
-//        cloud->points.push_back(pt);
-//        *(id_array_host+i)=i;
-//      }else{
-//        *(id_array_host+i)=-1;
-//      }
-//    }
-//
-//    //currentViewCloud.mypoints.clear();
-//    //PointCloud_RGB_NORMAL2MyPointCloud_RGB_NORMAL(cloud, currentViewCloud);
-//
-//    //showPointCloud3(cloud, "cloud");
-//
-//    PointCloudPtr_RGB_NORMAL cloudA (new PointCloud_RGB_NORMAL);
-//    PointCloudPtr_RGB_NORMAL cloudB (new PointCloud_RGB_NORMAL);
-//
-//    MyPointCloud_RGB_NORMAL2PointCloud_RGB_NORMAL(myCloudOne, cloudA);
-//    MyPointCloud_RGB_NORMAL2PointCloud_RGB_NORMAL(myCloudTwo, cloudB);
-//
-//    //showPointCloud3(cloudA, "cloudA");
-//    //showPointCloud3(cloudB, "cloudB");
-//
-//    PointCloudPtr_RGB_NORMAL planeCloudA(new PointCloud_RGB_NORMAL);
-//    PointCloudPtr rect_cloudA(new PointCloud());
-//    PointCloudPtr_RGB_NORMAL remainingCloudA(new PointCloud_RGB_NORMAL);
-//    pcl::ModelCoefficients coefficientsA;
-//    PointCloudPtr_RGB_NORMAL planeCloudB(new PointCloud_RGB_NORMAL);
-//    PointCloudPtr rect_cloudB(new PointCloud());
-//    PointCloudPtr_RGB_NORMAL remainingCloudB(new PointCloud_RGB_NORMAL);
-//    pcl::ModelCoefficients coefficientsB;
-//    detect_table(cloudA, coefficientsA, planeCloudA, rect_cloudA, remainingCloudA);
-//    detect_table(cloudB, coefficientsB, planeCloudB, rect_cloudB, remainingCloudB);
-//
-//    /* showPointCloud(planeCloudA, "planeCloudA");
-//    showPointCloud(remainingCloudA, "remainingCloudA");
-//    showPointCloud(planeCloudB, "planeCloudB");
-//    showPointCloud(remainingCloudB, "remainingCloudB");*/
-//
-//    Eigen::Matrix4f matrix_transformA;
-//    Eigen::Matrix4f matrix_transformA_r;
-//    Eigen::Matrix4f matrix_transformB;
-//    Eigen::Matrix4f matrix_transformB_r;
-//
-//    getTemTransformMatrix(coefficientsA, matrix_transformA, matrix_transformA_r);
-//    getTemTransformMatrix(coefficientsB, matrix_transformB, matrix_transformB_r);
-//
-//    PointCloudPtr_RGB_NORMAL tabletopCloudA_tem(new PointCloud_RGB_NORMAL());
-//    PointCloudPtr_RGB_NORMAL tabletopCloudB_tem(new PointCloud_RGB_NORMAL());
-//    getCloudOnTable(remainingCloudA, rect_cloudA, matrix_transformA, matrix_transformA_r, tabletopCloudA_tem);
-//    getCloudOnTable(remainingCloudB, rect_cloudB, matrix_transformB, matrix_transformB_r, tabletopCloudB_tem);
-//
-//    PointCloudPtr_RGB_NORMAL tabletopCloudA(new PointCloud_RGB_NORMAL());
-//    PointCloudPtr_RGB_NORMAL tabletopCloudB(new PointCloud_RGB_NORMAL());
-//    for(int i=0; i<tabletopCloudA_tem->size(); i++){
-//      if(!(tabletopCloudA_tem->points[i].z>1||tabletopCloudA_tem->points[i].x<-0.5||tabletopCloudA_tem->points[i].x>0.5||tabletopCloudA_tem->points[i].y<-0.5||tabletopCloudA_tem->points[i].y>0.5)){
-//        tabletopCloudA->push_back(tabletopCloudA_tem->points[i]);
-//      }
-//    }
-//
-//    for(int i=0; i<tabletopCloudB_tem->size(); i++){
-//      if(!(tabletopCloudB_tem->points[i].z>1||tabletopCloudB_tem->points[i].x<-0.5||tabletopCloudB_tem->points[i].x>0.5||tabletopCloudB_tem->points[i].y<-0.5||tabletopCloudB_tem->points[i].y>0.5)){
-//        tabletopCloudB->push_back(tabletopCloudB_tem->points[i]);
-//      }
-//    }
-//    //showPointCloud3(tabletopCloudA, "tabletopCloudA");
-//    //showPointCloud3(tabletopCloudB, "tabletopCloudB");
-//
-//    PointCloudPtr_RGB_NORMAL resultA (new PointCloud_RGB_NORMAL);
-//    PointCloudPtr_RGB_NORMAL resultB (new PointCloud_RGB_NORMAL);
-//    detect_change(tabletopCloudA, tabletopCloudB, resultA, resultB);
-//
-//    //showPointCloud3(resultA, "resultA");
-//    //showPointCloud3(resultB, "resultB");
-//
-//    PointCloudPtr_RGB object_cloud(new PointCloud_RGB);
-//    PointCloudPtr_RGB confidence_cloud(new PointCloud_RGB);
-//    updateSegmentObject(cloud, resultA, resultB, cPointCloudAnalysis, object_cloud, confidence_cloud);
-//
-//    KDtree tree;
-//    CUDA_KDTree GPU_tree;
-//    int max_tree_levels = 13; // play around with this value to get the best result
-//
-//    vector<KDPoint> data(cloud->size());
-//    vector<KDPoint> queries(object_cloud->size());
-//
-//    for(int i=0; i<cloud->size(); i++){
-//      data[i].coords[0] = cloud->points[i].x;
-//      data[i].coords[1] = cloud->points[i].y;
-//      data[i].coords[2] = cloud->points[i].z;
-//    }
-//
-//    for(int i=0; i<object_cloud->size(); i++){
-//      queries[i].coords[0] = object_cloud->points[i].x;
-//      queries[i].coords[1] = object_cloud->points[i].y;
-//      queries[i].coords[2] = object_cloud->points[i].z;
-//    }
-//
-//    vector <int> gpu_indexes;
-//    vector <float> gpu_dists;
-//
-//    tree.Create(data, max_tree_levels);
-//    GPU_tree.CreateKDTree(tree.GetRoot(), tree.GetNumNodes(), data);
-//    GPU_tree.Search(queries, gpu_indexes, gpu_dists);
-//
-//    PointCloudPtr_RGB colored_cloud0(new PointCloud_RGB);
-//    PointCloudPtr_RGB colored_cloud1(new PointCloud_RGB);
-//    for(int i=0; i<cloud->size(); i++){
-//      Point_RGB p_tem;
-//      p_tem.x=0;
-//      p_tem.y=0;
-//      p_tem.z=0;
-//      colored_cloud0->push_back(p_tem);
-//      colored_cloud1->push_back(p_tem);
-//    }
-//
-//    for(int i=0; i<object_cloud->size(); i++){
-//      colored_cloud0->points[gpu_indexes[i]].x = object_cloud->points[i].x;
-//      colored_cloud0->points[gpu_indexes[i]].y = object_cloud->points[i].y;
-//      colored_cloud0->points[gpu_indexes[i]].z = object_cloud->points[i].z;
-//      colored_cloud0->points[gpu_indexes[i]].r = object_cloud->points[i].r;
-//      colored_cloud0->points[gpu_indexes[i]].g = object_cloud->points[i].g;
-//      colored_cloud0->points[gpu_indexes[i]].b = object_cloud->points[i].b;
-//
-//      colored_cloud1->points[gpu_indexes[i]].x = confidence_cloud->points[i].x;
-//      colored_cloud1->points[gpu_indexes[i]].y = confidence_cloud->points[i].y;
-//      colored_cloud1->points[gpu_indexes[i]].z = confidence_cloud->points[i].z;
-//      colored_cloud1->points[gpu_indexes[i]].r = confidence_cloud->points[i].r;
-//      colored_cloud1->points[gpu_indexes[i]].g = confidence_cloud->points[i].g;
-//      colored_cloud1->points[gpu_indexes[i]].b = confidence_cloud->points[i].b;
-//    }
-//
-//    //showPointCloud(colored_cloud, "colored_cloud");
-//
-//    objectColors = (Vector3f*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f));
-//    confidenceColors = (Vector3f*)malloc(view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f));
-//
-//    int count=0;
-//    for(int i=0; i<view->depth->noDims.x*view->depth->noDims.y; i++){
-//      if(*(id_array_host+i)!=-1){
-//        if(!(colored_cloud0->points[count].x==0&&colored_cloud0->points[count].y==0&&colored_cloud0->points[count].z==0)){
-//          (*(objectColors+i))[0] = colored_cloud0->points[count].r;
-//          (*(objectColors+i))[1] = colored_cloud0->points[count].g;
-//          (*(objectColors+i))[2] = colored_cloud0->points[count].b;
-//
-//          (*(confidenceColors+i))[0] = colored_cloud1->points[count].r;
-//          (*(confidenceColors+i))[1] = colored_cloud1->points[count].g;
-//          (*(confidenceColors+i))[2] = colored_cloud1->points[count].b;
-//        }
-//        else{
-//          (*(objectColors+i))[0] = -1;
-//          (*(objectColors+i))[1] = -1;
-//          (*(objectColors+i))[2] = -1;
-//
-//          (*(confidenceColors+i))[0] = -1;
-//          (*(confidenceColors+i))[1] = -1;
-//          (*(confidenceColors+i))[2] = -1;
-//        }
-//
-//        count++;
-//      }
-//      else{
-//        (*(objectColors+i))[0] = -1;
-//        (*(objectColors+i))[1] = -1;
-//        (*(objectColors+i))[2] = -1;
-//
-//        (*(confidenceColors+i))[0] = -1;
-//        (*(confidenceColors+i))[1] = -1;
-//        (*(confidenceColors+i))[2] = -1;
-//      }
-//    }
-//
-//    Vector3f *colors_device;
-//    ITMSafeCall(cudaMalloc((void**)&colors_device, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f)));
-//    ITMSafeCall(cudaMemcpy(colors_device, objectColors, view->depth->noDims.x*view->depth->noDims.y*sizeof(Vector3f), cudaMemcpyHostToDevice));
-//    //pcl::io::savePLYFileBinary("Data/scan1.ply", *colored_cloud);
-//
-//    visualisationEngine->NewCreateICPMaps(scene, view, trackingState, colors_device, NULL, 0);
-//
-//    free(points_host);
-//    free(normals_host);
-//    free(id_array_host);
-//    points_host=NULL;
-//    normals_host=NULL;
-//    id_array_host=NULL;
-//
-//    ITMSafeCall(cudaFree(points_device));
-//    ITMSafeCall(cudaFree(normals_device));
-//    ITMSafeCall(cudaFree(colors_device));
-//#endif
-//  }
-}
-
-//hao modified it
 void ITMMainEngine::detectChange(){
   {
 #ifndef COMPILE_WITHOUT_CUDA
@@ -1125,10 +904,6 @@ void ITMMainEngine::savePoints()
   //visualisationEngine->GetAllPoints(scene);
   PointCloudPtr_RGB_NORMAL cloud(new PointCloud_RGB_NORMAL);
   //int num=0;
-  Vector3f *normal_device;
-  ITMSafeCall(cudaMalloc((void**)&normal_device, sizeof(Vector3f)));
-
-  Vector3f *normal_host = (Vector3f*)malloc(sizeof(Vector3f));
 
   ITMVoxelIndex::IndexData *hashData_host = new ITMVoxelIndex::IndexData;
   ITMVoxel *voxels = (ITMVoxel*)malloc(SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3 * sizeof(ITMVoxel));
@@ -1172,16 +947,13 @@ void ITMMainEngine::savePoints()
           p.b = res.b;
 
           Vector3f pt((hashEntry.pos.x*SDF_BLOCK_SIZE+((j%(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE))%SDF_BLOCK_SIZE+0.5f)), (hashEntry.pos.y*SDF_BLOCK_SIZE+((j%(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE))/SDF_BLOCK_SIZE+0.5f)), (hashEntry.pos.z*SDF_BLOCK_SIZE+(j/(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE)+0.5f)));
-          ITMSafeCall(cudaMemset(normal_device, 0, sizeof(Vector3f)));
-          memset(normal_host, 0, sizeof(Vector3f));
 
-          visualisationEngine->computePointNormal(scene, pt, normal_device);
-          ITMSafeCall(cudaMemcpy(normal_host, normal_device, sizeof(Vector3f), cudaMemcpyDeviceToHost));
+          Vector3f normal_host = computeSingleNormalFromSDF(voxels, hashData_host, pt);
 
-          float normScale = 1.0f / sqrtf((*normal_host).x * (*normal_host).x + (*normal_host).y * (*normal_host).y + (*normal_host).z * (*normal_host).z);
-          (*normal_host) *= normScale;
+          float normScale = 1.0f / sqrtf(normal_host.x * normal_host.x + normal_host.y * normal_host.y + normal_host.z * normal_host.z);
+          normal_host *= normScale;
 
-          Vector3f pn((*normal_host)[0], (*normal_host)[1], (*normal_host)[2]);
+          Vector3f pn(normal_host[0], normal_host[1], normal_host[2]);
           Vector3f tem(-p.x, -p.y, -p.z);
 
           double dotvalue = pn.x*tem.x + pn.y*tem.y + pn.z*tem.z;
@@ -1204,10 +976,6 @@ void ITMMainEngine::savePoints()
   free(hashData_host);
   voxels=NULL;
   hashData_host=NULL;
-
-  free(normal_host);
-  normal_host= NULL;
-  ITMSafeCall(cudaFree(normal_device));
 
   printf("savePoints finished.\n");
 }
@@ -1550,10 +1318,6 @@ void ITMMainEngine::getGlobalCloud(bool withNormals){
 
   //PointCloudPtr cloud(new PointCloud);
 
-  Vector3f *normal_device;
-  ITMSafeCall(cudaMalloc((void**)&normal_device, sizeof(Vector3f)));
-  Vector3f *normal_host = (Vector3f*)malloc(sizeof(Vector3f));
-
   ITMVoxelIndex::IndexData *hashData_host = new ITMVoxelIndex::IndexData;
   ITMVoxel *voxels = (ITMVoxel*)malloc(SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3 * sizeof(ITMVoxel));
 
@@ -1597,27 +1361,24 @@ void ITMMainEngine::getGlobalCloud(bool withNormals){
           p.id = res.id;
 
           if(withNormals){
-          ITMSafeCall(cudaMemset(normal_device, 0, sizeof(Vector3f)));
-          memset(normal_host, 0, sizeof(Vector3f));
+            Vector3f pt((hashEntry.pos.x*SDF_BLOCK_SIZE+((j%(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE))%SDF_BLOCK_SIZE+0.5f)), (hashEntry.pos.y*SDF_BLOCK_SIZE+((j%(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE))/SDF_BLOCK_SIZE+0.5f)), (hashEntry.pos.z*SDF_BLOCK_SIZE+(j/(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE)+0.5f)));
 
-          Vector3f pt((hashEntry.pos.x*SDF_BLOCK_SIZE+((j%(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE))%SDF_BLOCK_SIZE+0.5f)), (hashEntry.pos.y*SDF_BLOCK_SIZE+((j%(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE))/SDF_BLOCK_SIZE+0.5f)), (hashEntry.pos.z*SDF_BLOCK_SIZE+(j/(SDF_BLOCK_SIZE*SDF_BLOCK_SIZE)+0.5f)));
-          visualisationEngine->computePointNormal(scene, pt, normal_device);
-          ITMSafeCall(cudaMemcpy(normal_host, normal_device, sizeof(Vector3f), cudaMemcpyDeviceToHost));
+            Vector3f normal_host = computeSingleNormalFromSDF(voxels, hashData_host, pt);
 
-          float normScale = 1.0f / sqrtf((*normal_host).x * (*normal_host).x + (*normal_host).y * (*normal_host).y + (*normal_host).z * (*normal_host).z);
-          (*normal_host) *= normScale;
+            float normScale = 1.0f / sqrtf(normal_host.x * normal_host.x + normal_host.y * normal_host.y + normal_host.z * normal_host.z);
+            normal_host *= normScale;
 
-          Vector3f pn((*normal_host)[0], (*normal_host)[1], (*normal_host)[2]);
-          Vector3f tem(-p.x, -p.y, -p.z);
+            Vector3f pn(normal_host[0], normal_host[1], normal_host[2]);
+            Vector3f tem(-p.x, -p.y, -p.z);
 
-          double dotvalue = pn.x*tem.x + pn.y*tem.y + pn.z*tem.z;
-          if(dotvalue<0){
-            pn = -pn;
-          }
+            double dotvalue = pn.x*tem.x + pn.y*tem.y + pn.z*tem.z;
+            if(dotvalue<0){
+              pn = -pn;
+            }
 
-          p.normal_x = pn.x;
-          p.normal_y = pn.y;
-          p.normal_z = pn.z;
+            p.normal_x = pn.x;
+            p.normal_y = pn.y;
+            p.normal_z = pn.z;
           }
 
           globalCloud.mypoints.push_back(p);
@@ -1630,10 +1391,6 @@ void ITMMainEngine::getGlobalCloud(bool withNormals){
   free(hashData_host);
   voxels=NULL;
   hashData_host=NULL;
-
-  free(normal_host);
-  normal_host= NULL;
-  ITMSafeCall(cudaFree(normal_device));
 }
 
 //hao modified it
@@ -2123,17 +1880,18 @@ void ITMMainEngine::getIntsObjectsIds(const ushort targetObjectId, vector<ushort
         if(it->second > 100){
           for(map<ushort,ObjectAttri>::iterator it1 = objectMap.begin(); it1 != objectMap.end(); ++it1) {
             if(it->first.x == it1->second.oR && it->first.y == it1->second.oG && it->first.z == it1->second.oB){
-               objectIds.push_back(it1->first);
+              objectIds.push_back(it1->first);
             }
           }
         }
       }
 
-       break;
+      break;
     }
   }
 }
 
+//hao modified it
 void ITMMainEngine::preWorkForIntSeg(){
   saveViewPoints();
 

@@ -137,7 +137,6 @@ namespace ITMLib
       void saveViewPoints(ITMTrackingState *trackingState);//hao modified it
       void overSegmentView();//hao modified it
       void segmentView();//hao modified it
-      void updateSegmentView();//hao modified it
      
       void detectChange();//hao modified it
 
