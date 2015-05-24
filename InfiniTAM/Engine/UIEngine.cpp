@@ -132,8 +132,18 @@ void UIEngine::glutIdleFunction()
     uiEngine->mainLoopAction = DEPTH_PAUSED;
     uiEngine->needsRefresh = true;
     break;
-  case UPDATE_SEG_FRAME:
+  case INTERACTED_SEG:
     uiEngine->ProcessFrame(3); uiEngine->processedFrameNo++;
+    uiEngine->mainLoopAction = PROCESS_PAUSED;
+    uiEngine->needsRefresh = true;
+    break;
+  case GLOBAL_SEG:
+    uiEngine->ProcessFrame(4); uiEngine->processedFrameNo++;
+    uiEngine->mainLoopAction = PROCESS_PAUSED;
+    uiEngine->needsRefresh = true;
+    break;
+  case REFINED_SEG:
+    uiEngine->ProcessFrame(5); uiEngine->processedFrameNo++;
     uiEngine->mainLoopAction = PROCESS_PAUSED;
     uiEngine->needsRefresh = true;
     break;
@@ -189,113 +199,23 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
 
   switch (key)
   {
-  case '0':
-    printf("show object seg result ...\n");
-    UIEngine::Instance()->mainEngine->switchShowModel(0);
-    uiEngine->mainLoopAction = UIEngine::PROCESS_FRAME;
-    //glutPostRedisplay();
-    break;
-  case '1':
-    printf("show confidence graph ...\n");
-    UIEngine::Instance()->mainEngine->switchShowModel(1);
-    uiEngine->mainLoopAction = UIEngine::PROCESS_FRAME;
-    //glutPostRedisplay();
-    break;
-  case '2'://just for test
-    {
-      /* CInteractionCompute cic(UIEngine::Instance()->mainEngine->cPointCloudAnalysis);
-
-      if(cic.vecObjectHypo[0].objectness < 200){
-      break;
-      }
-
-      Eigen::Vector3f position_under_kinect;
-      Eigen::Vector3f direction;
-      cic.getTouchPointAndDir(0, position_under_kinect, direction, true);*/
-      break;
-    }
   case 'a':
     printf("auto reconstruct ...\n");
     UIEngine::Instance()->autoReconstruct();
-    break;
-  case 'r':
-    printf("reset ...\n");
-    UIEngine::Instance()->resetEngine();
-    break;
-  case 'v':
-    printf("save current view ...\n");
-    uiEngine->mainEngine->saveViewPoints();
-    break;
-  case 'w':
-    printf("save current view w...\n");
-    uiEngine->mainEngine->saveViewPoints(uiEngine->mainEngine->trackingStateTem);
-    break;
-  case 'd':
-    printf("detect change ...\n");
-    uiEngine->mainEngine->detectChange();
-    break;
-  case 'o':
-    printf("over segment objects ...\n");
-    uiEngine->mainLoopAction = UIEngine::OVER_SEG_FRAME;
-    break;
-  case 'p':
-    printf("segment objects ...\n");
-    uiEngine->mainLoopAction = UIEngine::SEG_FRAME;
-    break;
-  case 'u':
-    printf("update segment objects ...\n");
-    uiEngine->mainLoopAction = UIEngine::UPDATE_SEG_FRAME;
-    break;
-  case 'n':
-    printf("processing one frame ...\n");
-    uiEngine->mainLoopAction = UIEngine::PROCESS_FRAME;
     break;
   case 'b':
     printf("processing input source ...\n");
     uiEngine->mainLoopAction = UIEngine::PROCESS_VIDEO;
     break;
-  case 's'://hao modified it
-    {
-      printf("save points ...\n");
-      uiEngine->mainLoopAction = UIEngine::PROCESS_PAUSED;
-      uiEngine->mainEngine->savePoints();
-    }
-    break;
-
-    //ccjn modified it
-  case 'm':
-    printf("save mesh ...\n");
-    uiEngine->mainLoopAction = UIEngine::PROCESS_PAUSED;
-    uiEngine->mainEngine->saveMesh();
-    uiEngine->mainLoopAction = UIEngine::PROCESS_VIDEO;
-    break;
-
-  case 'e':
-  case 27: // esc key
-    printf("exiting ...\n");
-    uiEngine->mainLoopAction = UIEngine::PROCESS_EXIT;
-    break;
-  case 'f':
-    if (uiEngine->freeviewActive)
-    {
-      uiEngine->outImageType[0] = ITMMainEngine::InfiniTAM_IMAGE_SCENERAYCAST;
-      uiEngine->outImageType[1] = ITMMainEngine::InfiniTAM_IMAGE_ORIGINAL_DEPTH;
-
-      uiEngine->freeviewActive = false;
-    }
-    else
-    {
-      uiEngine->outImageType[0] = ITMMainEngine::InfiniTAM_IMAGE_SCENERAYCAST_FREECAMERA;
-      uiEngine->outImageType[1] = ITMMainEngine::InfiniTAM_IMAGE_SCENERAYCAST;
-
-      uiEngine->freeviewPose.SetFrom(uiEngine->mainEngine->trackingState->pose_d);
-      uiEngine->freeviewIntrinsics = uiEngine->mainEngine->GetView()->calib->intrinsics_d;
-      uiEngine->outImage[0]->ChangeDims(uiEngine->mainEngine->GetView()->depth->noDims);
-      uiEngine->freeviewActive = true;
-    }
+  case 'c':
+    uiEngine->colourActive = !uiEngine->colourActive;
     uiEngine->needsRefresh = true;
     break;
-  case 'z':
+  case 'd':
+    printf("detect change ...\n");
+    uiEngine->mainEngine->detectChange();
+    break;
+  case 'e':
     if (uiEngine->show_mode == 0)
     {
       uiEngine->outImageType[0] = ITMMainEngine::InfiniTAM_IMAGE_ORIGINAL_DEPTH;
@@ -322,44 +242,120 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
     }
     uiEngine->needsRefresh = true;
     break;
-  case 'c':
-    uiEngine->colourActive = !uiEngine->colourActive;
+  case 'f':
+    if (uiEngine->freeviewActive)
+    {
+      uiEngine->outImageType[0] = ITMMainEngine::InfiniTAM_IMAGE_SCENERAYCAST;
+      uiEngine->outImageType[1] = ITMMainEngine::InfiniTAM_IMAGE_ORIGINAL_DEPTH;
+
+      uiEngine->freeviewActive = false;
+    }
+    else
+    {
+      uiEngine->outImageType[0] = ITMMainEngine::InfiniTAM_IMAGE_SCENERAYCAST_FREECAMERA;
+      uiEngine->outImageType[1] = ITMMainEngine::InfiniTAM_IMAGE_SCENERAYCAST;
+
+      uiEngine->freeviewPose.SetFrom(uiEngine->mainEngine->trackingState->pose_d);
+      uiEngine->freeviewIntrinsics = uiEngine->mainEngine->GetView()->calib->intrinsics_d;
+      uiEngine->outImage[0]->ChangeDims(uiEngine->mainEngine->GetView()->depth->noDims);
+      uiEngine->freeviewActive = true;
+    }
     uiEngine->needsRefresh = true;
+    break;
+  case 'g':
+    printf("segment global points ...\n");
+    uiEngine->mainLoopAction = UIEngine::GLOBAL_SEG;
+    break;
+  case 'h':
+    printf("DEPTH_PAUSED ...\n");
+    uiEngine->mainLoopAction = UIEngine::DEPTH_PAUSED;
+    uiEngine->needsRefresh = true;
+    break;
+  case 'i':
+    printf("interacted segment ...\n");
+    uiEngine->mainLoopAction = UIEngine::INTERACTED_SEG;
+    break;
+  case 'j':
+    printf("preWorkForIntSeg start ...\n");
+    uiEngine->mainLoopAction = UIEngine::DEPTH_PAUSED;
+    uiEngine->mainEngine->preWorkForIntSeg();
+    break;
+  case 'k':
+    printf("segment frame ...\n");
+    uiEngine->mainLoopAction = UIEngine::SEG_FRAME;
+    break;
+  case 'm'://ccjn modified it
+    printf("save mesh ...\n");
+    uiEngine->mainLoopAction = UIEngine::PROCESS_PAUSED;
+    uiEngine->mainEngine->saveMesh();
+    break;
+  case 'n':
+    printf("processing one frame ...\n");
+    uiEngine->mainLoopAction = UIEngine::PROCESS_FRAME;
+    break;
+  case 'o':
+    printf("over segment objects ...\n");
+    uiEngine->mainLoopAction = UIEngine::OVER_SEG_FRAME;
+    break;
+  case 'p':
+    printf("PROCESS_PAUSED ...\n");
+    uiEngine->mainLoopAction = UIEngine::PROCESS_PAUSED;
+    uiEngine->needsRefresh = true;
+    break;
+  case 'r':
+    printf("reset ...\n");
+    UIEngine::Instance()->resetEngine();
+    break;
+  case 's':
+    {
+      printf("save points ...\n");
+      uiEngine->mainLoopAction = UIEngine::PROCESS_PAUSED;
+      uiEngine->mainEngine->savePoints();
+    }
     break;
   case 't':
     uiEngine->intergrationActive = !uiEngine->intergrationActive;
     if (uiEngine->intergrationActive) uiEngine->mainEngine->turnOnIntegration();
     else uiEngine->mainEngine->turnOffIntegration();
     break;
-  case 'x':
-    printf("PROCESS_PAUSED ...\n");
-    uiEngine->mainLoopAction = UIEngine::PROCESS_PAUSED;
-    uiEngine->needsRefresh = true;
-    break;
-  case 'y':
-    printf("DEPTH_PAUSED ...\n");
-    uiEngine->mainLoopAction = UIEngine::DEPTH_PAUSED;
-    uiEngine->needsRefresh = true;
-    break;
-  case '9':
-    printf("segment global points ...\n");
-    uiEngine->mainLoopAction = UIEngine::PROCESS_PAUSED;
-    uiEngine->mainEngine->segmentGlobal();
-    break;
-  case '8':
+  case 'u':
     printf("refine segment ...\n");
-    uiEngine->mainLoopAction = UIEngine::PROCESS_PAUSED;
-    uiEngine->mainEngine->refineSegment();
+    uiEngine->mainLoopAction = UIEngine::REFINED_SEG;
     break;
-  case '7':
-    printf("update segment ...\n");
-    uiEngine->mainLoopAction = UIEngine::PROCESS_PAUSED;
-    uiEngine->mainEngine->interactedSegment();
+  case 'v':
+    printf("save current view ...\n");
+    uiEngine->mainEngine->saveViewPoints();
     break;
-  case '6':
-    printf("preWorkForIntSeg start ...\n");
-    uiEngine->mainLoopAction = UIEngine::PROCESS_PAUSED;
-    uiEngine->mainEngine->preWorkForIntSeg();
+  case 'w':
+    printf("save current view w...\n");
+    uiEngine->mainEngine->saveViewPoints(uiEngine->mainEngine->trackingStateTem);
+    break;
+  case '0':
+    printf("show object seg result ...\n");
+    UIEngine::Instance()->mainEngine->switchShowModel(0);
+    uiEngine->mainLoopAction = UIEngine::PROCESS_FRAME;
+    break;
+  case '1':
+    printf("show confidence graph ...\n");
+    UIEngine::Instance()->mainEngine->switchShowModel(1);
+    uiEngine->mainLoopAction = UIEngine::PROCESS_FRAME;
+    break;
+  case '2'://just for test
+    {
+      /* CInteractionCompute cic(UIEngine::Instance()->mainEngine->cPointCloudAnalysis);
+
+      if(cic.vecObjectHypo[0].objectness < 200){
+      break;
+      }
+
+      Eigen::Vector3f position_under_kinect;
+      Eigen::Vector3f direction;
+      cic.getTouchPointAndDir(0, position_under_kinect, direction, true);*/
+      break;
+    }
+  case 27: // esc key
+    printf("exiting ...\n");
+    uiEngine->mainLoopAction = UIEngine::PROCESS_EXIT;
     break;
   default:
     break;

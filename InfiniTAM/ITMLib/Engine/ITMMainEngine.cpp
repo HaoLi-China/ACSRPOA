@@ -139,6 +139,12 @@ void ITMMainEngine::ProcessFrame(short segFlag)
     else if(segFlag==3){
       interactedSegment();
     }
+    else if(segFlag==4){
+      segmentGlobal();
+    }
+    else if(segFlag==5){
+      refineSegment();
+    }
 
     break;
   case ITMLibSettings::TRACKER_COLOR:
