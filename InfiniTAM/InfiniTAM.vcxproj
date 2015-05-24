@@ -155,6 +155,7 @@
     <ClCompile Include="ObjPreSegment\supervoxel_clustering.cpp" />
     <ClCompile Include="Utils\FileUtils.cpp" />
     <ClCompile Include="Utils\InteractionCompute.cpp" />
+    <ClCompile Include="Utils\ReadParamFiles.cpp" />
     <ClCompile Include="Utils\SocketClient.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -258,6 +259,7 @@
     <ClInclude Include="Utils\FileUtils.h" />
     <ClInclude Include="Utils\InteractionCompute.h" />
     <ClInclude Include="Utils\NVTimer.h" />
+    <ClInclude Include="Utils\ReadParamFiles.h" />
     <ClInclude Include="Utils\SocketClient.h" />
   </ItemGroup>
   <ItemGroup>

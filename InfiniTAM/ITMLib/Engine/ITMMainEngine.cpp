@@ -45,6 +45,11 @@ ITMMainEngine::ITMMainEngine(const ITMLibSettings *settings, const ITMRGBDCalib 
   fusionActive = true;
 
   idCount = 1;
+
+  getGlobalSegRange(global_seg_range);
+  getRefinedSegRange(refined_seg_range);
+  getInteractedSegRange(interacted_seg_range);
+  getRobotPose(robotpose);
 }
 
 ITMMainEngine::~ITMMainEngine()
@@ -1494,7 +1499,7 @@ void ITMMainEngine::segmentGlobal(){
   PointCloudPtr_RGB object_cloud(new PointCloud_RGB);
   PointCloudPtr_RGB confidence_cloud(new PointCloud_RGB);
   vector<ushort> objectIndexs;
-  Eigen::Vector3f range(0.5, 0.5, 1.0);
+  Eigen::Vector3f range  =global_seg_range;
   int objectNum;
   vector<ObjectAttri> obas;
   //showPointCloud3(source_cloud, "source_cloud");
@@ -1551,7 +1556,7 @@ void ITMMainEngine::segmentPortionInGlobal(const vector<ushort> &objectIds){
   PointCloudPtr_RGB object_cloud(new PointCloud_RGB);
   PointCloudPtr_RGB confidence_cloud(new PointCloud_RGB);
   vector<ushort> objectIndexs;
-  Eigen::Vector3f range(0.5, 0.5, 1.0);
+  Eigen::Vector3f range = refined_seg_range;
   int objectNum;
   vector<ObjectAttri> obas;
   segmentSepcialObjects(source_cloud, range, obas, object_cloud, confidence_cloud, objectIndexs, objectNum);
@@ -1677,7 +1682,7 @@ void ITMMainEngine::interactedSegment(){
 
     vector<ushort> objectIndexs;
     int objectNum;
-    Eigen::Vector3f range(0.5, 0.5, 1.0);
+    Eigen::Vector3f range = interacted_seg_range;
     vector<ObjectAttri> obas;
 
     updateSegmentObject(cloud, range, resultA, resultB, obas, object_cloud, confidence_cloud, objectIndexs, objectNum);

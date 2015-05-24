@@ -5,6 +5,7 @@
 #include "../ITMLib.h"
 #include "../Utils/ITMLibSettings.h"
 
+#include "../../Utils/ReadParamFiles.h"
 #include "../../Common/visualizer.h"//hao modified it
 #include "../../ObjPreSegment/object_segmentation.h"//hao modified it
 #include "../../ObjPreSegment/scene_seg.h"//hao modified it
@@ -92,17 +93,19 @@ namespace ITMLib
       ITMView *view;
       /// Pointer to the current camera pose and additional tracking information
       ITMTrackingState *trackingState;
-      ITMTrackingState *trackingStateTem;//hao modified it
 
+      ITMTrackingState *trackingStateTem;//hao modified it
       MyPointCloud_RGB_NORMAL myCloudOne;//hao modified it
       MyPointCloud_RGB_NORMAL myCloudTwo;//hao modified it
-      ushort idCount;//hao modified it
-
-
-
-
       MyPointCloud_RGB_NORMAL_ID globalCloud;//hao modified it
       map<ushort, ObjectAttri> objectMap;//hao modified it
+      ushort idCount;//hao modified it
+      
+      Eigen::Vector3f global_seg_range;
+      Eigen::Vector3f refined_seg_range;
+      Eigen::Vector3f interacted_seg_range;
+      RobotPose robotpose;
+
       void changeObjectIds(const vector<ushort> &oldIDs, const vector<ushort> &newIds, const vector<uchar> &newRs, const vector<uchar> &newGs, const vector<uchar> &newBs);//hao modified it
       void getGlobalCloud(bool withNormals = true);//hao modified it
       void changeVoxelValue(ITMVoxel *voxels, const ITMHashEntry *hashTable, Point_RGB pt, ushort objectId);//hao modified it
@@ -114,8 +117,10 @@ namespace ITMLib
       void interactedSegment();//hao modified it
       void preWorkForIntSeg();//hao modified it
       void switchShowModel(uchar mode);//hao modified it
-
-
+      void savePoints();//hao modified it
+      void saveMesh(); //ccjn modified it
+      void saveViewPoints();//hao modified it
+      void saveViewPoints(ITMTrackingState *trackingState);//hao modified it
 
       /// Gives access to the current input frame
       ITMView* GetView() { return view; }
@@ -130,17 +135,9 @@ namespace ITMLib
       void GetImage(ITMUChar4Image *out, GetImageType getImageType, bool useColour, ITMPose *pose = NULL, ITMIntrinsics *intrinsics = NULL);
       void GetDepthAndColorImageForPause(ITMUChar4Image *out, GetImageType getImageType, bool useColour, ITMPose *pose = NULL, ITMIntrinsics *intrinsics = NULL);//hao modified it
 
-      void SaveAll();
-
-      void savePoints();//hao modified it
-      void saveViewPoints();//hao modified it
-      void saveViewPoints(ITMTrackingState *trackingState);//hao modified it
       void overSegmentView();//hao modified it
       void segmentView();//hao modified it
-     
       void detectChange();//hao modified it
-
-      void saveMesh(); //ccjn modified it
 
       /// switch for turning intergration on/off
       void turnOnIntegration();
