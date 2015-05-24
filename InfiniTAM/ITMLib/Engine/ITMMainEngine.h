@@ -33,16 +33,6 @@ For use of ITMLib in your own project, the class
 point to the library.
 */
 
-struct objectAttri{
-  uchar oR;
-  uchar oG;
-  uchar oB;
-  uchar cR;
-  uchar cG;
-  uchar cB;
-  float confidence;
-};
-
 namespace ITMLib
 {
   namespace Engine
@@ -106,19 +96,13 @@ namespace ITMLib
 
       MyPointCloud_RGB_NORMAL myCloudOne;//hao modified it
       MyPointCloud_RGB_NORMAL myCloudTwo;//hao modified it
-      //MyPointCloud_RGB_NORMAL currentViewCloud;//hao modified it
-      //MyPointCloud_RGB objectCloud;//hao modified it
-      //MyPointCloud_RGB confidenceCloud;//hao modified it
-      Vector3f *objectColors;//hao modified it
-      Vector3f *confidenceColors;//hao modified it
-      CPointCloudAnalysis cPointCloudAnalysis;//hao modified it
       ushort idCount;//hao modified it
 
 
 
 
       MyPointCloud_RGB_NORMAL_ID globalCloud;//hao modified it
-      map<ushort, objectAttri> objectMap;//hao modified it
+      map<ushort, ObjectAttri> objectMap;//hao modified it
       void changeObjectIds(const vector<ushort> &oldIDs, const vector<ushort> &newIds, const vector<uchar> &newRs, const vector<uchar> &newGs, const vector<uchar> &newBs);//hao modified it
       void getGlobalCloud(bool withNormals = true);//hao modified it
       void changeVoxelValue(ITMVoxel *voxels, const ITMHashEntry *hashTable, Point_RGB pt, ushort objectId);//hao modified it
@@ -154,7 +138,6 @@ namespace ITMLib
       void overSegmentView();//hao modified it
       void segmentView();//hao modified it
       void updateSegmentView();//hao modified it
-      void showSegmentResult(int flag);//hao modified it
      
       void detectChange();//hao modified it
 

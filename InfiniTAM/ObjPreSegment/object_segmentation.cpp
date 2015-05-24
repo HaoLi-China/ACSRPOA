@@ -37,7 +37,7 @@ void shrinkCloudRange(PointCloudPtr_RGB_NORMAL source_cloud, const float range_x
 }
 
 //segment special object
-void segmentSepcialObjects(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f range, CPointCloudAnalysis &cpca, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud, vector<ushort> &objectIndexs, int &objectNum){
+void segmentSepcialObjects(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f range, vector<ObjectAttri> &obas, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud, vector<ushort> &objectIndexs, int &objectNum){
   objectNum = 0;
 
   CPointCloudAnalysis cPointCloudAnalysis;
@@ -172,6 +172,9 @@ void segmentSepcialObjects(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3
       g = double(rand()%255);
       b = double(rand()%255);
 
+      ObjectAttri oba = {r, g, b, 0, 0, 0, 0};
+      obas.push_back(oba);
+
       for(int k = 0; k < cPointCloudAnalysis.vecAreaInterest[i].vecObjectHypo[j].patchIndex.size();k++)
       { 
         int patchIndex = cPointCloudAnalysis.vecAreaInterest[i].vecObjectHypo[j].patchIndex[k];
@@ -194,6 +197,7 @@ void segmentSepcialObjects(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3
     }
   }
 
+  int count_tem = 0;
   for(int i = 0; i < cPointCloudAnalysis.vecAreaInterest.size();i++)
   {
     cPointCloudAnalysis.vecAreaInterest[i].ComputeScore();
@@ -205,6 +209,24 @@ void segmentSepcialObjects(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3
       rObj *= 255;
       gObj *= 255;
       bObj *= 255;
+
+      if(rObj>255){
+        rObj = 255;
+      }
+
+      if(gObj>255){
+        gObj = 255;
+      }
+
+      if(bObj>255){
+        bObj = 255;
+      }
+
+      obas[count_tem].cR = rObj;
+      obas[count_tem].cG = gObj;
+      obas[count_tem].cB = bObj;
+      obas[count_tem].confidence = cPointCloudAnalysis.vecAreaInterest[i].vecObjectHypo[j].objectness;
+      count_tem++;
 
       for(int k = 0; k < cPointCloudAnalysis.vecAreaInterest[i].vecObjectHypo[j].patchIndex.size();k++)
       {
@@ -226,12 +248,11 @@ void segmentSepcialObjects(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3
       }
     }
   }
-  cpca = cPointCloudAnalysis;
   //showPointCloud(confidence_cloud, "confidence_cloud");
 }
 
 //segment object
-void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f range, CPointCloudAnalysis &cpca, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud, vector<ushort> &objectIndexs, int &objectNum){
+void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f range, vector<ObjectAttri> &obas, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud, vector<ushort> &objectIndexs, int &objectNum){
   objectNum = 0;
   
   CPointCloudAnalysis cPointCloudAnalysis;
@@ -360,6 +381,9 @@ void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f range,
       g = double(rand()%255);
       b = double(rand()%255);
 
+      ObjectAttri oba = {r, g, b, 0, 0, 0, 0};
+      obas.push_back(oba);
+
       for(int k = 0; k < cPointCloudAnalysis.vecAreaInterest[i].vecObjectHypo[j].patchIndex.size();k++)
       { 
         int patchIndex = cPointCloudAnalysis.vecAreaInterest[i].vecObjectHypo[j].patchIndex[k];
@@ -382,6 +406,7 @@ void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f range,
     }
   }
 
+  int count_tem = 0;
   for(int i = 0; i < cPointCloudAnalysis.vecAreaInterest.size();i++)
   {
     cPointCloudAnalysis.vecAreaInterest[i].ComputeScore();
@@ -393,6 +418,24 @@ void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f range,
       rObj *= 255;
       gObj *= 255;
       bObj *= 255;
+
+      if(rObj>255){
+         rObj = 255;
+      }
+
+      if(gObj>255){
+        gObj = 255;
+      }
+
+      if(bObj>255){
+        bObj = 255;
+      }
+
+      obas[count_tem].cR = rObj;
+      obas[count_tem].cG = gObj;
+      obas[count_tem].cB = bObj;
+      obas[count_tem].confidence = cPointCloudAnalysis.vecAreaInterest[i].vecObjectHypo[j].objectness;
+      count_tem++;
 
       for(int k = 0; k < cPointCloudAnalysis.vecAreaInterest[i].vecObjectHypo[j].patchIndex.size();k++)
       {
@@ -414,7 +457,7 @@ void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f range,
       }
     }
   }
-  cpca = cPointCloudAnalysis;
+
   //showPointCloud(confidence_cloud, "confidence_cloud");
 }
 
@@ -492,7 +535,7 @@ void overSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RGB 
 }
 
 //update segment object
-void updateSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f range, PointCloudPtr_RGB_NORMAL change_cloudA, PointCloudPtr_RGB_NORMAL change_cloudB, CPointCloudAnalysis &cpca, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud, vector<ushort> &objectIndexs, int &objectNum){
+void updateSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f range, PointCloudPtr_RGB_NORMAL change_cloudA, PointCloudPtr_RGB_NORMAL change_cloudB, vector<ObjectAttri> &obas, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud, vector<ushort> &objectIndexs, int &objectNum){
   objectNum = 0;
   PointCloudPtr_RGB_NORMAL shrinked_cloud(new PointCloud_RGB_NORMAL);
   shrinkCloudRange(source_cloud, range[0], range[1], range[2], shrinked_cloud);
@@ -735,6 +778,9 @@ void updateSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f 
       g = double(rand()%255);
       b = double(rand()%255);
 
+      ObjectAttri oba = {r, g, b, 0, 0, 0, 0};
+      obas.push_back(oba);
+
       for(int k = 0; k < cPointCloudAnalysis.vecAreaInterest[i].vecObjectHypo[j].patchIndex.size();k++)
       {
         int patchIndex = cPointCloudAnalysis.vecAreaInterest[i].vecObjectHypo[j].patchIndex[k];
@@ -757,6 +803,7 @@ void updateSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f 
     }
   }
 
+  int count_tem=0;
   for(int i = 0; i < cPointCloudAnalysis.vecAreaInterest.size();i++)
   {
     cPointCloudAnalysis.vecAreaInterest[i].ComputeScore();
@@ -768,6 +815,24 @@ void updateSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f 
       rObj *= 255;
       gObj *= 255;
       bObj *= 255;
+
+      if(rObj>255){
+        rObj = 255;
+      }
+
+      if(gObj>255){
+        gObj = 255;
+      }
+
+      if(bObj>255){
+        bObj = 255;
+      }
+
+      obas[count_tem].cR = rObj;
+      obas[count_tem].cG = gObj;
+      obas[count_tem].cB = bObj;
+      obas[count_tem].confidence = cPointCloudAnalysis.vecAreaInterest[i].vecObjectHypo[j].objectness;
+      count_tem++;
 
       for(int k = 0; k < cPointCloudAnalysis.vecAreaInterest[i].vecObjectHypo[j].patchIndex.size();k++)
       {
@@ -790,5 +855,4 @@ void updateSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f 
     }
   }
 
-  cpca = cPointCloudAnalysis;
 }
