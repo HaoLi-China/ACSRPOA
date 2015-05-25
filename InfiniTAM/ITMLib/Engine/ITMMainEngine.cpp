@@ -1510,7 +1510,7 @@ void ITMMainEngine::segmentGlobal(){
   vector<ObjectAttri> obas;
   //showPointCloud3(source_cloud, "source_cloud");
 
-  segmentObject(source_cloud, range, obas, object_cloud, confidence_cloud, objectIndexs, objectNum);
+  segmentObject(source_cloud, range, obas, object_cloud, confidence_cloud, objectIndexs, objectNum, true);
 
   for(int i=0; i<obas.size(); i++){
     objectMap[idCount+i+1] = obas[i];
@@ -1578,8 +1578,11 @@ void ITMMainEngine::segmentPortionInGlobal(const vector<ushort> &objectIds){
 
 //hao modified it
 void ITMMainEngine::refineSegment(){
+  ushort targetObjectId;
+  getObjectIdFromFile(targetObjectId);
+
   vector<ushort> objectIds;
-  objectIds.push_back(2);
+  getIntsObjectsIds(targetObjectId, objectIds);
 
   segmentPortionInGlobal(objectIds);
 
@@ -1863,6 +1866,7 @@ void ITMMainEngine::getIntsObjectsIds(const ushort targetObjectId, vector<ushort
 
   for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)
   {
+    countForTargetObjectPoints = 0;
     PointCloudPtr_RGB cloud_cluster (new PointCloud_RGB);
 
     for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); pit++){
@@ -1874,10 +1878,10 @@ void ITMMainEngine::getIntsObjectsIds(const ushort targetObjectId, vector<ushort
     } 
 
     if(countForTargetObjectPoints>100){
-      map<Vector3u, int> map_tem;
-      if(cloud_cluster->size()>100){
+      map<int, int> map_tem;
+      if(cloud_cluster->size()>50){
         for(int i=0; i<cloud_cluster->size(); i++){
-          Vector3u color(cloud_cluster->points[i].r, cloud_cluster->points[i].g, cloud_cluster->points[i].b);
+          int color = (int)(cloud_cluster->points[i].r+cloud_cluster->points[i].g+cloud_cluster->points[i].b);
           if(map_tem.find(color)==map_tem.end()){
             map_tem[color] = 1;
           }
@@ -1887,10 +1891,10 @@ void ITMMainEngine::getIntsObjectsIds(const ushort targetObjectId, vector<ushort
         }
       }
 
-      for(map<Vector3u,int>::iterator it = map_tem.begin(); it != map_tem.end(); ++it) {
-        if(it->second > 100){
+      for(map<int,int>::iterator it = map_tem.begin(); it != map_tem.end(); ++it) {
+        if(it->second > 50){
           for(map<ushort,ObjectAttri>::iterator it1 = objectMap.begin(); it1 != objectMap.end(); ++it1) {
-            if(it->first.x == it1->second.oR && it->first.y == it1->second.oG && it->first.z == it1->second.oB){
+            if(it->first == (int)(it1->second.oR + it1->second.oG + it1->second.oB)){
               objectIds.push_back(it1->first);
             }
           }
@@ -1906,7 +1910,9 @@ void ITMMainEngine::getIntsObjectsIds(const ushort targetObjectId, vector<ushort
 void ITMMainEngine::preWorkForIntSeg(){
   saveViewPoints();
 
-  ushort targetObjectId = 2;
+  ushort targetObjectId;
+  getObjectIdFromFile(targetObjectId);
+
   vector<ushort> objectIds;
   getIntsObjectsIds(targetObjectId, objectIds);
 

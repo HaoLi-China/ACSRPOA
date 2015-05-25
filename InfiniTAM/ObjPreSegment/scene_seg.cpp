@@ -842,7 +842,7 @@ void detect_separation_plane(PointCloudPtr_RGB_NORMAL cloud, vector<MyPointCloud
     cout<<"w=====================:"<<w<<endl;
     cout<<"l*w:"<<l*w<<endl;
 
-    if(l<0.5&&w<0.5){
+    if(l<0.5||w<0.5){//modified
       appendCloud_RGB_NORMAL(cloud_tem,cloud_remaining);
       break;
     }

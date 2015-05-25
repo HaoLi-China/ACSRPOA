@@ -14,6 +14,8 @@
 #include "../Common/KDtree.h"
 #include "../Common/CUDA_KDtree.h"
 
+#include <pcl/io/ply_io.h>
+
 using namespace std;
 
 
@@ -28,7 +30,7 @@ struct ObjectAttri{
 };
 
 void segmentSepcialObjects(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f range, vector<ObjectAttri> &obas, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud, vector<ushort> &objectIndexs, int &objectNum);
-void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f range, vector<ObjectAttri> &obas, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud, vector<ushort> &objectIndexs, int &objectNum);
+void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f range, vector<ObjectAttri> &obas, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud, vector<ushort> &objectIndexs, int &objectNum, bool saveObjects = false);
 void overSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RGB result_cloud);
 void updateSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f range, PointCloudPtr_RGB_NORMAL change_cloudA, PointCloudPtr_RGB_NORMAL change_cloudB, vector<ObjectAttri> &obas, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud, vector<ushort> &objectIndexs, int &objectNum);
 
