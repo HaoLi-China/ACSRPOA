@@ -58,3 +58,15 @@ void getInteractedSegRange(Eigen::Vector3f  &interacted_seg_range){
 
   input.close();
 }
+
+void getObjectIdFromFile(unsigned short &objectId){
+  std::ifstream input("Files/parameter/objectId.txt");
+  if(input.fail()) {
+    std::cout<<"could not open file!" << std::endl;
+    return;
+  }
+
+  input >> objectId;
+
+  input.close();
+}

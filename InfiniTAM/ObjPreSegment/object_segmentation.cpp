@@ -200,10 +200,11 @@ void segmentSepcialObjects(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3
   int count_tem = 0;
   for(int i = 0; i < cPointCloudAnalysis.vecAreaInterest.size();i++)
   {
-    cPointCloudAnalysis.vecAreaInterest[i].ComputeScore();
+    //cPointCloudAnalysis.vecAreaInterest[i].ComputeScore();
     if(!cPointCloudAnalysis.vecAreaInterest[i].validFlag)	continue;
     for(int j = 0; j < cPointCloudAnalysis.vecAreaInterest[i].vecObjectHypo.size();j++)
     {
+      cPointCloudAnalysis.vecAreaInterest[i].vecObjectHypo[j].objectness = 100;
       double rObj,gObj,bObj;
       GetColour(double(650) - cPointCloudAnalysis.vecAreaInterest[i].vecObjectHypo[j].objectness,300,350,rObj,gObj,bObj);
       rObj *= 255;
@@ -252,7 +253,7 @@ void segmentSepcialObjects(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3
 }
 
 //segment object
-void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f range, vector<ObjectAttri> &obas, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud, vector<ushort> &objectIndexs, int &objectNum){
+void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f range, vector<ObjectAttri> &obas, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud, vector<ushort> &objectIndexs, int &objectNum, bool saveObjects){
   objectNum = 0;
   
   CPointCloudAnalysis cPointCloudAnalysis;
@@ -384,6 +385,8 @@ void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f range,
       ObjectAttri oba = {r, g, b, 0, 0, 0, 0};
       obas.push_back(oba);
 
+      PointCloudPtr_RGB object_pc(new PointCloud_RGB);
+
       for(int k = 0; k < cPointCloudAnalysis.vecAreaInterest[i].vecObjectHypo[j].patchIndex.size();k++)
       { 
         int patchIndex = cPointCloudAnalysis.vecAreaInterest[i].vecObjectHypo[j].patchIndex[k];
@@ -399,9 +402,18 @@ void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f range,
           po.g = g;
           po.b = b;
 
+          object_pc->push_back(po);
           object_cloud->push_back(po);
           objectIndexs.push_back(objectNum);
         }
+      }
+
+      if(saveObjects){
+        stringstream str;
+        str<<"Data/objects/"<<objectNum+1<<".ply";
+        string filename=str.str();
+
+        pcl::io::savePLYFileBinary(filename, *object_pc);
       }
     }
   }

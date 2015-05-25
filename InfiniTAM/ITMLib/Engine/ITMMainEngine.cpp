@@ -846,6 +846,72 @@ void ITMMainEngine::detectChange(){
 }
 
 //hao modified it
+void ITMMainEngine::removeVexelsByObjectId(const vector<ushort> &objIDs)
+{
+  for(int i=0; i<objIDs.size(); i++){
+    objectMap.erase(objIDs[i]);
+  }
+
+  ITMVoxelIndex::IndexData *hashData_host = new ITMVoxelIndex::IndexData;
+  ITMVoxel *voxels = (ITMVoxel*)malloc(SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3 * sizeof(ITMVoxel));
+
+  //printf("aaaaaa\n");
+
+  bool flag = false;
+#ifndef COMPILE_WITHOUT_CUDA
+  flag=true;
+#endif
+  if(flag){
+    ITMSafeCall(cudaMemcpy(hashData_host, scene->index.getIndexData(), sizeof(ITMVoxelIndex::IndexData), cudaMemcpyDeviceToHost));
+    ITMSafeCall(cudaMemcpy(voxels, scene->localVBA.GetVoxelBlocks(), SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3*sizeof(ITMVoxel), cudaMemcpyDeviceToHost));
+  }
+  else{
+    memcpy(hashData_host, scene->index.getIndexData(), sizeof(ITMVoxelIndex::IndexData));
+    memcpy(voxels, scene->localVBA.GetVoxelBlocks(), SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3 * sizeof(ITMVoxel));
+  }
+  //printf("bbbbbb\n");
+  const ITMHashEntry *hashTable = hashData_host->entries_all;
+
+  for(int i=0; i<SDF_BUCKET_NUM * SDF_ENTRY_NUM_PER_BUCKET + SDF_EXCESS_LIST_SIZE; i++){
+    const ITMHashEntry &hashEntry = hashTable[i];
+
+    if(hashEntry.ptr >= 0){
+      for(int j=0; j<SDF_BLOCK_SIZE3; j++){
+        ITMVoxel res = voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j];
+
+        //if(res.id == 3){
+        //  printf("dddddd\n");
+        //}
+
+        for(int k=0; k<objIDs.size(); k++){
+          if(res.id == objIDs[k]){
+            voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j].id = 0;
+            voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j].r = 255;
+            voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j].g = 255;
+            voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j].b = 255;
+            voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j].sdf = 32767;
+            voxels[(hashEntry.ptr * SDF_BLOCK_SIZE3) + j].w_depth = 0;
+          }
+        }
+      }
+    }
+  }
+
+  if(flag){
+    ITMSafeCall(cudaMemcpy(scene->localVBA.GetVoxelBlocks(), voxels, SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3*sizeof(ITMVoxel), cudaMemcpyHostToDevice));
+  }
+  else{
+    memcpy(scene->localVBA.GetVoxelBlocks(), voxels, SDF_LOCAL_BLOCK_NUM*SDF_BLOCK_SIZE3 * sizeof(ITMVoxel));
+  }
+
+  //printf("cccccc\n");
+  free(voxels);
+  free(hashData_host);
+  voxels=NULL;
+  hashData_host=NULL;
+}
+
+//hao modified it
 void ITMMainEngine::changeObjectIds(const vector<ushort> &oldIDs, const vector<ushort> &newIds, const vector<uchar> &newRs, const vector<uchar> &newGs, const vector<uchar> &newBs){
 
   for(int i=0; i<oldIDs.size(); i++){
@@ -1510,7 +1576,7 @@ void ITMMainEngine::segmentGlobal(){
   vector<ObjectAttri> obas;
   //showPointCloud3(source_cloud, "source_cloud");
 
-  segmentObject(source_cloud, range, obas, object_cloud, confidence_cloud, objectIndexs, objectNum);
+  segmentObject(source_cloud, range, obas, object_cloud, confidence_cloud, objectIndexs, objectNum, true);
 
   for(int i=0; i<obas.size(); i++){
     objectMap[idCount+i+1] = obas[i];
@@ -1578,8 +1644,11 @@ void ITMMainEngine::segmentPortionInGlobal(const vector<ushort> &objectIds){
 
 //hao modified it
 void ITMMainEngine::refineSegment(){
+  ushort targetObjectId;
+  getObjectIdFromFile(targetObjectId);
+
   vector<ushort> objectIds;
-  objectIds.push_back(2);
+  getIntsObjectsIds(targetObjectId, objectIds);
 
   segmentPortionInGlobal(objectIds);
 
@@ -1863,6 +1932,7 @@ void ITMMainEngine::getIntsObjectsIds(const ushort targetObjectId, vector<ushort
 
   for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it)
   {
+    countForTargetObjectPoints = 0;
     PointCloudPtr_RGB cloud_cluster (new PointCloud_RGB);
 
     for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); pit++){
@@ -1874,10 +1944,10 @@ void ITMMainEngine::getIntsObjectsIds(const ushort targetObjectId, vector<ushort
     } 
 
     if(countForTargetObjectPoints>100){
-      map<Vector3u, int> map_tem;
-      if(cloud_cluster->size()>100){
+      map<int, int> map_tem;
+      if(cloud_cluster->size()>50){
         for(int i=0; i<cloud_cluster->size(); i++){
-          Vector3u color(cloud_cluster->points[i].r, cloud_cluster->points[i].g, cloud_cluster->points[i].b);
+          int color = (int)(cloud_cluster->points[i].r+cloud_cluster->points[i].g+cloud_cluster->points[i].b);
           if(map_tem.find(color)==map_tem.end()){
             map_tem[color] = 1;
           }
@@ -1887,10 +1957,10 @@ void ITMMainEngine::getIntsObjectsIds(const ushort targetObjectId, vector<ushort
         }
       }
 
-      for(map<Vector3u,int>::iterator it = map_tem.begin(); it != map_tem.end(); ++it) {
-        if(it->second > 100){
+      for(map<int,int>::iterator it = map_tem.begin(); it != map_tem.end(); ++it) {
+        if(it->second > 50){
           for(map<ushort,ObjectAttri>::iterator it1 = objectMap.begin(); it1 != objectMap.end(); ++it1) {
-            if(it->first.x == it1->second.oR && it->first.y == it1->second.oG && it->first.z == it1->second.oB){
+            if(it->first == (int)(it1->second.oR + it1->second.oG + it1->second.oB)){
               objectIds.push_back(it1->first);
             }
           }
@@ -1906,7 +1976,9 @@ void ITMMainEngine::getIntsObjectsIds(const ushort targetObjectId, vector<ushort
 void ITMMainEngine::preWorkForIntSeg(){
   saveViewPoints();
 
-  ushort targetObjectId = 2;
+  ushort targetObjectId;
+  getObjectIdFromFile(targetObjectId);
+
   vector<ushort> objectIds;
   getIntsObjectsIds(targetObjectId, objectIds);
 
@@ -1921,7 +1993,8 @@ void ITMMainEngine::preWorkForIntSeg(){
     newBs.push_back(255);
   }
 
-  changeObjectIds(objectIds, newIds, newRs, newGs, newBs);
+  removeVexelsByObjectId(objectIds);
+  //changeObjectIds(objectIds, newIds, newRs, newGs, newBs);
 
   printf("preWorkForIntSeg finished.\n");
 }

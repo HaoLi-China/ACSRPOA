@@ -107,6 +107,7 @@ namespace ITMLib
       RobotPose robotpose;
 
       void changeObjectIds(const vector<ushort> &oldIDs, const vector<ushort> &newIds, const vector<uchar> &newRs, const vector<uchar> &newGs, const vector<uchar> &newBs);//hao modified it
+      void removeVexelsByObjectId(const vector<ushort> &objIDs);//hao modified it
       void getGlobalCloud(bool withNormals = true);//hao modified it
       void changeVoxelValue(ITMVoxel *voxels, const ITMHashEntry *hashTable, Point_RGB pt, ushort objectId);//hao modified it
       void updateVoxelsValues(PointCloudPtr_RGB cloud, vector<ushort> objectIds);//hao modified it

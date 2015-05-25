@@ -21,5 +21,6 @@ void getRobotPose(RobotPose &robotpose);
 void getGlobalSegRange(Eigen::Vector3f  &global_seg_range);
 void getRefinedSegRange(Eigen::Vector3f  &refined_seg_range);
 void getInteractedSegRange(Eigen::Vector3f  &interacted_seg_range);
+void getObjectIdFromFile(unsigned short &objectId);
 
 #endif //READPARAMFILES_H

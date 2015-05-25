@@ -84,27 +84,27 @@ void UIEngine::glutDisplayFunction()
   glMatrixMode(GL_PROJECTION);
   glPopMatrix();
 
-  glColor3f(1.0f, 0.0f, 0.0f); glRasterPos2f(0.85f, -0.962f);
+  //glColor3f(1.0f, 0.0f, 0.0f); glRasterPos2f(0.85f, -0.962f);
 
-  char str[200]; sprintf(str, "%04.2lf", uiEngine->processedTime);
-  safe_glutBitmapString(GLUT_BITMAP_HELVETICA_18, (const char*)str);
-  //hao modified it
-  {
-    glRasterPos2f(-0.95f, -0.93f);
-    sprintf(str, "r - reset \t n - next frame \t o - over-segmentation \t p - segmentation \t b - all frames \t u - update segmentation \t v - save points in current frame");
-    safe_glutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*)str);
+  //char str[200]; sprintf(str, "%04.2lf", uiEngine->processedTime);
+  //safe_glutBitmapString(GLUT_BITMAP_HELVETICA_18, (const char*)str);
+  ////hao modified it
+  //{
+  //  glRasterPos2f(-0.95f, -0.93f);
+  //  sprintf(str, "r - reset \t n - next frame \t o - over-segmentation \t p - segmentation \t b - all frames \t u - update segmentation \t v - save points in current frame");
+  //  safe_glutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*)str);
 
-    glRasterPos2f(-0.95f, -0.98f);
-    if (ITMVoxel::hasColorInformation)
-    {//hao modified it
-      sprintf(str, "d - detect change \t a - auto reconstruct \t m - save mesh \t e - exit \t f - %s \t c - %s", uiEngine->freeviewActive?"follow camera":"free viewpoint", uiEngine->colourActive?"stop using colour":"use colour");
-    }
-    else
-    {//hao modified it
-      sprintf(str, "d - detect change \t a - auto reconstruct \t m - save mesh \t e/esc - exit \t f - %s \t t - turn fusion %s", uiEngine->freeviewActive ? "follow camera" : "free viewpoint", uiEngine->intergrationActive ? "off" : "on");
-    }
-    safe_glutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*)str);
-  }
+  //  glRasterPos2f(-0.95f, -0.98f);
+  //  if (ITMVoxel::hasColorInformation)
+  //  {//hao modified it
+  //    sprintf(str, "d - detect change \t a - auto reconstruct \t m - save mesh \t e - exit \t f - %s \t c - %s", uiEngine->freeviewActive?"follow camera":"free viewpoint", uiEngine->colourActive?"stop using colour":"use colour");
+  //  }
+  //  else
+  //  {//hao modified it
+  //    sprintf(str, "d - detect change \t a - auto reconstruct \t m - save mesh \t e/esc - exit \t f - %s \t t - turn fusion %s", uiEngine->freeviewActive ? "follow camera" : "free viewpoint", uiEngine->intergrationActive ? "off" : "on");
+  //  }
+  //  safe_glutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*)str);
+  //}
 
   glutSwapBuffers();
   uiEngine->needsRefresh = false;
@@ -507,8 +507,10 @@ void UIEngine::Initialise(int & argc, char** argv, ITMLibSettings *internalSetti
   //winSize.x = (int)(1.5f * (float)MAX(imageSource->getImageSize().x, imageSource->getDepthImageSize().x));
   //winSize.y = MAX(imageSource->getRGBImageSize().y, imageSource->getDepthImageSize().y) + textHeight;
   winSize.x = (int)(1.5f * (float)(imageSource->getDepthImageSize().x));
-  winSize.y = imageSource->getDepthImageSize().y + textHeight;
-  float h1 = textHeight / (float)winSize.y, h2 = (1.f + h1) / 2;
+  //winSize.y = imageSource->getDepthImageSize().y + textHeight;
+  winSize.y = imageSource->getDepthImageSize().y;//hao modified it
+  //float h1 = textHeight / (float)winSize.y, h2 = (1.f + h1) / 2;
+  float h1 = 0, h2 = (1.f + h1) / 2;
   winReg[0] = Vector4f(0.0f, h1, 0.665f, 1.0f);   // Main render
   winReg[1] = Vector4f(0.665f, h2, 1.0f, 1.0f);   // Side sub window 0
   winReg[2] = Vector4f(0.665f, h1, 1.0f, h2);     // Side sub window 2
@@ -519,7 +521,7 @@ void UIEngine::Initialise(int & argc, char** argv, ITMLibSettings *internalSetti
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
   glutInitWindowSize(winSize.x, winSize.y);
-  glutCreateWindow("InfiniTAM");
+  glutCreateWindow("ACSROA");//hao modified it
   glGenTextures(NUM_WIN, textureId);
 
   glutDisplayFunc(UIEngine::glutDisplayFunction);
@@ -575,7 +577,8 @@ void UIEngine::resetEngine()
   int textHeight = 30; // Height of text area
   winSize.x = (int)(1.5f * (float)(imageSource->getDepthImageSize().x));
   winSize.y = imageSource->getDepthImageSize().y + textHeight;
-  float h1 = textHeight / (float)winSize.y, h2 = (1.f + h1) / 2;
+  //float h1 = textHeight / (float)winSize.y, h2 = (1.f + h1) / 2;
+  float h1 = 0, h2 = (1.f + h1) / 2;
   winReg[0] = Vector4f(0.0f, h1, 0.665f, 1.0f);   // Main render
   winReg[1] = Vector4f(0.665f, h2, 1.0f, 1.0f);   // Side sub window 0
   winReg[2] = Vector4f(0.665f, h1, 1.0f, h2);     // Side sub window 2
