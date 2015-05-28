@@ -71,6 +71,25 @@ void get_r_touch_point_and_dir(SOCKET &sockClient, const Eigen::Vector3f& input_
 //just for test 
 bool test_calibration_result(SOCKET &sockClient, const Eigen::Vector3f& input_position, const Eigen::Vector3f& input_dir);
 
+//base drive forward
+void base_drive_forward(SOCKET &sockClient, float distance);
+
+//base drive back
+void base_drive_back(SOCKET &sockClient, float distance);
+
+//base drive left
+void base_drive_left(SOCKET &sockClient, float distance);
+
+//base drive right
+void base_drive_right(SOCKET &sockClient, float distance);
+
+//base turn left
+void base_turn_left(SOCKET &sockClient, float radians);
+
+//base turn right
+void base_turn_right(SOCKET &sockClient, float radians);
+
+
 ////push the object
 //void excute_set_arm_pose();
 //
