@@ -59,7 +59,10 @@ __global__ void getRaycastImage_device(TRaycastRenderer renderer,
   Vector3f *colors, ushort *objectIds, Vector3f *table_sum_normal);
 
 //hao modified it
-__global__ void genIdMaps_device(Vector2i imgSize, Vector3f *points, Vector3f *normals, Vector3f *colors, ushort *objectIds, Vector3f* table_avg_normal);
+__global__ void genIdMaps1_device(Vector2i imgSize, Vector3f *points, Vector3f *normals, Vector3f *colors, ushort *objectIds, Vector3f* table_avg_normal);
+
+//hao modified it
+__global__ void genIdMaps2_device(Vector2i imgSize, Vector3f *points, Vector3f *normals, Vector3f *colors, ushort *objectIds);
 
 //hao modified it
 __global__ void copute_table_avg_normal_device(Vector3f *table_sum_normal, int length, Vector3f* table_avg_normal);
@@ -409,8 +412,14 @@ void CreateICPMaps_common(ITMScene<TVoxel,TIndex> *scene, const ITMView *view, I
   ITMSafeCall(cudaThreadSynchronize());
   //printf("222222\n");
 
-  genIdMaps_device << <gridSize, cudaBlockSize >> >(imgSize, points, normals, colors, objectIds, table_avg_normal);
+  for(int i=0; i<10; i++){
+  genIdMaps1_device << <gridSize, cudaBlockSize >> >(imgSize, points, normals, colors, objectIds, table_avg_normal);
   ITMSafeCall(cudaThreadSynchronize());
+  }
+
+  genIdMaps2_device << <gridSize, cudaBlockSize >> >(imgSize, points, normals, colors, objectIds);
+  ITMSafeCall(cudaThreadSynchronize());
+
   //printf("333333\n");
 	genericRaycastAndRender_device<TVoxel,TIndex> << <gridSize, cudaBlockSize >> >(renderer, scene->localVBA.GetVoxelBlocks(), scene->index.getIndexData(), imgSize, invM, projParams, oneOverVoxelSize, minmaxdata, mu, lightSource, colors, objectIds);
 	ITMSafeCall(cudaThreadSynchronize());
@@ -828,13 +837,23 @@ __global__ void getRaycastImage_device(TRaycastRenderer renderer,
 }
 
 //hao modified it
-__global__ void genIdMaps_device(Vector2i imgSize, Vector3f *points, Vector3f *normals, Vector3f *colors, ushort *objectIds, Vector3f *table_avg_normal)
+__global__ void genIdMaps1_device(Vector2i imgSize, Vector3f *points, Vector3f *normals, Vector3f *colors, ushort *objectIds, Vector3f *table_avg_normal)
 {
 	int x = (threadIdx.x + blockIdx.x * blockDim.x), y = (threadIdx.y + blockIdx.y * blockDim.y);
 
 	if (x >= imgSize.x || y >= imgSize.y) return;
 
-  genIdMaps(x, y, imgSize, points, normals, colors, objectIds, table_avg_normal);
+  genIdMaps1(x, y, imgSize, points, normals, colors, objectIds, table_avg_normal);
+}
+
+//hao modified it
+__global__ void genIdMaps2_device(Vector2i imgSize, Vector3f *points, Vector3f *normals, Vector3f *colors, ushort *objectIds)
+{
+	int x = (threadIdx.x + blockIdx.x * blockDim.x), y = (threadIdx.y + blockIdx.y * blockDim.y);
+
+	if (x >= imgSize.x || y >= imgSize.y) return;
+
+  genIdMaps2(x, y, imgSize, points, normals, colors, objectIds);
 }
 
 //hao modified it
