@@ -471,7 +471,7 @@ void get_r_touch_point_and_dir(SOCKET &sockClient, const Eigen::Vector3f& input_
 }
 
 //base drive forward
-void base_drive_forward(SOCKET &sockClient, float distance){
+bool base_drive_forward(SOCKET &sockClient, float distance){
   char tem[1024];
   memset(tem, 0, sizeof(tem));
 
@@ -486,17 +486,17 @@ void base_drive_forward(SOCKET &sockClient, float distance){
 
   send(sockClient,tem,strlen(tem)+1,0);
 
-  //char recvBuf[256];
-  //recv(sockClient,recvBuf,256,0);
+  char recvBuf[256];
+  recv(sockClient,recvBuf,256,0);
 
-  //if(strcmp(recvBuf,"finished")==0){
-  //  return true;
-  //}
-  //return false;
+  if(strcmp(recvBuf,"finished")==0){
+    return true;
+  }
+  return false;
 }
 
 //base drive back
-void base_drive_back(SOCKET &sockClient, float distance){
+bool base_drive_back(SOCKET &sockClient, float distance){
   char tem[1024];
   memset(tem, 0, sizeof(tem));
 
@@ -511,17 +511,17 @@ void base_drive_back(SOCKET &sockClient, float distance){
 
   send(sockClient,tem,strlen(tem)+1,0);
 
-  //char recvBuf[256];
-  //recv(sockClient,recvBuf,256,0);
+  char recvBuf[256];
+  recv(sockClient,recvBuf,256,0);
 
-  //if(strcmp(recvBuf,"finished")==0){
-  //  return true;
-  //}
-  //return false;
+  if(strcmp(recvBuf,"finished")==0){
+    return true;
+  }
+  return false;
 }
 
 //base drive left
-void base_drive_left(SOCKET &sockClient, float distance){
+bool base_drive_left(SOCKET &sockClient, float distance){
   char tem[1024];
   memset(tem, 0, sizeof(tem));
 
@@ -536,17 +536,17 @@ void base_drive_left(SOCKET &sockClient, float distance){
 
   send(sockClient,tem,strlen(tem)+1,0);
 
-  //char recvBuf[256];
-  //recv(sockClient,recvBuf,256,0);
+  char recvBuf[256];
+  recv(sockClient,recvBuf,256,0);
 
-  //if(strcmp(recvBuf,"finished")==0){
-  //  return true;
-  //}
-  //return false;
+  if(strcmp(recvBuf,"finished")==0){
+    return true;
+  }
+  return false;
 }
 
 //base drive right
-void base_drive_right(SOCKET &sockClient, float distance){
+bool base_drive_right(SOCKET &sockClient, float distance){
   char tem[1024];
   memset(tem, 0, sizeof(tem));
 
@@ -561,17 +561,17 @@ void base_drive_right(SOCKET &sockClient, float distance){
 
   send(sockClient,tem,strlen(tem)+1,0);
 
-  //char recvBuf[256];
-  //recv(sockClient,recvBuf,256,0);
+  char recvBuf[256];
+  recv(sockClient,recvBuf,256,0);
 
-  //if(strcmp(recvBuf,"finished")==0){
-  //  return true;
-  //}
-  //return false;
+  if(strcmp(recvBuf,"finished")==0){
+    return true;
+  }
+  return false;
 }
 
 //base turn left
-void base_turn_left(SOCKET &sockClient, float radians){
+bool base_turn_left(SOCKET &sockClient, float radians){
   char tem[1024];
   memset(tem, 0, sizeof(tem));
 
@@ -586,17 +586,17 @@ void base_turn_left(SOCKET &sockClient, float radians){
 
   send(sockClient,tem,strlen(tem)+1,0);
 
-  //char recvBuf[256];
-  //recv(sockClient,recvBuf,256,0);
+  char recvBuf[256];
+  recv(sockClient,recvBuf,256,0);
 
-  //if(strcmp(recvBuf,"finished")==0){
-  //  return true;
-  //}
-  //return false;
+  if(strcmp(recvBuf,"finished")==0){
+    return true;
+  }
+  return false;
 }
 
 //base turn right
-void base_turn_right(SOCKET &sockClient, float radians){
+bool base_turn_right(SOCKET &sockClient, float radians){
   char tem[1024];
   memset(tem, 0, sizeof(tem));
 
@@ -611,13 +611,13 @@ void base_turn_right(SOCKET &sockClient, float radians){
 
   send(sockClient,tem,strlen(tem)+1,0);
 
-  //char recvBuf[256];
-  //recv(sockClient,recvBuf,256,0);
+  char recvBuf[256];
+  recv(sockClient,recvBuf,256,0);
 
-  //if(strcmp(recvBuf,"finished")==0){
-  //  return true;
-  //}
-  //return false;
+  if(strcmp(recvBuf,"finished")==0){
+    return true;
+  }
+  return false;
 }
 
 //just for test
