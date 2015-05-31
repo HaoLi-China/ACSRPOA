@@ -17,41 +17,39 @@ using namespace std;
 
 namespace InfiniTAM
 {
-	namespace Engine
-	{
-		class UIEngine
-		{
-			static UIEngine* instance;
+  namespace Engine
+  {
+    class UIEngine
+    {
+      static UIEngine* instance;
 
-			ITMLibSettings *internalSettings;
-			ImageSourceEngine *imageSource;
-			
-			StopWatchInterface *timer;
+      ITMLibSettings *internalSettings;
+      ImageSourceEngine *imageSource;
 
-		private: // For UI layout
-			static const int NUM_WIN = 3;
-			Vector4f winReg[NUM_WIN]; // (x1, y1, x2, y2)
-			Vector2i winSize;
-			uint textureId[NUM_WIN];
-			ITMUChar4Image *outImage[NUM_WIN];
-			ITMMainEngine::GetImageType outImageType[NUM_WIN];
+      StopWatchInterface *timer;
 
-			bool freeviewActive;
-			bool colourActive;
-			bool intergrationActive;
-			ITMPose freeviewPose;
-			ITMIntrinsics freeviewIntrinsics;
-      int show_mode;
+    private: // For UI layout
+      static const int NUM_WIN = 3;
+      Vector4f winReg[NUM_WIN]; // (x1, y1, x2, y2)
+      Vector2i winSize;
+      uint textureId[NUM_WIN];
+      ITMUChar4Image *outImage[NUM_WIN];
 
-			int mouseState;
-			Vector2i mouseLastClick;
+      bool freeviewActive;
+      bool colourActive;
+      bool intergrationActive;
+      ITMPose freeviewPose;
+      ITMIntrinsics freeviewIntrinsics;
 
-			int currentFrameNo; bool isRecording;
-		public:
-			static UIEngine* Instance(void) {
-				if (instance == NULL) instance = new UIEngine();
-				return instance;
-			}
+      int mouseState;
+      Vector2i mouseLastClick;
+
+      int currentFrameNo; bool isRecording;
+    public:
+      static UIEngine* Instance(void) {
+        if (instance == NULL) instance = new UIEngine();
+        return instance;
+      }
 
       enum MainLoopAction
       {
@@ -60,33 +58,36 @@ namespace InfiniTAM
 
       ITMMainEngine *mainEngine;//hao modified it
 
-			static void glutDisplayFunction();
-			static void glutIdleFunction();
-			static void glutKeyUpFunction(unsigned char key, int x, int y);
-			static void glutMouseButtonFunction(int button, int state, int x, int y);
-			static void glutMouseMoveFunction(int x, int y);
-			static void glutMouseWheelFunction(int button, int dir, int x, int y);
+      static void glutDisplayFunction();
+      static void glutIdleFunction();
+      static void glutKeyUpFunction(unsigned char key, int x, int y);
+      static void glutMouseButtonFunction(int button, int state, int x, int y);
+      static void glutMouseMoveFunction(int x, int y);
+      static void glutMouseWheelFunction(int button, int dir, int x, int y);
 
-			const Vector2i & getWindowSize(void) const
-			{ return winSize; }
+      const Vector2i & getWindowSize(void) const
+      { return winSize; }
 
-			float processedTime;
-			int processedFrameNo;
-			char *outFolder;
-			bool needsRefresh;
-			ITMUChar4Image *saveImage;
+      float processedTime;
+      int processedFrameNo;
+      char *outFolder;
+      bool needsRefresh;
+      ITMUChar4Image *saveImage;
 
-			void Initialise(int & argc, char** argv, ITMLibSettings *internalSettings, ImageSourceEngine *imageSource, ITMMainEngine *mainEngine, const char *outFolder);//hao modified it
-			void Shutdown();
+      ITMMainEngine::GetImageType outImageType[NUM_WIN];//hao modified it
+      int show_mode;//hao modified it
+
+      void Initialise(int & argc, char** argv, ITMLibSettings *internalSettings, ImageSourceEngine *imageSource, ITMMainEngine *mainEngine, const char *outFolder);//hao modified it
+      void Shutdown();
       void resetEngine();//hao modified it
 
-			void Run();
-			void ProcessFrame(short segFlag);//hao modified it. 0:just fusion 1:over-segmentation 2:segment objects 3:update segment objects
+      void Run();
+      void ProcessFrame(short segFlag);//hao modified it. 0:just fusion 1:over-segmentation 2:segment objects 3:update segment objects
 
-			void GetScreenshot(ITMUChar4Image *dest) const;
-			void SaveScreenshot(const char *filename) const;
+      void GetScreenshot(ITMUChar4Image *dest) const;
+      void SaveScreenshot(const char *filename) const;
 
       void autoReconstruct();//hao modified it
-		};
-	}
+    };
+  }
 }

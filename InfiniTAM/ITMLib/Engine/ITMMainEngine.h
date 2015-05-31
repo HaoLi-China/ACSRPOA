@@ -101,9 +101,11 @@ namespace ITMLib
       map<ushort, ObjectAttri> objectMap;//hao modified it
       ushort idCount;//hao modified it
       
-      Eigen::Vector3f global_seg_range;
-      Eigen::Vector3f refined_seg_range;
-      Eigen::Vector3f interacted_seg_range;
+      float roi_x0;
+      float roi_x1;
+      float roi_y0;
+      float roi_y1;
+      float roi_z;
       RobotPose robotpose;
 
       void changeObjectIds(const vector<ushort> &oldIDs, const vector<ushort> &newIds, const vector<uchar> &newRs, const vector<uchar> &newGs, const vector<uchar> &newBs);//hao modified it
@@ -118,7 +120,7 @@ namespace ITMLib
       void interactedSegment();//hao modified it
       void preWorkForIntSeg();//hao modified it
       void switchShowModel(uchar mode);//hao modified it
-      void savePoints();//hao modified it
+      void savePoints(string name = "Data/scan_points.ply");//hao modified it
       void saveMesh(); //ccjn modified it
       void saveViewPoints();//hao modified it
       void saveViewPoints(ITMTrackingState *trackingState);//hao modified it

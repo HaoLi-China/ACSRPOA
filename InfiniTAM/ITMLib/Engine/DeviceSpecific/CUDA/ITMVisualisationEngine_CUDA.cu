@@ -62,7 +62,7 @@ __global__ void getRaycastImage_device(TRaycastRenderer renderer,
 __global__ void genIdMaps1_device(Vector2i imgSize, Vector3f *points, Vector3f *normals, Vector3f *colors, ushort *objectIds, Vector3f* table_avg_normal);
 
 //hao modified it
-__global__ void genIdMaps2_device(Vector2i imgSize, Vector3f *points, Vector3f *normals, Vector3f *colors, ushort *objectIds);
+__global__ void genIdMaps2_device(Vector2i imgSize, float x0, float x1, float y0, float y1, float z, Vector3f *points, Vector3f *normals, Vector3f *colors, ushort *objectIds);
 
 //hao modified it
 __global__ void copute_table_avg_normal_device(Vector3f *table_sum_normal, int length, Vector3f* table_avg_normal);
@@ -360,7 +360,7 @@ static void CreatePointCloud_common(ITMScene<TVoxel,TIndex> *scene, const ITMVie
 
 //hao modified it
 template<class TVoxel, class TIndex>
-void CreateICPMaps_common(ITMScene<TVoxel,TIndex> *scene, const ITMView *view, ITMTrackingState *trackingState)
+void CreateICPMaps_common(ITMScene<TVoxel,TIndex> *scene, const ITMView *view, ITMTrackingState *trackingState, float x0, float x1, float y0, float y1, float z)
 { //printf("222222222222222\n");
 	Vector2i imgSize = view->depth->noDims;
 	float voxelSize = scene->sceneParams->voxelSize;
@@ -412,12 +412,12 @@ void CreateICPMaps_common(ITMScene<TVoxel,TIndex> *scene, const ITMView *view, I
   ITMSafeCall(cudaThreadSynchronize());
   //printf("222222\n");
 
-  for(int i=0; i<10; i++){
+  for(int i=0; i<20; i++){
   genIdMaps1_device << <gridSize, cudaBlockSize >> >(imgSize, points, normals, colors, objectIds, table_avg_normal);
   ITMSafeCall(cudaThreadSynchronize());
   }
 
-  genIdMaps2_device << <gridSize, cudaBlockSize >> >(imgSize, points, normals, colors, objectIds);
+  genIdMaps2_device << <gridSize, cudaBlockSize >> >(imgSize, x0, x1, y0, y1, z, points, normals, colors, objectIds);
   ITMSafeCall(cudaThreadSynchronize());
 
   //printf("333333\n");
@@ -457,15 +457,15 @@ void ITMVisualisationEngine_CUDA<TVoxel,ITMVoxelBlockHash>::CreatePointCloud(ITM
 }
 
 template<class TVoxel, class TIndex>
-void ITMVisualisationEngine_CUDA<TVoxel,TIndex>::CreateICPMaps(ITMScene<TVoxel,TIndex> *scene, const ITMView *view, ITMTrackingState *trackingState)
+void ITMVisualisationEngine_CUDA<TVoxel,TIndex>::CreateICPMaps(ITMScene<TVoxel,TIndex> *scene, const ITMView *view, ITMTrackingState *trackingState, float x0, float x1, float y0, float y1, float z)
 {
-	CreateICPMaps_common(scene, view, trackingState);
+	CreateICPMaps_common(scene, view, trackingState, x0, x1, y0, y1, z);
 }
 
 template<class TVoxel>
-void ITMVisualisationEngine_CUDA<TVoxel,ITMVoxelBlockHash>::CreateICPMaps(ITMScene<TVoxel,ITMVoxelBlockHash> *scene, const ITMView *view, ITMTrackingState *trackingState)
+void ITMVisualisationEngine_CUDA<TVoxel,ITMVoxelBlockHash>::CreateICPMaps(ITMScene<TVoxel,ITMVoxelBlockHash> *scene, const ITMView *view, ITMTrackingState *trackingState, float x0, float x1, float y0, float y1, float z)
 { 
-	CreateICPMaps_common(scene, view, trackingState);
+	CreateICPMaps_common(scene, view, trackingState, x0, x1, y0, y1, z);
 }
 
 //hao modified it
@@ -847,13 +847,13 @@ __global__ void genIdMaps1_device(Vector2i imgSize, Vector3f *points, Vector3f *
 }
 
 //hao modified it
-__global__ void genIdMaps2_device(Vector2i imgSize, Vector3f *points, Vector3f *normals, Vector3f *colors, ushort *objectIds)
+__global__ void genIdMaps2_device(Vector2i imgSize, float x0, float x1, float y0, float y1, float z, Vector3f *points, Vector3f *normals, Vector3f *colors, ushort *objectIds)
 {
 	int x = (threadIdx.x + blockIdx.x * blockDim.x), y = (threadIdx.y + blockIdx.y * blockDim.y);
 
 	if (x >= imgSize.x || y >= imgSize.y) return;
 
-  genIdMaps2(x, y, imgSize, points, normals, colors, objectIds);
+  genIdMaps2(x, y, imgSize, x0, x1, y0, y1, z, points, normals, colors, objectIds);
 }
 
 //hao modified it

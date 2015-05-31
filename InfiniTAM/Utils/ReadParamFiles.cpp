@@ -1,13 +1,6 @@
 //hao added it
 #include "ReadParamFiles.h"
 
-//float pos_left_arm[7];
-//float pos_right_arm[7];
-//Eigen::Vector3f head_focus;
-//float torso_up;
-//float down_value;
-//float up_value;
-
 void getRobotPose(RobotPose &robotpose){
   std::ifstream input("Files/parameter/robotpose.txt");
   if(input.fail()) {
@@ -23,38 +16,14 @@ void getRobotPose(RobotPose &robotpose){
   input.close();
 }
 
-void getGlobalSegRange(Eigen::Vector3f &global_seg_range){
-  std::ifstream input("Files/parameter/global_seg_range.txt");
+void getSegRange(char* name, float &range_x0, float &range_x1, float &range_y0, float &range_y1, float &range_z){
+  std::ifstream input(name);
   if(input.fail()) {
     std::cout<<"could not open file!" << std::endl;
     return;
   }
 
-  input >> global_seg_range[0] >> global_seg_range[1] >> global_seg_range[2];
-
-  input.close();
-}
-
-void getRefinedSegRange(Eigen::Vector3f  &refined_seg_range){
-  std::ifstream input("Files/parameter/refined_seg_range.txt");
-  if(input.fail()) {
-    std::cout<<"could not open file!" << std::endl;
-    return;
-  }
-
-  input >> refined_seg_range[0] >> refined_seg_range[1] >> refined_seg_range[2];
-
-  input.close();
-}
-
-void getInteractedSegRange(Eigen::Vector3f  &interacted_seg_range){
-  std::ifstream input("Files/parameter/interacted_seg_range.txt");
-  if(input.fail()) {
-    std::cout<<"could not open file!" << std::endl;
-    return;
-  }
-
-  input >> interacted_seg_range[0] >> interacted_seg_range[1] >> interacted_seg_range[2];
+  input >> range_x0 >> range_x1 >> range_y0 >> range_y1 >> range_z;
 
   input.close();
 }
@@ -67,6 +36,19 @@ void getObjectIdFromFile(unsigned short &objectId){
   }
 
   input >> objectId;
+
+  input.close();
+}
+
+//just for test
+void getTestCount(int &testCount){
+  std::ifstream input("Files/parameter/testCount.txt");
+  if(input.fail()) {
+    std::cout<<"could not open file!" << std::endl;
+    return;
+  }
+
+  input >> testCount;
 
   input.close();
 }

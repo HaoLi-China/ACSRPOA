@@ -46,9 +46,7 @@ ITMMainEngine::ITMMainEngine(const ITMLibSettings *settings, const ITMRGBDCalib 
 
   idCount = 1;
 
-  getGlobalSegRange(global_seg_range);
-  getRefinedSegRange(refined_seg_range);
-  getInteractedSegRange(interacted_seg_range);
+  getSegRange("Files/parameter/global_seg_range.txt", roi_x0, roi_x1, roi_y0, roi_y1, roi_z);
   getRobotPose(robotpose);
 }
 
@@ -128,7 +126,7 @@ void ITMMainEngine::ProcessFrame(short segFlag)
     visualisationEngine->CreateExpectedDepths(scene, trackingState->pose_d, &(view->calib->intrinsics_d), trackingState->renderingRangeImage);
 
     if(segFlag==0){
-      visualisationEngine->CreateICPMaps(scene, view, trackingState);
+      visualisationEngine->CreateICPMaps(scene, view, trackingState, roi_x0, roi_x1, roi_y0, roi_y1, roi_z);
     }
     else if(segFlag==1){
       overSegmentView();
@@ -425,10 +423,17 @@ void ITMMainEngine::segmentView()
     PointCloudPtr_RGB object_cloud(new PointCloud_RGB);
     PointCloudPtr_RGB confidence_cloud(new PointCloud_RGB);
     vector<ushort> objectIndexs;
-    Eigen::Vector3f range(0.5, 0.5, 1.0);
+
+    float range_x0;
+    float range_x1;
+    float range_y0;
+    float range_y1;
+    float range_z;
     int objectNum;
     vector<ObjectAttri> obas;
-    segmentObject(cloud, range, obas, object_cloud, confidence_cloud, objectIndexs, objectNum);
+    getSegRange("Files/parameter/global_seg_range.txt", range_x0, range_x1, range_y0, range_y1, range_z);
+
+    segmentObject(cloud, range_x0, range_x1, range_y0, range_y1, range_z, obas, object_cloud, confidence_cloud, objectIndexs, objectNum);
     //showPointCloud(segmented_cloud, "segmented_cloud");
 
     for(int i=0; i<obas.size(); i++){
@@ -976,7 +981,7 @@ void ITMMainEngine::changeObjectIds(const vector<ushort> &oldIDs, const vector<u
 }
 
 //hao modified it
-void ITMMainEngine::savePoints()
+void ITMMainEngine::savePoints(string name)
 {
   //visualisationEngine->GetAllPoints(scene);
   PointCloudPtr_RGB_NORMAL cloud(new PointCloud_RGB_NORMAL);
@@ -1047,7 +1052,7 @@ void ITMMainEngine::savePoints()
       }
     }
   }
-  pcl::io::savePLYFileBinary("Data/scan_points.ply", *cloud);
+  pcl::io::savePLYFileBinary(name, *cloud);
 
   free(voxels);
   free(hashData_host);
@@ -1571,12 +1576,16 @@ void ITMMainEngine::segmentGlobal(){
   PointCloudPtr_RGB object_cloud(new PointCloud_RGB);
   PointCloudPtr_RGB confidence_cloud(new PointCloud_RGB);
   vector<ushort> objectIndexs;
-  Eigen::Vector3f range  =global_seg_range;
+  float range_x0;
+  float range_x1;
+  float range_y0;
+  float range_y1;
+  float range_z;
   int objectNum;
   vector<ObjectAttri> obas;
-  //showPointCloud3(source_cloud, "source_cloud");
+  getSegRange("Files/parameter/global_seg_range.txt", range_x0, range_x1, range_y0, range_y1, range_z);
 
-  segmentObject(source_cloud, range, obas, object_cloud, confidence_cloud, objectIndexs, objectNum, true);
+  segmentObject(source_cloud, range_x0, range_x1, range_y0, range_y1, range_z, obas, object_cloud, confidence_cloud, objectIndexs, objectNum, true);
 
   for(int i=0; i<obas.size(); i++){
     objectMap[idCount+i+1] = obas[i];
@@ -1628,10 +1637,16 @@ void ITMMainEngine::segmentPortionInGlobal(const vector<ushort> &objectIds){
   PointCloudPtr_RGB object_cloud(new PointCloud_RGB);
   PointCloudPtr_RGB confidence_cloud(new PointCloud_RGB);
   vector<ushort> objectIndexs;
-  Eigen::Vector3f range = refined_seg_range;
+  //Eigen::Vector3f range = refined_seg_range;
+  float range_x0;
+  float range_x1;
+  float range_y0;
+  float range_y1;
+  float range_z;
   int objectNum;
   vector<ObjectAttri> obas;
-  segmentSepcialObjects(source_cloud, range, obas, object_cloud, confidence_cloud, objectIndexs, objectNum);
+  getSegRange("Files/parameter/refined_seg_range.txt", range_x0, range_x1, range_y0, range_y1, range_z);
+  segmentSepcialObjects(source_cloud, range_x0, range_x1, range_y0, range_y1, range_z, obas, object_cloud, confidence_cloud, objectIndexs, objectNum);
 
   for(int i=0; i<obas.size(); i++){
     objectMap[idCount+i+1] = obas[i];
@@ -1756,11 +1771,15 @@ void ITMMainEngine::interactedSegment(){
     PointCloudPtr_RGB confidence_cloud(new PointCloud_RGB);
 
     vector<ushort> objectIndexs;
+    float range_x0;
+    float range_x1;
+    float range_y0;
+    float range_y1;
+    float range_z;
     int objectNum;
-    Eigen::Vector3f range = interacted_seg_range;
     vector<ObjectAttri> obas;
-
-    updateSegmentObject(cloud, range, resultA, resultB, obas, object_cloud, confidence_cloud, objectIndexs, objectNum);
+    getSegRange("Files/parameter/interacted_seg_range.txt", range_x0, range_x1, range_y0, range_y1, range_z);
+    segmentSepcialObjects(cloud, range_x0, range_x1, range_y0, range_y1, range_z, obas, object_cloud, confidence_cloud, objectIndexs, objectNum);
 
     for(int i=0; i<obas.size(); i++){
       objectMap[idCount+i+1] = obas[i];
@@ -1883,7 +1902,7 @@ void ITMMainEngine::interactedSegment(){
 #endif
   }
 
-  printf("interactedSegment finished.\n");
+printf("interactedSegment finished.\n");
 }
 
 //hao modified it
@@ -1958,7 +1977,7 @@ void ITMMainEngine::getIntsObjectsIds(const ushort targetObjectId, vector<ushort
       }
 
       for(map<int,int>::iterator it = map_tem.begin(); it != map_tem.end(); ++it) {
-        if(it->second > 50){
+        if(it->second > 5){
           for(map<ushort,ObjectAttri>::iterator it1 = objectMap.begin(); it1 != objectMap.end(); ++it1) {
             if(it->first == (int)(it1->second.oR + it1->second.oG + it1->second.oB)){
               objectIds.push_back(it1->first);
@@ -1981,17 +2000,6 @@ void ITMMainEngine::preWorkForIntSeg(){
 
   vector<ushort> objectIds;
   getIntsObjectsIds(targetObjectId, objectIds);
-
-  vector<ushort> newIds;
-  vector<uchar> newRs;
-  vector<uchar> newGs;
-  vector<uchar> newBs;
-  for(int i=0; i<objectIds.size(); i++){
-    newIds.push_back(0);
-    newRs.push_back(255);
-    newGs.push_back(255);
-    newBs.push_back(255);
-  }
 
   removeVexelsByObjectId(objectIds);
   //changeObjectIds(objectIds, newIds, newRs, newGs, newBs);

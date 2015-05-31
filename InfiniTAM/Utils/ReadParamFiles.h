@@ -18,9 +18,8 @@ struct RobotPose{
 };
 
 void getRobotPose(RobotPose &robotpose);
-void getGlobalSegRange(Eigen::Vector3f  &global_seg_range);
-void getRefinedSegRange(Eigen::Vector3f  &refined_seg_range);
-void getInteractedSegRange(Eigen::Vector3f  &interacted_seg_range);
+void getSegRange(char *name, float &range_x0, float &range_x1, float &range_y0, float &range_y1, float &range_z);
 void getObjectIdFromFile(unsigned short &objectId);
+void getTestCount(int &testCount);//just for test
 
 #endif //READPARAMFILES_H

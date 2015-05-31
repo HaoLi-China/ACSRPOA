@@ -36,14 +36,24 @@ void shrinkCloudRange(PointCloudPtr_RGB_NORMAL source_cloud, const float range_x
   }
 }
 
+//shrink cloud range
+void shrinkCloudRange2(PointCloudPtr_RGB_NORMAL source_cloud, const float range_x0, const float range_x1, const float range_y0, const float range_y1, const float range_z, PointCloudPtr_RGB_NORMAL result_cloud){
+  for(int i=0; i<source_cloud->size(); i++){
+    if(!(source_cloud->points[i].z>range_z||source_cloud->points[i].x<range_x0||source_cloud->points[i].x>range_x1||source_cloud->points[i].y<range_y0||source_cloud->points[i].y>range_y1)){
+      result_cloud->push_back(source_cloud->points[i]);
+    }
+  }
+}
+
 //segment special object
-void segmentSepcialObjects(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f range, vector<ObjectAttri> &obas, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud, vector<ushort> &objectIndexs, int &objectNum){
+void segmentSepcialObjects(PointCloudPtr_RGB_NORMAL source_cloud, float range_x0, float range_x1, float range_y0, float range_y1, float range_z, vector<ObjectAttri> &obas, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud, vector<ushort> &objectIndexs, int &objectNum){
   objectNum = 0;
 
   CPointCloudAnalysis cPointCloudAnalysis;
 
   PointCloudPtr_RGB_NORMAL shrinked_cloud(new PointCloud_RGB_NORMAL);
-  shrinkCloudRange(source_cloud, range[0], range[1], range[2], shrinked_cloud);
+  //shrinkCloudRange(source_cloud, range[0], range[1], range[2], shrinked_cloud);
+  shrinkCloudRange2(source_cloud, range_x0, range_x1, range_y0, range_y1, range_z, shrinked_cloud);
 
   /******************detect table************************/
   PointCloudPtr_RGB_NORMAL tabletopCloud(new PointCloud_RGB_NORMAL());
@@ -88,25 +98,35 @@ void segmentSepcialObjects(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3
 
   object_seg_ECE(tabletopCloud, cluster_points);
 
+  srand((unsigned)time(0));
   for(int i=0;i<cluster_points.size();i++){
-    if(cluster_points.at(i).mypoints.size()<200){
+
+    MyPointCloud_RGB_NORMAL mp_tem;
+
+    for(int j=0; j<cluster_points.at(i).mypoints.size(); j++){
+      if(!(cluster_points.at(i).mypoints[j].r == 255 && cluster_points.at(i).mypoints[j].g == 255 && cluster_points.at(i).mypoints[j].b == 0)){
+        mp_tem.mypoints.push_back(cluster_points.at(i).mypoints[j]);
+      }
+    }
+
+    if(mp_tem.mypoints.size()<200){
       continue;
     }
 
     double sumcolorR = 0;
     double sumcolorG = 0;
     double sumcolorB = 0;
-    for(int j=0; j<cluster_points.at(i).mypoints.size(); j++){
-      sumcolorR+=(cluster_points.at(i).mypoints[j].r/255.0);
-      sumcolorG+=(cluster_points.at(i).mypoints[j].g/255.0);
-      sumcolorB+=(cluster_points.at(i).mypoints[j].b/255.0);
+    for(int j=0; j<mp_tem.mypoints.size(); j++){
+      sumcolorR+=(mp_tem.mypoints[j].r/255.0);
+      sumcolorG+=(mp_tem.mypoints[j].g/255.0);
+      sumcolorB+=(mp_tem.mypoints[j].b/255.0);
     }
 
-    sumcolorR/=cluster_points.at(i).mypoints.size();
-    sumcolorG/=cluster_points.at(i).mypoints.size();
-    sumcolorB/=cluster_points.at(i).mypoints.size();
+    sumcolorR/=mp_tem.mypoints.size();
+    sumcolorG/=mp_tem.mypoints.size();
+    sumcolorB/=mp_tem.mypoints.size();
 
-    if(!(sumcolorR<=1.0&&sumcolorR>=0.98&&sumcolorG<=1.0&&sumcolorG>=0.98&&sumcolorB<=1.0&&sumcolorB>=0.98)){
+    if(!(sumcolorR<=1.0&&sumcolorR>=0.9&&sumcolorG<=1.0&&sumcolorG>=0.9&&sumcolorB<=1.0&&sumcolorB>=0.9)){
      continue;
     }
 
@@ -115,7 +135,7 @@ void segmentSepcialObjects(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3
     PointNCloudT::Ptr normal_cloud(new PointNCloudT);
 
     PointCloudPtr_RGB_NORMAL ct(new PointCloud_RGB_NORMAL);
-    MyPointCloud_RGB_NORMAL2PointCloud_RGB_NORMAL(cluster_points.at(i), ct);
+    MyPointCloud_RGB_NORMAL2PointCloud_RGB_NORMAL(mp_tem, ct);
 
     VCCS_over_segmentation(ct,voxel_resolution,seed_resolution,color_importance,spatial_importance,normal_importance,patch_clouds,colored_cloud,normal_cloud);
 
@@ -253,13 +273,13 @@ void segmentSepcialObjects(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3
 }
 
 //segment object
-void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f range, vector<ObjectAttri> &obas, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud, vector<ushort> &objectIndexs, int &objectNum, bool saveObjects){
+void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, float range_x0, float range_x1, float range_y0, float range_y1, float range_z, vector<ObjectAttri> &obas, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud, vector<ushort> &objectIndexs, int &objectNum, bool saveObjects){
   objectNum = 0;
   
   CPointCloudAnalysis cPointCloudAnalysis;
 
   PointCloudPtr_RGB_NORMAL shrinked_cloud(new PointCloud_RGB_NORMAL);
-  shrinkCloudRange(source_cloud, range[0], range[1], range[2], shrinked_cloud);
+  shrinkCloudRange2(source_cloud, range_x0, range_x1, range_y0, range_y1, range_z, shrinked_cloud);
 
   /******************detect table************************/
   PointCloudPtr_RGB_NORMAL tabletopCloud(new PointCloud_RGB_NORMAL());
@@ -547,10 +567,10 @@ void overSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RGB 
 }
 
 //update segment object
-void updateSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f range, PointCloudPtr_RGB_NORMAL change_cloudA, PointCloudPtr_RGB_NORMAL change_cloudB, vector<ObjectAttri> &obas, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud, vector<ushort> &objectIndexs, int &objectNum){
+void updateSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, float range_x0, float range_x1, float range_y0, float range_y1, float range_z, PointCloudPtr_RGB_NORMAL change_cloudA, PointCloudPtr_RGB_NORMAL change_cloudB, vector<ObjectAttri> &obas, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud, vector<ushort> &objectIndexs, int &objectNum){
   objectNum = 0;
   PointCloudPtr_RGB_NORMAL shrinked_cloud(new PointCloud_RGB_NORMAL);
-  shrinkCloudRange(source_cloud, range[0], range[1], range[2], shrinked_cloud);
+  shrinkCloudRange2(source_cloud, range_x0, range_x1, range_y0, range_y1, range_z, shrinked_cloud);
 
   std::vector<MyPointCloud_RGB_NORMAL> change_cluster;
   object_seg_ECE(change_cloudB, change_cluster);

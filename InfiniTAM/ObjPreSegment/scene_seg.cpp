@@ -933,7 +933,7 @@ void detect_table(PointCloudPtr_RGB_NORMAL sourceCloud, pcl::ModelCoefficients& 
     seg.setModelType (pcl::SACMODEL_PLANE);
     seg.setMethodType (pcl::SAC_RANSAC);
     seg.setMaxIterations (1000);
-    seg.setDistanceThreshold (0.015);
+    seg.setDistanceThreshold (0.012);
 
     // Segment the largest planar component from the remaining cloud
     seg.setInputCloud (cloud_tem);

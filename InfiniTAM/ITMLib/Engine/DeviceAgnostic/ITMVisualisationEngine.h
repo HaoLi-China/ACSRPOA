@@ -826,6 +826,16 @@ _CPU_AND_GPU_CODE_ inline void genIdMaps1(int x, int y, Vector2i imgSize, Vector
 {
   int cenIndex = x + y * imgSize.x;
 
+  if(objectId[cenIndex]==1){
+    double dotvalue = (normals[cenIndex].x * (*table_avg_normal).x) + (normals[cenIndex].y * (*table_avg_normal).y) + (normals[cenIndex].z * (*table_avg_normal).z);
+    if(dotvalue<0.87){
+      objectId[cenIndex] = 0;
+      colors[cenIndex].x = 255;
+      colors[cenIndex].y = 255;
+      colors[cenIndex].z = 255;
+    }
+  }
+
   if(objectId[cenIndex] != 0){
 
     int upIndex = cenIndex - imgSize.x;
@@ -834,165 +844,82 @@ _CPU_AND_GPU_CODE_ inline void genIdMaps1(int x, int y, Vector2i imgSize, Vector
     int rightIndex = cenIndex + 1;
 
     if(y - 1 >= 0){
-      if(objectId[upIndex]==0&&points[upIndex]!=0){
+
+      if(points[upIndex]!=0){
         double dis = sqrt(pow(points[cenIndex].x - points[upIndex].x, 2) + pow(points[cenIndex].y - points[upIndex].y, 2) + pow(points[cenIndex].z - points[upIndex].z, 2));
 
-        int neighboorX[8];
-        int neighboorY[8];
-        genNeighborPoints(x, y-1, neighboorX, neighboorY);
-
-        int count0=0;
-        int count1=0;
-
-        for(int i=0; i<8; i++){
-          if(neighboorX[i]>=0&&neighboorX[i]<imgSize.x&&neighboorY[i]>0&&neighboorY[i]<imgSize.y){
-            int tem_index = neighboorX[i] + neighboorY[i] * imgSize.x;; 
-            double tem_dis = sqrt(pow(points[tem_index].x - points[upIndex].x, 2) + pow(points[tem_index].y - points[upIndex].y, 2) + pow(points[tem_index].z - points[upIndex].z, 2));
-
-            if(tem_dis < 0.005 && objectId[tem_index] == objectId[cenIndex]){
-              count0++;
-            }
-            else if(tem_dis < 0.005 && objectId[tem_index] != 0){
-              count1++;
-            }
-          }
-        }
-
-        if(count0>=count1){
+        //if(count0>=count1){
           if(dis < 0.005){
             if(objectId[cenIndex] == 1){
               double dotvalue = (normals[upIndex].x * (*table_avg_normal).x) + (normals[upIndex].y * (*table_avg_normal).y) + (normals[upIndex].z * (*table_avg_normal).z);
-              if(dotvalue>0.9){
+              if(dotvalue>0.87){
                 objectId[upIndex] = objectId[cenIndex];
                 colors[upIndex] = colors[cenIndex];
               }
             }
           }
-        }
+        //}
       }
     }
 
     if(y + 1 < imgSize.y){
-      if(objectId[downIndex]==0&&points[downIndex]!=0){
+      if(points[downIndex]!=0){
         double dis = sqrt(pow(points[cenIndex].x - points[downIndex].x, 2) + pow(points[cenIndex].y - points[downIndex].y, 2) + pow(points[cenIndex].z - points[downIndex].z, 2));
 
-        int neighboorX[8];
-        int neighboorY[8];
-        genNeighborPoints(x, y-1, neighboorX, neighboorY);
-
-        int count0=0;
-        int count1=0;
-
-        for(int i=0; i<8; i++){
-          if(neighboorX[i]>=0&&neighboorX[i]<imgSize.x&&neighboorY[i]>0&&neighboorY[i]<imgSize.y){
-            int tem_index = neighboorX[i] + neighboorY[i] * imgSize.x;; 
-            double tem_dis = sqrt(pow(points[tem_index].x - points[downIndex].x, 2) + pow(points[tem_index].y - points[downIndex].y, 2) + pow(points[tem_index].z - points[downIndex].z, 2));
-
-            if(tem_dis < 0.005 && objectId[tem_index] == objectId[cenIndex]){
-              count0++;
-            }
-            else if(tem_dis < 0.005 && objectId[tem_index] != 0){
-              count1++;
-            }
-          }
-        }
-
-        if(count0>=count1){
+        //if(count0>=count1){
           if(dis < 0.005){
             if(objectId[cenIndex] == 1){
               double dotvalue = (normals[downIndex].x * (*table_avg_normal).x) + (normals[downIndex].y * (*table_avg_normal).y) + (normals[downIndex].z * (*table_avg_normal).z);
-              if(dotvalue>0.9){
+              if(dotvalue>0.87){
                 objectId[downIndex] = objectId[cenIndex];
                 colors[downIndex] = colors[cenIndex];
               }
             }
           }
-        }
+        //}
       }
     }
 
     if(x - 1 >= 0){
-      if(objectId[leftIndex]==0&&points[leftIndex]!=0){
+      if(points[leftIndex]!=0){
         double dis = sqrt(pow(points[cenIndex].x - points[leftIndex].x, 2) + pow(points[cenIndex].y - points[leftIndex].y, 2) + pow(points[cenIndex].z - points[leftIndex].z, 2));
 
-        int neighboorX[8];
-        int neighboorY[8];
-        genNeighborPoints(x, y-1, neighboorX, neighboorY);
-
-        int count0=0;
-        int count1=0;
-
-        for(int i=0; i<8; i++){
-          if(neighboorX[i]>=0&&neighboorX[i]<imgSize.x&&neighboorY[i]>0&&neighboorY[i]<imgSize.y){
-            int tem_index = neighboorX[i] + neighboorY[i] * imgSize.x;; 
-            double tem_dis = sqrt(pow(points[tem_index].x - points[leftIndex].x, 2) + pow(points[tem_index].y - points[leftIndex].y, 2) + pow(points[tem_index].z - points[leftIndex].z, 2));
-
-            if(tem_dis < 0.005 && objectId[tem_index] == objectId[cenIndex]){
-              count0++;
-            }
-            else if(tem_dis < 0.005 && objectId[tem_index] != 0){
-              count1++;
-            }
-          }
-        }
-
-        if(count0>=count1){
+       // if(count0>=count1){
           if(dis < 0.005){
             if(objectId[cenIndex] == 1){
               double dotvalue = (normals[leftIndex].x * (*table_avg_normal).x) + (normals[leftIndex].y * (*table_avg_normal).y) + (normals[leftIndex].z * (*table_avg_normal).z);
-              if(dotvalue>0.9){
+              if(dotvalue>0.87){
                 objectId[leftIndex] = objectId[cenIndex];
                 colors[leftIndex] = colors[cenIndex];
               }
             }
           }
-        }
+        //}
       }
     }
 
     if(x + 1 < imgSize.x){
-      if(objectId[rightIndex]==0&&points[rightIndex]!=0){
+      if(points[rightIndex]!=0){
         double dis = sqrt(pow(points[cenIndex].x - points[rightIndex].x, 2) + pow(points[cenIndex].y - points[rightIndex].y, 2) + pow(points[cenIndex].z - points[rightIndex].z, 2));
 
-        int neighboorX[8];
-        int neighboorY[8];
-        genNeighborPoints(x, y-1, neighboorX, neighboorY);
-
-        int count0=0;
-        int count1=0;
-
-        for(int i=0; i<8; i++){
-          if(neighboorX[i]>=0&&neighboorX[i]<imgSize.x&&neighboorY[i]>0&&neighboorY[i]<imgSize.y){
-            int tem_index = neighboorX[i] + neighboorY[i] * imgSize.x;; 
-            double tem_dis = sqrt(pow(points[tem_index].x - points[rightIndex].x, 2) + pow(points[tem_index].y - points[rightIndex].y, 2) + pow(points[tem_index].z - points[rightIndex].z, 2));
-
-            if(tem_dis < 0.005 && objectId[tem_index] == objectId[cenIndex]){
-              count0++;
-            }
-            else if(tem_dis < 0.005 && objectId[tem_index] != 0){
-              count1++;
-            }
-          }
-        }
-
-        if(count0>=count1){
+        //if(count0>=count1){
           if(dis < 0.005){
             if(objectId[cenIndex] == 1){
               double dotvalue = (normals[rightIndex].x * (*table_avg_normal).x) + (normals[rightIndex].y * (*table_avg_normal).y) + (normals[rightIndex].z * (*table_avg_normal).z);
-              if(dotvalue>0.9){
+              if(dotvalue>0.87){
                 objectId[rightIndex] = objectId[cenIndex];
                 colors[rightIndex] = colors[cenIndex];
               }
             }
           }
-        }
+        //}
       }
     }
   }
 }
 
 //hao modified it
-_CPU_AND_GPU_CODE_ inline void genIdMaps2(int x, int y, Vector2i imgSize, Vector3f *points, Vector3f *normals, Vector3f *colors, ushort *objectId)
+_CPU_AND_GPU_CODE_ inline void genIdMaps2(int x, int y, Vector2i imgSize, float x0, float x1, float y0, float y1, float z, Vector3f *points, Vector3f *normals, Vector3f *colors, ushort *objectId)
 {
   int cenIndex = x + y * imgSize.x;
 
@@ -1005,7 +932,7 @@ _CPU_AND_GPU_CODE_ inline void genIdMaps2(int x, int y, Vector2i imgSize, Vector
     int leftIndex = cenIndex - 1;
     int rightIndex = cenIndex + 1;
 
-    if(y - 1 >= 0){
+    if(y - 1 >= 0&&points[upIndex].z<z&&points[upIndex].x<x1&&points[upIndex].x>x0&&points[upIndex].y<y1&&points[upIndex].y>y0){
       if(objectId[upIndex]==0&&points[upIndex]!=0){
         double dis = sqrt(pow(points[cenIndex].x - points[upIndex].x, 2) + pow(points[cenIndex].y - points[upIndex].y, 2) + pow(points[cenIndex].z - points[upIndex].z, 2));
 
@@ -1032,17 +959,17 @@ _CPU_AND_GPU_CODE_ inline void genIdMaps2(int x, int y, Vector2i imgSize, Vector
 
         if(count0>=count1){
           if(dis < 0.005){
-            if(objectId[cenIndex] != 1){
+            //if(objectId[cenIndex] != 1){
               objectId[upIndex] = objectId[cenIndex];
               colors[upIndex] = colors[cenIndex];
               //genIdMaps(x, y-1, imgSize, points, colors, objectId);
-            }
+            //}
           }
         }
       }
     }
 
-    if(y + 1 < imgSize.y){
+    if(y + 1 < imgSize.y&&points[downIndex].z<z&&points[downIndex].x<x1&&points[downIndex].x>x0&&points[downIndex].y<y1&&points[downIndex].y>y0){
       if(objectId[downIndex]==0&&points[downIndex]!=0){
         double dis = sqrt(pow(points[cenIndex].x - points[downIndex].x, 2) + pow(points[cenIndex].y - points[downIndex].y, 2) + pow(points[cenIndex].z - points[downIndex].z, 2));
 
@@ -1078,7 +1005,7 @@ _CPU_AND_GPU_CODE_ inline void genIdMaps2(int x, int y, Vector2i imgSize, Vector
       }
     }
 
-    if(x - 1 >= 0){
+    if(x - 1 >= 0&&points[leftIndex].z<z&&points[leftIndex].x<x1&&points[leftIndex].x>x0&&points[leftIndex].y<y1&&points[leftIndex].y>y0){
       if(objectId[leftIndex]==0&&points[leftIndex]!=0){
         double dis = sqrt(pow(points[cenIndex].x - points[leftIndex].x, 2) + pow(points[cenIndex].y - points[leftIndex].y, 2) + pow(points[cenIndex].z - points[leftIndex].z, 2));
 
@@ -1114,7 +1041,7 @@ _CPU_AND_GPU_CODE_ inline void genIdMaps2(int x, int y, Vector2i imgSize, Vector
       }
     }
 
-    if(x + 1 < imgSize.x){
+    if(x + 1 < imgSize.x&&points[rightIndex].z<z&&points[rightIndex].x<x1&&points[rightIndex].x>x0&&points[rightIndex].y<y1&&points[rightIndex].y>y0){
       if(objectId[rightIndex]==0&&points[rightIndex]!=0){
         double dis = sqrt(pow(points[cenIndex].x - points[rightIndex].x, 2) + pow(points[cenIndex].y - points[rightIndex].y, 2) + pow(points[cenIndex].z - points[rightIndex].z, 2));
 

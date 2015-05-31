@@ -369,13 +369,13 @@ void ITMVisualisationEngine_CPU<TVoxel,ITMVoxelBlockHash>::CreatePointCloud(ITMS
 }
 
 template<class TVoxel, class TIndex>
-void ITMVisualisationEngine_CPU<TVoxel,TIndex>::CreateICPMaps(ITMScene<TVoxel,TIndex> *scene, const ITMView *view, ITMTrackingState *trackingState)
+void ITMVisualisationEngine_CPU<TVoxel,TIndex>::CreateICPMaps(ITMScene<TVoxel,TIndex> *scene, const ITMView *view, ITMTrackingState *trackingState, float x0, float x1, float y0, float y1, float z)
 {
 	CreateICPMaps_common(scene, view, trackingState);
 }
 
 template<class TVoxel>
-void ITMVisualisationEngine_CPU<TVoxel,ITMVoxelBlockHash>::CreateICPMaps(ITMScene<TVoxel,ITMVoxelBlockHash> *scene, const ITMView *view, ITMTrackingState *trackingState)
+void ITMVisualisationEngine_CPU<TVoxel,ITMVoxelBlockHash>::CreateICPMaps(ITMScene<TVoxel,ITMVoxelBlockHash> *scene, const ITMView *view, ITMTrackingState *trackingState, float x0, float x1, float y0, float y1, float z)
 {
 	CreateICPMaps_common(scene, view, trackingState);
 }

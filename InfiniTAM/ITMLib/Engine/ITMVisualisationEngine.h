@@ -67,7 +67,7 @@ namespace ITMLib
       required by the ITMLib::Engine::ITMDepthTracker
       classes.
       */
-      virtual void CreateICPMaps(ITMScene<TVoxel,TIndex> *scene, const ITMView *view, ITMTrackingState *trackingState) = 0;
+      virtual void CreateICPMaps(ITMScene<TVoxel,TIndex> *scene, const ITMView *view, ITMTrackingState *trackingState, float x0, float x1, float y0, float y1, float z) = 0;
 
       //hao modified it
       virtual void GetAllPoints(const ITMScene<TVoxel,TIndex> *scene, Vector3f *points, Vector3f *normals, Vector3f *colors, ushort *objectId, int &num) = 0;

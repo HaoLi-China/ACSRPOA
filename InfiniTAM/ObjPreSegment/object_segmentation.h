@@ -29,9 +29,9 @@ struct ObjectAttri{
   float confidence;
 };
 
-void segmentSepcialObjects(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f range, vector<ObjectAttri> &obas, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud, vector<ushort> &objectIndexs, int &objectNum);
-void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f range, vector<ObjectAttri> &obas, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud, vector<ushort> &objectIndexs, int &objectNum, bool saveObjects = false);
+void segmentSepcialObjects(PointCloudPtr_RGB_NORMAL source_cloud, float range_x0, float range_x1, float range_y0, float range_y1, float range_z, vector<ObjectAttri> &obas, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud, vector<ushort> &objectIndexs, int &objectNum);
+void segmentObject(PointCloudPtr_RGB_NORMAL source_cloud, float range_x0, float range_x1, float range_y0, float range_y1, float range_z, vector<ObjectAttri> &obas, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud, vector<ushort> &objectIndexs, int &objectNum, bool saveObjects = false);
 void overSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, PointCloudPtr_RGB result_cloud);
-void updateSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, Eigen::Vector3f range, PointCloudPtr_RGB_NORMAL change_cloudA, PointCloudPtr_RGB_NORMAL change_cloudB, vector<ObjectAttri> &obas, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud, vector<ushort> &objectIndexs, int &objectNum);
+void updateSegmentObject(PointCloudPtr_RGB_NORMAL source_cloud, float range_x0, float range_x1, float range_y0, float range_y1, float range_z, PointCloudPtr_RGB_NORMAL change_cloudA, PointCloudPtr_RGB_NORMAL change_cloudB, vector<ObjectAttri> &obas, PointCloudPtr_RGB object_cloud, PointCloudPtr_RGB confidence_cloud, vector<ushort> &objectIndexs, int &objectNum);
 
 #endif // OBJECT_SEGMENTATION_H
