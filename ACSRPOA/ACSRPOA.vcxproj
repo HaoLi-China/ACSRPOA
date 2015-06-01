@@ -14,7 +14,7 @@
     <ProjectGuid>{A70E385A-568D-4558-957A-585A7CD4F3C2}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>STAR3D</RootNamespace>
-    <ProjectName>InfiniTAM</ProjectName>
+    <ProjectName>ACSRPOA</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -39,7 +39,7 @@
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="modified_InfiniTAM_x64_release.props" />
+    <Import Project="ACSRPOA_x64_release.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -142,7 +142,7 @@
     <ClCompile Include="ITMLib\Engine\ITMVisualisationEngine.cpp" />
     <ClCompile Include="ITMLib\Utils\ITMLibSettings.cpp" />
     <ClCompile Include="ITMLib\Utils\ITMCalibIO.cpp" />
-    <ClCompile Include="InfiniTAM.cpp" />
+    <ClCompile Include="ACSRPOA.cpp" />
     <ClCompile Include="ITMLib\Objects\ITMDisparityCalib.cpp" />
     <ClCompile Include="ITMLib\Objects\ITMIntrinsics.cpp" />
     <ClCompile Include="ITMLib\Objects\ITMPose.cpp" />

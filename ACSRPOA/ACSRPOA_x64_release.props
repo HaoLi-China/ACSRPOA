@@ -7,7 +7,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <LibraryPath>..\IncludeLib\Boost\lib;..\IncludeLib\flann\lib;..\IncludeLib\PCL\lib;..\IncludeLib\qhull\lib;..\IncludeLib\VTK\lib\vtk-5.8;..\IncludeLib\opencv\lib\x64\vc10\lib;..\IncludeLib\GeometricTool\lib;..\IncludeLib\trimesh\lib;$(LibraryPath)</LibraryPath>
-    <_PropertySheetDisplayName>modified_InfiniTAM_x64_release</_PropertySheetDisplayName>
+    <_PropertySheetDisplayName>ACSRPOA_x64_release</_PropertySheetDisplayName>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <Link>

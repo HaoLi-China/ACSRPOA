@@ -102,7 +102,7 @@
     <ClCompile Include="Engine\OpenNIEngine.cpp">
       <Filter>Engine\Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="InfiniTAM.cpp" />
+    <ClCompile Include="ACSRPOA.cpp" />
     <ClCompile Include="ITMLib\Objects\ITMDisparityCalib.cpp">
       <Filter>ITMLib\Objects\Source Files</Filter>
     </ClCompile>
