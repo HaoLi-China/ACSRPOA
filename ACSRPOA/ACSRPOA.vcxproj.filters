@@ -94,6 +94,15 @@
     <Filter Include="ChangeDetection\Source Files">
       <UniqueIdentifier>{fb6c4eec-d959-4a7f-8b23-013c356c33b2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="NBV">
+      <UniqueIdentifier>{e2146226-07aa-4d9c-81af-e1ec6f51c687}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NBV\Header Files">
+      <UniqueIdentifier>{8e66b7c0-214d-44d6-9c0f-c5ce6ac584b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NBV\Source Files">
+      <UniqueIdentifier>{f7b66352-470b-4d33-876b-7a606abf176a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Utils\FileUtils.cpp">
@@ -252,6 +261,15 @@
     </ClCompile>
     <ClCompile Include="Utils\ReadParamFiles.cpp">
       <Filter>Utils\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NBV\grid.cpp">
+      <Filter>NBV\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NBV\plylib.cpp">
+      <Filter>NBV\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NBV\NBV.cpp">
+      <Filter>NBV\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -560,6 +578,18 @@
     </ClInclude>
     <ClInclude Include="Utils\ReadParamFiles.h">
       <Filter>Utils\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NBV\grid.h">
+      <Filter>NBV\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NBV\plylib.h">
+      <Filter>NBV\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NBV\plystuff.h">
+      <Filter>NBV\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NBV\NBV.h">
+      <Filter>NBV\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

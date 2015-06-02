@@ -1,6 +1,6 @@
 #pragma once
 #include <vcg/simplex/vertex/base.h>
-#include <vcg/simplex/vertex/component_ocf.h>
+//#include <vcg/simplex/vertex/component_ocf.h>
 #include <vcg/simplex/edge/base.h>
 #include <vcg/simplex/face/base.h>
 #include <vcg/simplex/face/component_ocf.h>
@@ -26,84 +26,85 @@
 #include <ctime> //for time()
 
 #include <vector>
+
 using std::vector;
 using namespace vcg;
 //用vcg库定义三维网格结构
 
-//commonly used VCG type
-// Forward declarations needed for creating the used types
-class CVertexO;
-class CEdgeO;
-class CFaceO;
-
-// Declaration of the semantic of the used types
-class CUsedTypesO: public vcg::UsedTypes < vcg::Use<CVertexO>::AsVertexType,
-  vcg::Use<CEdgeO   >::AsEdgeType,
-  vcg::Use<CFaceO  >::AsFaceType >{};
-
-
-// The Main Vertex Class
-// Most of the attributes are optional and must be enabled before use.
-// Each vertex needs 40 byte, on 32bit arch. and 44 byte on 64bit arch.
-
-class CVertexO  : public vcg::Vertex< CUsedTypesO,
-  vcg::vertex::InfoOcf,           /*  4b */
-  vcg::vertex::Coord3f,           /* 12b */
-  vcg::vertex::BitFlags,          /*  4b */
-  vcg::vertex::Normal3f,          /* 12b */
-  vcg::vertex::Qualityf,          /*  4b */
-  vcg::vertex::Color4b,           /*  4b */
-  vcg::vertex::VFAdjOcf,          /*  0b */
-  vcg::vertex::MarkOcf,           /*  0b */
-  vcg::vertex::TexCoordfOcf,      /*  0b */
-  vcg::vertex::CurvaturefOcf,     /*  0b */
-  vcg::vertex::CurvatureDirfOcf,  /*  0b */
-  vcg::vertex::RadiusfOcf         /*  0b */
->{};
-
-// The Main Edge Class
-// Currently it does not contains anything.
-class CEdgeO : public vcg::Edge<CUsedTypesO, vcg::edge::EVAdj> {
-public:
-  inline CEdgeO(){};
-  inline CEdgeO( CVertexO * v0, CVertexO * v1){ V(0)= v0 ; V(1)= v1;};
-  static inline CEdgeO OrderedEdge(CVertexO* v0,CVertexO* v1){
-    if(v0<v1) return CEdgeO(v0,v1);
-    else return CEdgeO(v1,v0);
-  }
-};
-
-// Each face needs 32 byte, on 32bit arch. and 48 byte on 64bit arch.
-class CFaceO    : public vcg::Face<  CUsedTypesO,
-  vcg::face::InfoOcf,              /* 4b */
-  vcg::face::VertexRef,            /*12b */
-  vcg::face::BitFlags,             /* 4b */
-  vcg::face::Normal3f,             /*12b */
-  vcg::face::QualityfOcf,          /* 0b */
-  vcg::face::MarkOcf,              /* 0b */
-  vcg::face::Color4bOcf,           /* 0b */
-  vcg::face::FFAdjOcf,             /* 0b */
-  vcg::face::VFAdjOcf,             /* 0b */
-  vcg::face::WedgeTexCoordfOcf     /* 0b */
-> {};
-
-class CMeshO : public vcg::tri::TriMesh< vcg::vertex::vector_ocf<CVertexO>, vcg::face::vector_ocf<CFaceO> > {
-public :
-  int sfn; //The number of selected faces.
-  int svn; //The number of selected faces.
-  vcg::Matrix44f Tr; // Usually it is the identity. It is applied in rendering and filters can or cannot use it. (most of the filter will ignore this)
-
-  double grid_radius;//by wsh 11-2-27 
-
-  const vcg::Box3f &trBB()
-  {
-    static vcg::Box3f bb;
-    bb.SetNull();
-    bb.Add(Tr,bbox);
-    return bb;
-  }
-};
-//commonly used VCG type end
+////commonly used VCG type
+//// Forward declarations needed for creating the used types
+//class CVertexO;
+//class CEdgeO;
+//class CFaceO;
+//
+//// Declaration of the semantic of the used types
+//class CUsedTypesO: public vcg::UsedTypes < vcg::Use<CVertexO>::AsVertexType,
+//  vcg::Use<CEdgeO   >::AsEdgeType,
+//  vcg::Use<CFaceO  >::AsFaceType >{};
+//
+//
+//// The Main Vertex Class
+//// Most of the attributes are optional and must be enabled before use.
+//// Each vertex needs 40 byte, on 32bit arch. and 44 byte on 64bit arch.
+//
+//class CVertexO  : public vcg::Vertex< CUsedTypesO,
+//  vcg::vertex::InfoOcf,           /*  4b */
+//  vcg::vertex::Coord3f,           /* 12b */
+//  vcg::vertex::BitFlags,          /*  4b */
+//  vcg::vertex::Normal3f,          /* 12b */
+//  vcg::vertex::Qualityf,          /*  4b */
+//  vcg::vertex::Color4b,           /*  4b */
+//  vcg::vertex::VFAdjOcf,          /*  0b */
+//  vcg::vertex::MarkOcf,           /*  0b */
+//  vcg::vertex::TexCoordfOcf,      /*  0b */
+//  vcg::vertex::CurvaturefOcf,     /*  0b */
+//  vcg::vertex::CurvatureDirfOcf,  /*  0b */
+//  vcg::vertex::RadiusfOcf         /*  0b */
+//>{};
+//
+//// The Main Edge Class
+//// Currently it does not contains anything.
+//class CEdgeO : public vcg::Edge<CUsedTypesO, vcg::edge::EVAdj> {
+//public:
+//  inline CEdgeO(){};
+//  inline CEdgeO( CVertexO * v0, CVertexO * v1){ V(0)= v0 ; V(1)= v1;};
+//  static inline CEdgeO OrderedEdge(CVertexO* v0,CVertexO* v1){
+//    if(v0<v1) return CEdgeO(v0,v1);
+//    else return CEdgeO(v1,v0);
+//  }
+//};
+//
+//// Each face needs 32 byte, on 32bit arch. and 48 byte on 64bit arch.
+//class CFaceO    : public vcg::Face<  CUsedTypesO,
+//  vcg::face::InfoOcf,              /* 4b */
+//  vcg::face::VertexRef,            /*12b */
+//  vcg::face::BitFlags,             /* 4b */
+//  vcg::face::Normal3f,             /*12b */
+//  vcg::face::QualityfOcf,          /* 0b */
+//  vcg::face::MarkOcf,              /* 0b */
+//  vcg::face::Color4bOcf,           /* 0b */
+//  vcg::face::FFAdjOcf,             /* 0b */
+//  vcg::face::VFAdjOcf,             /* 0b */
+//  vcg::face::WedgeTexCoordfOcf     /* 0b */
+//> {};
+//
+//class CMeshO : public vcg::tri::TriMesh< vcg::vertex::vector_ocf<CVertexO>, vcg::face::vector_ocf<CFaceO> > {
+//public :
+//  int sfn; //The number of selected faces.
+//  int svn; //The number of selected faces.
+//  vcg::Matrix44f Tr; // Usually it is the identity. It is applied in rendering and filters can or cannot use it. (most of the filter will ignore this)
+//
+//  double grid_radius;//by wsh 11-2-27 
+//
+//  const vcg::Box3f &trBB()
+//  {
+//    static vcg::Box3f bb;
+//    bb.SetNull();
+//    bb.Add(Tr,bbox);
+//    return bb;
+//  }
+//};
+////commonly used VCG type end
 
 
 class CVertex;
@@ -114,19 +115,19 @@ class CUsedTypes: public vcg::UsedTypes< vcg::Use<CVertex>::AsVertexType, vcg::U
 
 
 class CVertex : public vcg::Vertex<CUsedTypes, 
-  vcg::vertex::InfoOcf,           /*  4b */
-  vcg::vertex::Coord3f,           /* 12b */
-  vcg::vertex::BitFlags,          /*  4b */
-  vcg::vertex::Normal3f,          /* 12b */
-  vcg::vertex::Qualityf,          /*  4b */
-  vcg::vertex::Color4b,           /*  4b */
-  vcg::vertex::VFAdjOcf,          /*  0b */
-  vcg::vertex::MarkOcf,           /*  0b */
-  vcg::vertex::TexCoordfOcf,      /*  0b */
-  vcg::vertex::CurvaturefOcf,     /*  0b */
-  vcg::vertex::CurvatureDirfOcf,  /*  0b */
-  vcg::vertex::RadiusfOcf         /*  0b */
-  /*vcg::vertex::Coord3f, vcg::vertex::Normal3f, vcg::vertex::Color4b, vcg::vertex::BitFlags*/> 
+  //vcg::vertex::InfoOcf,           /*  4b */
+  //vcg::vertex::Coord3f,           /* 12b */
+  //vcg::vertex::BitFlags,          /*  4b */
+  //vcg::vertex::Normal3f,          /* 12b */
+  //vcg::vertex::Qualityf,          /*  4b */
+  //vcg::vertex::Color4b,           /*  4b */
+  //vcg::vertex::VFAdjOcf,          /*  0b */
+  //vcg::vertex::MarkOcf,           /*  0b */
+  //vcg::vertex::TexCoordfOcf,      /*  0b */
+  //vcg::vertex::CurvaturefOcf,     /*  0b */
+  //vcg::vertex::CurvatureDirfOcf,  /*  0b */
+  //vcg::vertex::RadiusfOcf         /*  0b */
+  vcg::vertex::Coord3f, vcg::vertex::Normal3f, vcg::vertex::Color4b, vcg::vertex::BitFlags> 
 {
 public:
 	vector<int> neighbors;
@@ -142,11 +143,9 @@ public:
   bool is_iso;
   bool is_hole;
   bool is_poisson;
-  bool is_graphcut_related;
   bool is_visible;
   bool is_barely_visible;
   bool is_boundary;
-  bool is_sdf;
 	int m_index;
 
 	bool is_fixed_sample; //feature points (blue color) 
@@ -197,11 +196,9 @@ public:
     is_iso(false),
     is_hole(false),
     is_poisson(false),
-    is_graphcut_related(false),
 		is_fixed_sample(false),
     is_boundary(false),
-    is_sdf(false),
-		eigen_confidence(-1.0f),
+		eigen_confidence(-1),
 		is_ignore(false),
     is_field_grid(false),
 		eigen_vector0(Point3f(1, 0, 0)),
@@ -302,20 +299,20 @@ public:
 };
 
 class CFace : public vcg::Face<CUsedTypes, 
-  vcg::face::InfoOcf,              /* 4b */
-  vcg::face::VertexRef,            /*12b */
-  vcg::face::BitFlags,             /* 4b */
-  vcg::face::Normal3f,             /*12b */
-  vcg::face::QualityfOcf,          /* 0b */
-  vcg::face::MarkOcf,              /* 0b */
-  vcg::face::Color4bOcf,           /* 0b */
-  vcg::face::FFAdjOcf,             /* 0b */
-  vcg::face::VFAdjOcf,             /* 0b */
-  vcg::face::WedgeTexCoordfOcf     /* 0b */
-  /*vcg::face::FFAdj, vcg::face::VFAdj, vcg::face::VertexRef, vcg::face::BitFlags*/> 
+  //vcg::face::InfoOcf,              /* 4b */
+  //vcg::face::VertexRef,            /*12b */
+  //vcg::face::BitFlags,             /* 4b */
+  //vcg::face::Normal3f,             /*12b */
+  //vcg::face::QualityfOcf,          /* 0b */
+  //vcg::face::MarkOcf,              /* 0b */
+  //vcg::face::Color4bOcf,           /* 0b */
+  //vcg::face::FFAdjOcf,             /* 0b */
+  //vcg::face::VFAdjOcf,             /* 0b */
+  //vcg::face::WedgeTexCoordfOcf     /* 0b */
+  vcg::face::FFAdj, vcg::face::VFAdj, vcg::face::VertexRef, vcg::face::BitFlags> 
 {};
 
-class CMesh : public vcg::tri::TriMesh< vcg::vertex::vector_ocf<CVertex>, vcg::face::vector_ocf<CFace>/*, std::vector<CEdge>*/ >
+class CMesh : public vcg::tri::TriMesh<std::vector<CVertex>, std::vector<CFace>/*, std::vector<CEdge>*/ >
 {
 //public:
 //  //add two meshes

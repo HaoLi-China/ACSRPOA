@@ -147,6 +147,9 @@
     <ClCompile Include="ITMLib\Objects\ITMIntrinsics.cpp" />
     <ClCompile Include="ITMLib\Objects\ITMPose.cpp" />
     <ClCompile Include="ITMLib\Utils\MarchingCubeUtils.cpp" />
+    <ClCompile Include="NBV\grid.cpp" />
+    <ClCompile Include="NBV\NBV.cpp" />
+    <ClCompile Include="NBV\plylib.cpp" />
     <ClCompile Include="ObjPreSegment\main.cpp" />
     <ClCompile Include="ObjPreSegment\main_scene_seg.cpp" />
     <ClCompile Include="ObjPreSegment\object_segmentation.cpp" />
@@ -251,6 +254,10 @@
     <ClInclude Include="ITMLib\Objects\ITMLocalVBA.h" />
     <ClInclude Include="ITMLib\ITMLib.h" />
     <ClInclude Include="ITMLib\Utils\MarchingCubeUtils.h" />
+    <ClInclude Include="NBV\grid.h" />
+    <ClInclude Include="NBV\NBV.h" />
+    <ClInclude Include="NBV\plylib.h" />
+    <ClInclude Include="NBV\plystuff.h" />
     <ClInclude Include="ObjPreSegment\object_segmentation.h" />
     <ClInclude Include="ObjPreSegment\scene_graph.h" />
     <ClInclude Include="ObjPreSegment\scene_seg.h" />

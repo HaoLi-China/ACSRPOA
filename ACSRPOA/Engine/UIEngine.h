@@ -2,14 +2,16 @@
 
 #pragma once
 
+#include <vector>//hao modified it
+
 #include "../Utils/SocketClient.h"//hao modified it
 #include "../ITMLib/Engine/ITMMainEngine.h"
 #include "../ITMLib/Utils/ITMLibSettings.h"
+#include "../NBV/NBV.h"//hao modified it
 #include "../Utils/FileUtils.h"
 #include "../Utils/NVTimer.h"
 #include "../Utils/InteractionCompute.h"//hao modified it
 
-#include <vector>//hao modified it
 
 using namespace std;
 
@@ -88,6 +90,8 @@ namespace InfiniTAM
       void SaveScreenshot(const char *filename) const;
 
       void autoReconstruct();//hao modified it
+
+      void testNBV();//just for test
     };
   }
 }

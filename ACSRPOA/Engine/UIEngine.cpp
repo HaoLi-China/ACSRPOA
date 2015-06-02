@@ -342,6 +342,7 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
     break;
   case '2'://just for test
     {
+      UIEngine::Instance()->testNBV();
       /* CInteractionCompute cic(UIEngine::Instance()->mainEngine->cPointCloudAnalysis);
 
       if(cic.vecObjectHypo[0].objectness < 200){
@@ -764,4 +765,44 @@ DWORD _stdcall autoscan(LPVOID lpParameter)
 //hao modified it
 void UIEngine::autoReconstruct(){
   CreateThread(NULL,0,autoscan,NULL,0,NULL);
+}
+
+//just for test
+void UIEngine::testNBV(){
+    /*load mesh*/
+    loadMesh("Data/nbv_test_original.ply", original);
+    cout<<original.vert.size() <<endl;
+    normalizeROSA_Mesh(original);
+  
+    /*iso points*/
+    saveMesh("poisson_in.ply", original);
+    runPoissonExe();
+    extractPoissonConfidence();
+    extractIsoPoints();
+    computeHoleConfidence();
+  
+    /*nbv*/
+    buildGrid();
+    propagate();
+    viewExtractionIntoBins(view_bin_each_axis);
+    viewPrune();
+  
+    ofstream out("Data/nbv_output/NBV.txt");
+    for (int i = 0; i < scan_candidates.size(); ++i){
+      cout<<scan_candidates[i].first.X() <<" " <<scan_candidates[i].first.Y() <<" " <<scan_candidates[i].first.Z() <<endl
+        <<scan_candidates[i].second.X() <<" " <<scan_candidates[i].second.Y() <<" " <<scan_candidates[i].second.Z() <<endl;
+    }
+    out.close();
+  
+    clearCMesh(nbv_candidates);
+    for (int i = 0; i < scan_candidates.size(); ++i){
+      CVertex t;
+      t.m_index = i;
+      t.P() = scan_candidates[i].first;
+      t.N() = scan_candidates[i].second;
+      nbv_candidates.vert.push_back(t);
+      nbv_candidates.bbox.Add(t.P());
+    }
+    nbv_candidates.vn = nbv_candidates.vert.size();
+    saveMesh("Data/nbv_output/NBV.ply", nbv_candidates);
 }

@@ -9,7 +9,7 @@
 
 #define LARGE_NUM 9999999
 #define SMALL_NUM -9999999
-#define E 2.71828182
+//#define E 2.71828182
 
 #ifndef _NO_NAMESPACE
 using namespace std;
